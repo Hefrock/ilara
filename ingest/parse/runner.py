@@ -97,11 +97,18 @@ def _school_county(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]
     return {"immunization_county": [{**common, **r} for r in rows], "flags": []}
 
 
+def _school_level(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
+    rows = school_imm.parse_school(rawstore.read_payload(m, root))
+    common = _common(m, run_id, school_imm.PARSER_VERSION, label=school_imm.SCHOOL_SOURCE_LABEL)
+    return {"immunization_school": [{**common, **r} for r in rows], "flags": []}
+
+
 PARSERS = {
     ("doh_dashboard", "responses"): (doh_dashboard.PARSER_VERSION, _dashboard),
     ("doh_school_imm_county", None): (school_imm.PARSER_VERSION, _school_county),
+    ("doh_school_imm_school", None): (school_imm.PARSER_VERSION, _school_level),
 }
-OUTPUT_TABLES = ("case_state", "case_county", "immunization_county")
+OUTPUT_TABLES = ("case_state", "case_county", "immunization_county", "immunization_school")
 
 
 def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:

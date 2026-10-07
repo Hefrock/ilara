@@ -30,6 +30,19 @@ def cmd_capture(a: argparse.Namespace) -> int:
     from ingest.capture import runner
     from ingest.capture_log import CaptureLog
 
+    if a.backfill:
+        from ingest.capture import backfill
+
+        if a.dry_run:
+            done = backfill.captured_urls(_root())
+            for d in backfill.documents(_root()):
+                state = "captured" if d["url"] in done else "to fetch"
+                print(f"{state:9s} {d['source_id']:12s} {d['url']}")
+            return 0
+        log = CaptureLog(a.run_id)
+        for r in backfill.run(log, _root()):
+            print(f"{r.source_id:12s} {r.outcome:9s} {r.http_status} {r.url}")
+        return 0
     reg = registry.load()
     if a.source:
         if a.source not in reg:
@@ -211,6 +224,11 @@ def build_parser() -> argparse.ArgumentParser:
     g = c.add_mutually_exclusive_group(required=True)
     g.add_argument("--source")
     g.add_argument("--all-due", action="store_true")
+    g.add_argument(
+        "--backfill",
+        action="store_true",
+        help="fetch each document in data/registry/backfill_urls.yml once",
+    )
     c.add_argument("--access", choices=["http", "browser"])
     c.add_argument("--dry-run", action="store_true")
     c.add_argument("--run-id")
