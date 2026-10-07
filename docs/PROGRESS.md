@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First sche
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-07 (5) | Dashboard capture clicks the visible tabs and slicer states in one page load; case-level safeguard refuses identifier-bearing responses; static Power BI files no longer stored; partial captures raise an anomaly issue; offline fake-report tests (ADR 0002) | Merge, then confirm the first scheduled capture; county parser from it; seed loader |
 | 2026-10-07 (4) | Owner decisions: B04 (accept E01 to E20, Plotly maps), B05 (commit sensitivity seeds), B15 (tab and slicer clicks), B16 (case-level safeguard) | Agent: tab and slicer capture with the case-level safeguard, then seed loader |
 | 2026-10-07 (3) | PR Hefrock/ilara#1 merged; probe captured the dashboard; probe report written; capture now records why each Power BI response was or was not kept | Owner: B15, B16 (plus B04, B05). Agent: seed loader, county tab capture once B15 and B16 are answered |
 | 2026-10-07 (2) | Brought in the full package: CLAUDE.md, docs/sources.md, docs/dashboard.md, T1 seeds; registry URLs from sources S1, S2, S8, S9, S10; user agent names the repository (I7); S3 population check in the reference build; tests mirror the code tree | Owner: B12, B05, B13. Agent: seed loader (WP3b), then WP4 release logic |
@@ -47,5 +48,6 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First sche
 ## Decisions and ADRs
 - Owner decisions 2026-10-07: E01 to E20 accepted; maps Plotly only (E17); sensitivity seeds committed (H6); dashboard capture may click visible tabs and the count-definition slicer within one page load; capture refuses case-level responses.
 - `docs/adr/0001-github-free-limits.md`: GitHub Free limits and the in-workflow guards (E18, U23).
+- `docs/adr/0002-dashboard-views-and-case-level-safeguard.md`: dashboard views captured per page load and the case-level safeguard (B15, B16).
 - Raw manifests sit beside their file as `<name>.manifest.json`, so a JSON capture and its manifest never share a name (E02 detail).
 - The dashboard capture saves JSON responses, rendered text, html and a screenshot until the probe picks a path; html and screenshot are kept only alongside a substantive change (8.3 storage rule 1).

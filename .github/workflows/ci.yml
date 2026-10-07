@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --all-extras
 
+      - name: Install browser for the offline capture tests
+        run: uv run --frozen playwright install --with-deps --only-shell chromium
+
       - name: make check (lint, type check, tests, guards)
         run: make check
 
