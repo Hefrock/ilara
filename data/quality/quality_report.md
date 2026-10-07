@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-07T04:15:22Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-05. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-07T11:17:02Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-05. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -13,10 +13,23 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
   - sensitivity: data/sensitivity/seed/statewide_t3_derived.csv sw-m04: date to confirm
 - **PARSE_SCHEMA_CHANGE** (1)
   - curated: data/raw/doh_dashboard/2026/20261007T022732Z_f326ab94771c.json.gz: DashboardParseError: no data query responses in the capture
+- **STALE_SNAPSHOT** (1)
+  - curated: census_commuting: no good capture within 48 h (last good never)
 
 ## Capture freshness
 
-- doh_dashboard: last outcome changed, last good 2026-10-07T03:43:11Z (1 h ago)
+- cdc_measles_national: last outcome changed, last good 2026-10-07T11:16:55Z (0 h ago)
+- census_cartographic: last outcome changed, last good 2026-10-07T11:16:50Z (0 h ago)
+- census_commuting: last outcome failed, last good never STALE
+- census_popest_agesex: last outcome changed, last good 2026-10-07T11:16:40Z (0 h ago)
+- census_popest_totals: last outcome changed, last good 2026-10-07T11:16:35Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-10-07T03:43:11Z (8 h ago)
+- doh_han_index: last outcome changed, last good 2026-10-07T11:16:20Z (0 h ago)
+- doh_measles_page: last outcome changed, last good 2026-10-07T11:16:10Z (0 h ago)
+- doh_newsroom: last outcome changed, last good 2026-10-07T11:16:15Z (0 h ago)
+- doh_school_imm_county: last outcome changed, last good 2026-10-07T11:16:25Z (0 h ago)
+- doh_school_imm_school: last outcome changed, last good 2026-10-07T11:16:30Z (0 h ago)
+- local_hd_lancaster: last outcome changed, last good 2026-10-07T11:17:00Z (0 h ago)
 
 ## Implied counts
 
