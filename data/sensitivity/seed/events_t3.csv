@@ -1,0 +1,7 @@
+event_id,event_type,event_date,county_scope,title,detail,source_tier,source_label,source_url,url_status
+ev-009,school_calendar,2026-08-18,Lancaster,First Lancaster County schools open,Add a school-calendar covariate,T3,News,,url_to_find
+ev-011,program,2026-09-28,state,DOH doses given in 2026,8306 doses given in 2026 by about Sept 28,T3,News,,url_to_find
+ev-012,program,2026-10-05,state,DOH doses given in 2026,8843 doses given in 2026 by Oct 5,T3,News,,url_to_find
+ev-019,wastewater_detection,2026-06-09,Delaware,Measles RNA detected in wastewater (WastewaterSCAN),First detection date; second on June 11,T3,WastewaterSCAN via news,,url_to_find
+ev-020,wastewater_detection,2026-06-11,Delaware,Measles RNA detected in wastewater (WastewaterSCAN),Second detection date,T3,WastewaterSCAN via news,,url_to_find
+ev-s01,intervention,2026-06-24,Berks;Chester;Dauphin;Lancaster;Lebanon;Northumberland;York,Counties named in June for early MMR recommendations,Counties named on a CHOP page for the HAN 831 recommendations,T3,CHOP page,,url_to_find

@@ -1,0 +1,28 @@
+row_id,as_of_date,date_precision,as_of_date_end,county_name,cum_cases,count_definition,source_label,url_status,notes
+cy-001,2026-05-06,exact,,Lebanon,11,unknown,News,url_to_find,11 Lebanon residents diagnosed by May 6 (main outbreak start).
+cy-002,2026-08-25,exact,,Mifflin,29,unknown,Lewistown Sentinel,url_to_find,
+cy-003,2026-08-25,approx,,Lancaster,185,unknown,News,url_to_find,Reported alongside the statewide 393 figure (sw-m06).
+cy-004,2026-09-17,range,2026-09-18,Lancaster,324,unknown,LancasterOnline,url_to_find,Full county list was truncated in the search result; re-read the article for the full list (do not commit article text).
+cy-005,2026-09-17,range,2026-09-18,Mifflin,93,unknown,LancasterOnline,url_to_find,
+cy-006,2026-09-17,range,2026-09-18,Chester,72,unknown,LancasterOnline,url_to_find,
+cy-007,2026-09-17,range,2026-09-18,Jefferson,32,unknown,LancasterOnline,url_to_find,
+cy-008,2026-09-17,range,2026-09-18,Snyder,35,unknown,LancasterOnline,url_to_find,
+cy-009,2026-09-17,range,2026-09-18,Centre,19,unknown,LancasterOnline,url_to_find,
+cy-010,2026-09-17,range,2026-09-18,Clearfield,19,unknown,LancasterOnline,url_to_find,
+cy-011,2026-09-17,range,2026-09-18,Lebanon,21,unknown,LancasterOnline,url_to_find,
+cy-012,2026-09-17,range,2026-09-18,Indiana,14,unknown,LancasterOnline,url_to_find,
+cy-013,2026-09-21,exact,,Lancaster,342,unknown,Philadelphia Inquirer,url_to_find,
+cy-014,2026-09-21,exact,,Mifflin,94,unknown,Philadelphia Inquirer,url_to_find,
+cy-015,2026-09-21,exact,,Chester,78,unknown,Philadelphia Inquirer,url_to_find,
+cy-016,2026-09-28,exact,,Lancaster,363,unknown,Philadelphia Inquirer; Lewistown Sentinel,url_to_find,
+cy-017,2026-09-28,exact,,Mifflin,106,unknown,Philadelphia Inquirer; Lewistown Sentinel,url_to_find,
+cy-018,2026-09-28,exact,,Chester,83,unknown,Philadelphia Inquirer; Lewistown Sentinel,url_to_find,
+cy-019,2026-10-05,exact,,Lancaster,391,unknown,NBC10; Lewistown Sentinel,url_to_find,First-snapshot sanity check for the dashboard parser. 39 counties with cases; 95 across the Philadelphia region.
+cy-020,2026-10-05,exact,,Mifflin,118,unknown,NBC10; Lewistown Sentinel,url_to_find,
+cy-021,2026-10-05,exact,,Chester,84,unknown,NBC10; Lewistown Sentinel,url_to_find,
+cy-022,2026-10-05,exact,,Berks,6,unknown,NBC10,url_to_find,
+cy-023,2026-10-05,exact,,Montgomery,3,unknown,NBC10,url_to_find,
+cy-024,2026-10-05,exact,,Lehigh,2,unknown,NBC10,url_to_find,
+cy-025,2026-10-05,exact,,Philadelphia,0,unknown,NBC10,url_to_find,Zero is a reported value here.
+cy-026,2026-10-05,exact,,Delaware,0,unknown,NBC10,url_to_find,Zero is a reported value here. Wastewater detection earlier in June.
+cy-027,2026-10-05,exact,,Bucks,0,unknown,NBC10,url_to_find,Zero is a reported value here.

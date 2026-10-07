@@ -4,7 +4,7 @@ Design intent: an executive band at the top with a few, impactful, succinct item
 
 ## 1. Build approach
 - Static site regenerated after every weekly release and on demand with `make dashboard`. While the repo is private (GitHub Free has no private Pages) the build is a CI artifact; public Pages hosting starts at Gate G5. No server and no database at view time.
-- Python generates the pages. Plotly (HTML output) for charts, and MapLibre GL JS or Plotly choropleth for maps. Boundary data is simplified GeoJSON committed to the repo.
+- Python generates the pages. Plotly (HTML output) for charts and Plotly choropleth maps (E17: no tile server, no MapLibre). Boundary data is simplified GeoJSON committed to the repo.
 - Every chart reads only from curated tables and `capture_status()` through `ingest/access.py` (HANDOFF.md sections 3 and 4). No chart may read raw snapshots or seed files directly. Section 3C reads `case_demographics` (provisional schema).
 - Every chart has a CSV export of its underlying data and a footer: source, `as_of_date`, `source_tier`, `count_definition`.
 - Page order: one scrolling page. Executive band, then analyst sections, then a Data and trust section, with a sticky in-page nav.
