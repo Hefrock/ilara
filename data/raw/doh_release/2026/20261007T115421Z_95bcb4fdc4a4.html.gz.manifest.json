@@ -1,0 +1,22 @@
+{
+  "bytes": 599567,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/shapiro-administration-launches-measles-dashboard",
+  "compression": "gzip",
+  "content_hash": "cd9914a9a9eb9ea8745a8f9ff709cd47a6db4d7fb884e83dea8e6e782dbd057f",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:12:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/shapiro-administration-launches-measles-dashboard",
+    "purpose": "ev-007 (dashboard launch, 2026-07-14)"
+  },
+  "fetched_at_et": "2026-10-07T07:54:21-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:21Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115421Z_95bcb4fdc4a4.html.gz",
+  "sha256": "95bcb4fdc4a4f2cae8856ce5056b8a694ad7bf7b00d0dc3873b919fca81369fc",
+  "source_id": "doh_release",
+  "stored_sha256": "257cef60d45765cca4664acbd7e0bcdaf7ec29028395f2ddb25638169420c70f",
+  "url": "https://www.pa.gov/agencies/health/newsroom/shapiro-administration-launches-measles-dashboard"
+}

@@ -1,0 +1,22 @@
+{
+  "bytes": 590331,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/dept-of-health-responding-to-potential-measles-exposure-in-westm",
+  "compression": "gzip",
+  "content_hash": "91d03ffc0afe34c357fe5c3b0c04d76593583effe083eb81c14bd1d9941eda07",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:18:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/dept-of-health-responding-to-potential-measles-exposure-in-westm",
+    "purpose": "ev-018 (Westmoreland exposure)"
+  },
+  "fetched_at_et": "2026-10-07T07:54:52-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:52Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115452Z_23b82deb8727.html.gz",
+  "sha256": "23b82deb8727ec8fab32334e888dbb39f1a25471cdb9a0c439ae17978b7a4966",
+  "source_id": "doh_release",
+  "stored_sha256": "6a51fc1a37d07a50f034653f020bed9479142f9e2556a9da3af228697d187d31",
+  "url": "https://www.pa.gov/agencies/health/newsroom/dept-of-health-responding-to-potential-measles-exposure-in-westm"
+}

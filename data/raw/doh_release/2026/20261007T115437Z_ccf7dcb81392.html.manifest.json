@@ -1,0 +1,22 @@
+{
+  "bytes": 128368,
+  "capture_key": "https://www.pa.gov/governor/newsroom/2026-press-releases/shapiro-administration-expands-measles-response-efforts",
+  "compression": null,
+  "content_hash": "9a6f6617f572ab79773601ddf739bd9c5bef97cbab44d0f0160dd3b97d01dd0a",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:15:doh_release",
+    "final_url": "https://www.pa.gov/governor/newsroom/2026-press-releases/shapiro-administration-expands-measles-response-efforts",
+    "purpose": "ev-010 (pop-up clinics), statewide stats block"
+  },
+  "fetched_at_et": "2026-10-07T07:54:37-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:37Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115437Z_ccf7dcb81392.html",
+  "sha256": "ccf7dcb8139296dd6fad944ee284c73965306e9e9c4817cc2293e16a69c20f88",
+  "source_id": "doh_release",
+  "stored_sha256": "ccf7dcb8139296dd6fad944ee284c73965306e9e9c4817cc2293e16a69c20f88",
+  "url": "https://www.pa.gov/governor/newsroom/2026-press-releases/shapiro-administration-expands-measles-response-efforts"
+}

@@ -1,0 +1,22 @@
+{
+  "bytes": 589637,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-responding-to-potential-measle",
+  "compression": "gzip",
+  "content_hash": "d18ea25f8cfd45df237fe6e82f1b9d3cdacf369a7400a002ebc23c90edf1cefd",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:21:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-responding-to-potential-measle",
+    "purpose": "exposure events"
+  },
+  "fetched_at_et": "2026-10-07T07:55:07-04:00",
+  "fetched_at_utc": "2026-10-07T11:55:07Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115507Z_3e79ca6a959c.html.gz",
+  "sha256": "3e79ca6a959cca37eb0d7bb1e0450f6abfbf41d01923f23b0d8dcc7e8f46de81",
+  "source_id": "doh_release",
+  "stored_sha256": "e881bb02b260f1b5ca841a489fa54c7e97f26442fa453349e05032db221cf85b",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-responding-to-potential-measle"
+}

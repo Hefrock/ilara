@@ -1,0 +1,22 @@
+{
+  "bytes": 601472,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/doh-provides-update-on-measles-outbreak-as-cases-reach-497-in-34",
+  "compression": "gzip",
+  "content_hash": "fb21347130a8686bcfd10aee15cc9f7ff2d1fd14a8be0ad9a5a73e7c07b16128",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:22:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/doh-provides-update-on-measles-outbreak-as-cases-reach-497-in-34",
+    "purpose": "U16 (as-of date of the 497 row, sw-004)"
+  },
+  "fetched_at_et": "2026-10-07T07:55:12-04:00",
+  "fetched_at_utc": "2026-10-07T11:55:12Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115512Z_234bc9d2bd18.html.gz",
+  "sha256": "234bc9d2bd18df3af8ce0e3a0f2eb79e814616a1df97223bd7fa727bdb01e4f8",
+  "source_id": "doh_release",
+  "stored_sha256": "9f4a8089c31792446a19c889a4bd78585ecb9da432643169d474e4926526d7d7",
+  "url": "https://www.pa.gov/agencies/health/newsroom/doh-provides-update-on-measles-outbreak-as-cases-reach-497-in-34"
+}

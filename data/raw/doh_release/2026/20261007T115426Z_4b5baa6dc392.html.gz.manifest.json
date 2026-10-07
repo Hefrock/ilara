@@ -1,0 +1,22 @@
+{
+  "bytes": 598157,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-takes-action-to-prevent-spread-of-measle",
+  "compression": "gzip",
+  "content_hash": "b65679ea4e38df141274fede264dc01b6dd82176ab5ab4472714dc9f1e4dd164",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:13:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-takes-action-to-prevent-spread-of-measle",
+    "purpose": "early outbreak releases; event dates"
+  },
+  "fetched_at_et": "2026-10-07T07:54:26-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:26Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115426Z_4b5baa6dc392.html.gz",
+  "sha256": "4b5baa6dc392ff0c2b0aed53b189e2fa002d89872a7f593418dccb71d675515d",
+  "source_id": "doh_release",
+  "stored_sha256": "2461b4c0c18d2ecf4e1c2da374d00d8231ebac58a801769dff12105464176acc",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-takes-action-to-prevent-spread-of-measle"
+}

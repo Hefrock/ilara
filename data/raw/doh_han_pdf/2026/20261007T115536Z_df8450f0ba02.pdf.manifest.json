@@ -1,0 +1,22 @@
+{
+  "bytes": 241148,
+  "capture_key": "https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-831-06-24-ALT-Measles_Early%20MMR.pdf",
+  "compression": null,
+  "content_hash": "f2b1b6c9daa38cfb69be6d14390e9d86c1ab8760fdd2f354a714b754546b890d",
+  "ext": "pdf",
+  "extra": {
+    "capture_id": "gh-37617137202-1:27:doh_han_pdf",
+    "final_url": "https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-831-06-24-ALT-Measles_Early%20MMR.pdf",
+    "purpose": "sw-002, ev-004, ev-006"
+  },
+  "fetched_at_et": "2026-10-07T07:55:36-04:00",
+  "fetched_at_utc": "2026-10-07T11:55:36Z",
+  "http_status": 200,
+  "normaliser": "identity:1",
+  "parser_hint": "doh_han_pdf",
+  "raw_path": "data/raw/doh_han_pdf/2026/20261007T115536Z_df8450f0ba02.pdf",
+  "sha256": "df8450f0ba027c30579430fcf299b45c2e08c08c8ece468966a77926ffb4fbaf",
+  "source_id": "doh_han_pdf",
+  "stored_sha256": "df8450f0ba027c30579430fcf299b45c2e08c08c8ece468966a77926ffb4fbaf",
+  "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-831-06-24-ALT-Measles_Early%20MMR.pdf"
+}

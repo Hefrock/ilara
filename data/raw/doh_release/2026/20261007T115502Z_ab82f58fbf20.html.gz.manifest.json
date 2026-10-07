@@ -1,0 +1,22 @@
+{
+  "bytes": 591192,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/doh-responding-to-two-separate-potential-measles-exposures-in-la",
+  "compression": "gzip",
+  "content_hash": "8fa632b6b2205ff54d451ddc47e5672591e8a94243199985118016945abbcaf2",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:20:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/doh-responding-to-two-separate-potential-measles-exposures-in-la",
+    "purpose": "ev-017 (two Lancaster exposures)"
+  },
+  "fetched_at_et": "2026-10-07T07:55:02-04:00",
+  "fetched_at_utc": "2026-10-07T11:55:02Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115502Z_ab82f58fbf20.html.gz",
+  "sha256": "ab82f58fbf200a56858e2b317ebc7a5441bce55b0c4d6687c5ac7f5bd756cc92",
+  "source_id": "doh_release",
+  "stored_sha256": "ce5c7a4c912d8463e247d438b6334269b45dc602c07e65de51ece828ecef89c1",
+  "url": "https://www.pa.gov/agencies/health/newsroom/doh-responding-to-two-separate-potential-measles-exposures-in-la"
+}

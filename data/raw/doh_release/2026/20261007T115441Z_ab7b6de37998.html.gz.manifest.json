@@ -1,0 +1,22 @@
+{
+  "bytes": 591342,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-confirms-two-measles-associate",
+  "compression": "gzip",
+  "content_hash": "24b53f9eccaa7f5826251ed7f900a52d8b1f383a3a9ec1e93e5fa0eba3865c9b",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:16:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-confirms-two-measles-associate",
+    "purpose": "deaths; statewide stats block"
+  },
+  "fetched_at_et": "2026-10-07T07:54:41-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:41Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115441Z_ab7b6de37998.html.gz",
+  "sha256": "ab7b6de37998bb2afd2ea30595e3fc7cde59a661a380616883fb013ae2f85cc8",
+  "source_id": "doh_release",
+  "stored_sha256": "f75008b2af69257081721a4d75767f28f592741d1514cf397c0eb0ce3160ce58",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-confirms-two-measles-associate"
+}

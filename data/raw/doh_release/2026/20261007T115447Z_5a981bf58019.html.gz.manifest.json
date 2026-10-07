@@ -1,0 +1,22 @@
+{
+  "bytes": 595136,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/department-of-health-responding-to-potential-measles-exposure",
+  "compression": "gzip",
+  "content_hash": "625bc0999ebb4efa8e2f99069f2a22b5ae74e64aca3036575001b35646797281",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:17:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/department-of-health-responding-to-potential-measles-exposure",
+    "purpose": "exposure events (ev-013 to ev-018)"
+  },
+  "fetched_at_et": "2026-10-07T07:54:47-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:47Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115447Z_5a981bf58019.html.gz",
+  "sha256": "5a981bf5801943c759913b5d4359fdf38a772f90d2fbddf3bd24e5200bdec32a",
+  "source_id": "doh_release",
+  "stored_sha256": "2782f613fa690d19cf89bf15525fb2989117f536d1192f7ca047ccd8f21cf470",
+  "url": "https://www.pa.gov/agencies/health/newsroom/department-of-health-responding-to-potential-measles-exposure"
+}

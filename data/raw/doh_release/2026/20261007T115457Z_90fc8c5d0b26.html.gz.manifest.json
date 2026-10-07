@@ -1,0 +1,22 @@
+{
+  "bytes": 596515,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/doh-responding-to-measles-exposure-at-lancaster-courthouse",
+  "compression": "gzip",
+  "content_hash": "b67d3c7e86c9994ba3ba8ef39495b8b8356c08e42958fe8a7db824e42d8af892",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:19:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/doh-responding-to-measles-exposure-at-lancaster-courthouse",
+    "purpose": "ev-015 (Lancaster County Courthouse exposure)"
+  },
+  "fetched_at_et": "2026-10-07T07:54:57-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:57Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115457Z_90fc8c5d0b26.html.gz",
+  "sha256": "90fc8c5d0b26c6d0c5464cc6845d76c73abf39302fbb1234af596660bef76b43",
+  "source_id": "doh_release",
+  "stored_sha256": "eec60364b117742f229b7cb59b3cfc7c28be6c20bd4475fb684930e2a417ec62",
+  "url": "https://www.pa.gov/agencies/health/newsroom/doh-responding-to-measles-exposure-at-lancaster-courthouse"
+}

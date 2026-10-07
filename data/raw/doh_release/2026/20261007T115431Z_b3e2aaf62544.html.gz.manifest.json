@@ -1,0 +1,22 @@
+{
+  "bytes": 599948,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/shapiro-administration-taking-action-to-contain-spread-of-measle",
+  "compression": "gzip",
+  "content_hash": "05915d650f020eabe003511da18a4b31a07bb4ae453dfb61ce6c9e3969e87284",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:14:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/shapiro-administration-taking-action-to-contain-spread-of-measle",
+    "purpose": "early outbreak releases; event dates"
+  },
+  "fetched_at_et": "2026-10-07T07:54:31-04:00",
+  "fetched_at_utc": "2026-10-07T11:54:31Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115431Z_b3e2aaf62544.html.gz",
+  "sha256": "b3e2aaf625445378c40e952708978033fa00b63478229e8cc0c8bd53e0bcf858",
+  "source_id": "doh_release",
+  "stored_sha256": "d5640d8c7ca3007bef84994e6aad7daf58de92169c2cb0a7f7402e2ba71be979",
+  "url": "https://www.pa.gov/agencies/health/newsroom/shapiro-administration-taking-action-to-contain-spread-of-measle"
+}

@@ -1,0 +1,22 @@
+{
+  "bytes": 604248,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pa-dept-of-health-provides-update-on-measles-outbreak-as-cases-r",
+  "compression": "gzip",
+  "content_hash": "42d493e137603089e58595e88a2c6a4ce971ec2a57278e8dc1aa4c2e04d8ed80",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:23:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pa-dept-of-health-provides-update-on-measles-outbreak-as-cases-r",
+    "purpose": "U16 (540 row, sw-005) or later update"
+  },
+  "fetched_at_et": "2026-10-07T07:55:17-04:00",
+  "fetched_at_utc": "2026-10-07T11:55:17Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115517Z_d397e92aff80.html.gz",
+  "sha256": "d397e92aff80d42d893916974d3787c7b4e3959ba0bd1a16a9fb533533e0e21b",
+  "source_id": "doh_release",
+  "stored_sha256": "f62f682747fdf8abe5520f30b5d78510b5277901c9c3a4cce78181aa04ea766b",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pa-dept-of-health-provides-update-on-measles-outbreak-as-cases-r"
+}

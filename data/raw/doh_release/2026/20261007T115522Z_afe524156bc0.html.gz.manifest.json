@@ -1,0 +1,22 @@
+{
+  "bytes": 606911,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-091126",
+  "compression": "gzip",
+  "content_hash": "9fc8f5445cec1a093c35d0e21c49a8bf3a19f5d8caab759df7c7786627b67803",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37617137202-1:24:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-091126",
+    "purpose": "sw-006 (2026-09-11 update)"
+  },
+  "fetched_at_et": "2026-10-07T07:55:22-04:00",
+  "fetched_at_utc": "2026-10-07T11:55:22Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T115522Z_afe524156bc0.html.gz",
+  "sha256": "afe524156bc018cc349a3ae220495ae0a27d64a3eac893b022705b904a79173a",
+  "source_id": "doh_release",
+  "stored_sha256": "f773dbd6aad41626d5c9b03fdf1a592f080e4cfd0058aa4a1160ada190043455",
+  "url": "https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-091126"
+}
