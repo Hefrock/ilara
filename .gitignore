@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Local-only material (owner steps, scratch, sensitivity seeds before decision H6)
+local/
+HUMAN_STEPS.md
+
+# Model outputs stay private until Gate G4 (D07, T6.16)
+project/outputs/
+
+# Built dashboard (CI artifact while the repository is private, D09)
+site/
+
+# Never commit a database file (E01)
+*.duckdb
+*.duckdb.wal

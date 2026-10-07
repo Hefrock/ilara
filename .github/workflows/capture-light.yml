@@ -1,0 +1,76 @@
+name: capture-light
+
+# Schedule: docs/HANDOFF.md section 8.1 (single source; mirrored in ingest/schedule.py).
+on:
+  schedule:
+    - cron: "30 14 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: capture-light
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MEASLES_RUN_ID: gh-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Capture (HTTP sources; unchanged content is logged only)
+        run: uv run --frozen measles capture --all-due --access http --run-id "$MEASLES_RUN_ID"
+
+      - name: Commit raw and capture log
+        run: .github/scripts/commit-data.sh "capture http sources ${MEASLES_RUN_ID}"
+
+      # E19: parse and curate run after the raw commit; a failure here never reverts it.
+      - name: Parse, curate, quality report
+        continue-on-error: true
+        run: |
+          uv run --frozen measles reference build || echo "reference build did not run (see log)"
+          uv run --frozen measles parse
+          uv run --frozen measles quality
+          .github/scripts/commit-data.sh "parse http sources ${MEASLES_RUN_ID}"
+
+      - name: Guards before push
+        run: |
+          uv run --frozen measles guard paths --bot --range "${BASE_SHA}..HEAD"
+          uv run --frozen measles guard append-only --base "${BASE_SHA}" --head HEAD
+          uv run --frozen measles guard size
+          uv run --frozen measles verify
+
+      - name: Push with rebase retry
+        run: .github/scripts/push-with-retry.sh "${GITHUB_REF_NAME}"
+
+      - name: Alerts
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          log=$(ls data/capture_log/*/"${MEASLES_RUN_ID}".jsonl 2>/dev/null | head -1 || true)
+          if [ -n "$log" ]; then
+            uv run --frozen measles alerts --log-file "$log"
+          else
+            echo "no capture log for this run"
+          fi
