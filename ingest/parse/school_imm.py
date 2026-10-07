@@ -108,3 +108,85 @@ def parse(data: bytes) -> list[dict[str, Any]]:
     if len(seen) != len(pa_counties.COUNTIES):
         raise SchoolParseError(f"expected 67 county sheets, found {len(seen)}")
     return rows
+
+
+# ---------------------------------------------------------------- school level (U4)
+
+SCHOOL_SOURCE_LABEL = "DOH school immunization rates by school"
+SCHOOL_GRADES = {"Kindergarten": "kindergarten", "7th Grade": "grade_7", "12th Grade": "grade_12"}
+SCHOOL_COLUMNS = [
+    "County",
+    "School",
+    "Grade",
+    "Total Students Enrolled",
+    "MMR Percent",
+    "Medical Exemption Percent",
+    "Religious Exemption Percent",
+    "Philosophical Exemption Percent",
+]
+
+
+def _widget_table(html: str) -> tuple[list[str], list[list[Any]]]:
+    import json
+
+    m = re.search(r'<script type="application/json" data-for="[^"]+">(.*?)</script>', html, re.S)
+    if m is None:
+        raise SchoolParseError("no embedded table widget found")
+    x = json.loads(m.group(1))["x"]
+    header = re.findall(r"<th>(.*?)</th>", x["container"])
+    cols = x["data"]
+    if len(header) != len(cols):
+        raise SchoolParseError(f"{len(header)} headers but {len(cols)} data columns")
+    n = len(cols[0])
+    return header, [[c[i] for c in cols] for i in range(n)]
+
+
+def parse_school(data: bytes) -> list[dict[str, Any]]:
+    """The by-school page embeds its table as an htmlwidgets DataTable (column-major JSON).
+    Rates are fractions; a school-grade with fewer than 20 students has every rate null,
+    shown as "ND" on the page: those rows get ``suppressed_flag`` true and null rates, never 0.
+    """
+    import json
+
+    html = data.decode("utf-8", "replace")
+    title = re.search(r"<title>(.*?)</title>", html, re.S)
+    years = re.findall(r"(20\d\d)\s*[-–]\s*(20\d\d)", title.group(1) if title else "")
+    if not years:
+        raise SchoolParseError("school year not found in the page title")
+    school_year = f"{years[0][0]}-{years[0][1]}"
+    header, table = _widget_table(html)
+    missing = [c for c in SCHOOL_COLUMNS if c not in header]
+    if missing:
+        raise SchoolParseError(f"columns missing: {missing}")
+    ix = {c: header.index(c) for c in SCHOOL_COLUMNS}
+    xw = crosswalk.build(pa_counties.COUNTIES)
+    out: list[dict[str, Any]] = []
+    for r in table:
+        grade = SCHOOL_GRADES.get(r[ix["Grade"]])
+        if grade is None:
+            raise SchoolParseError(f"unknown grade {r[ix['Grade']]!r}")
+        rates = [r[i] for i in range(ix["Total Students Enrolled"] + 1, len(header))]
+        suppressed = all(v is None for v in rates)
+
+        def pct(col: str, row: list[Any] = r) -> float | None:
+            v = row[ix[col]]
+            return None if v is None else round(100.0 * float(v), 4)
+
+        exempt = {
+            "medical": pct("Medical Exemption Percent"),
+            "religious": pct("Religious Exemption Percent"),
+            "philosophical": pct("Philosophical Exemption Percent"),
+        }
+        out.append(
+            {
+                "school_year": school_year,
+                "school_name": r[ix["School"]],
+                "county_fips": crosswalk.resolve(r[ix["County"]], xw),
+                "grade": grade,
+                "enrolled": int(r[ix["Total Students Enrolled"]]),
+                "mmr_pct": pct("MMR Percent"),
+                "exempt_pcts": None if suppressed else json.dumps(exempt, sort_keys=True),
+                "suppressed_flag": suppressed,
+            }
+        )
+    return out

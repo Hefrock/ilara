@@ -25,8 +25,18 @@ Observed in `data/raw/doh_school_imm_county/2026/20261007T111620Z_9a7406dfecb0.x
 
 ## DOH school immunization by school (`doh_school_imm_school`, U4)
 
-Captured (`data/raw/doh_school_imm_school/2026/20261007T111625Z_00162b993811.html.gz`); the
-location of the table data inside the Quarto page is still to be recorded.
+Observed in `data/raw/doh_school_imm_school/2026/20261007T111625Z_00162b993811.html.gz`.
+
+- A Quarto page. The table is an htmlwidgets DataTable: `<script type="application/json"
+  data-for="...">` holds `x.data`, a list of 20 columns (column-major), and `x.container`, the
+  `<th>` header row: County, School, Grade, Total Students Enrolled, DTaP, Polio, MMR, Hep B,
+  Varicella had disease, Varicella, Tdap, MCV4 1st dose, MCV4 16+ 1 dose, MCV4 2nd dose 16+,
+  Medical, Religious and Philosophical Exemption, Enrolled Provisionally, Denied Admission,
+  Noncompliant and Attending (all "Percent", as fractions).
+- 5,943 rows (school x grade: Kindergarten, 7th Grade, 12th Grade), 67 counties, school names
+  unique within county and grade. School year from the page title ("2025-2026").
+- Rows with fewer than 20 enrolled have every rate null (displayed "ND"): 2,228 rows. The
+  parser keeps them with `suppressed_flag = true` and null rates, never 0 (T3.14).
 
 ## DOH dashboard (`doh_dashboard`)
 
