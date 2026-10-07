@@ -119,6 +119,25 @@ def cmd_guard(a: argparse.Namespace) -> int:
     raise AssertionError(a.name)
 
 
+def cmd_seed(a: argparse.Namespace) -> int:
+    from ingest.curate.seed import SeedError, load
+
+    try:
+        rep = load(_root())
+    except SeedError as e:
+        print(f"seed load: {e}", file=sys.stderr)
+        return 1
+    for f in rep.new_files:
+        print(f"seeded {f}")
+    for key in sorted(set(rep.loaded) | set(rep.quarantined)):
+        print(
+            f"  {key:28s} loaded {rep.loaded.get(key, 0):3d}  "
+            f"quarantined {rep.quarantined.get(key, 0):3d}"
+        )
+    print(f"  data quality flags: {rep.flags}")
+    return 0
+
+
 def cmd_reference(a: argparse.Namespace) -> int:
     from ingest.reference.build import ReferenceError, build
 
@@ -169,7 +188,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sd = sub.add_parser("seed")
     sd.add_argument("action", choices=["load"])
-    sd.set_defaults(func=_not_yet("WP3b"))
+    sd.set_defaults(func=cmd_seed)
 
     rf = sub.add_parser("reference", help="build data/reference from saved raw Census files")
     rf.add_argument("action", choices=["build"])

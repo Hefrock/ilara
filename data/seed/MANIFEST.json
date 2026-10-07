@@ -1,0 +1,12 @@
+{
+  "files": {
+    "events.csv": {
+      "seeded_utc": "2026-10-07T03:44:34Z",
+      "sha256": "5433e0af20dc6b450dce52374df1168d540c99d89b7ab7f5068aeb99b64c6279"
+    },
+    "statewide_backfill.csv": {
+      "seeded_utc": "2026-10-07T03:44:34Z",
+      "sha256": "d42bd061ee8f15c48de313f43917a6942b1f4c7fd4472dad4bdd43fde4708cec"
+    }
+  }
+}

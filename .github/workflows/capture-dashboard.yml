@@ -62,6 +62,7 @@ jobs:
       - name: Parse, curate, quality report
         continue-on-error: true
         run: |
+          uv run --frozen measles seed load
           uv run --frozen measles parse --source doh_dashboard
           uv run --frozen measles quality
           .github/scripts/commit-data.sh "parse doh_dashboard ${MEASLES_RUN_ID}"

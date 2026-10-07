@@ -179,7 +179,10 @@ def conform(table: str, df: pl.DataFrame) -> pl.DataFrame:
     cols = []
     for name, dtype in sch.items():
         if name in df.columns:
-            cols.append(pl.col(name).cast(dtype))
+            if dtype == pl.Date and df.schema[name] == pl.String:
+                cols.append(pl.col(name).str.to_date("%Y-%m-%d").alias(name))
+            else:
+                cols.append(pl.col(name).cast(dtype))
         else:
             cols.append(pl.lit(None, dtype=dtype).alias(name))
     return df.select(cols)

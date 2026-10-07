@@ -1,0 +1,16 @@
+{
+  "files": {
+    "county_t3_derived.csv": {
+      "seeded_utc": "2026-10-07T03:44:34Z",
+      "sha256": "86770606a970b72f0d90b109613e196d8811165f06df2dde0ca2f2603eb57cc4"
+    },
+    "events_t3.csv": {
+      "seeded_utc": "2026-10-07T03:44:34Z",
+      "sha256": "cce7ded880c5e1b8f2503e22c0fdd315ab2a106edae5d8adef6903213fd7b99b"
+    },
+    "statewide_t3_derived.csv": {
+      "seeded_utc": "2026-10-07T03:44:34Z",
+      "sha256": "d524fcae2f346133a0cf6a2e9dae23fed5d5cb2c4f3dec4fd0139a33b63a2dca"
+    }
+  }
+}
