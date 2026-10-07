@@ -119,6 +119,14 @@ def cmd_guard(a: argparse.Namespace) -> int:
     raise AssertionError(a.name)
 
 
+def cmd_quality(a: argparse.Namespace) -> int:
+    from ingest.quality.engine import run
+
+    n, out = run(_root())
+    print(f"quality: {n} new flag(s); report {out.relative_to(_root())}")
+    return 0
+
+
 def cmd_parse(a: argparse.Namespace) -> int:
     from ingest.parse.runner import run
 
@@ -210,7 +218,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("verify").set_defaults(func=cmd_verify)
     sub.add_parser("rebuild").set_defaults(func=_not_yet("WP3e"))
-    sub.add_parser("quality").set_defaults(func=_not_yet("WP3d"))
+    sub.add_parser("quality").set_defaults(func=cmd_quality)
 
     r = sub.add_parser("release")
     r.add_argument("--week")
