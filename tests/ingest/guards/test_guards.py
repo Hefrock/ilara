@@ -131,3 +131,22 @@ def test_outputs_guard(gitrepo: Path) -> None:  # T6.16
 def test_gitignore_covers_outputs() -> None:  # T6.16
     text = (REPO / ".gitignore").read_text()
     assert "project/outputs/" in text and "local/" in text
+
+
+def test_seed_manifest_may_only_grow(gitrepo: Path) -> None:
+    import json
+
+    d = gitrepo / "data" / "seed"
+    d.mkdir(parents=True)
+    m = d / "MANIFEST.json"
+    a = {"sha256": "a", "seeded_utc": "2026-10-07T00:00:00Z"}
+    m.write_text(json.dumps({"files": {"a.csv": a}}))
+    git(gitrepo, "add", ".")
+    git(gitrepo, "commit", "-q", "-m", "seed a")
+    base = git(gitrepo, "rev-parse", "HEAD").strip()
+    m.write_text(json.dumps({"files": {"a.csv": a, "b.csv": {"sha256": "b", "seeded_utc": "x"}}}))
+    git(gitrepo, "commit", "-qam", "seed b")
+    assert append_only.check_range(gitrepo, base) == []
+    m.write_text(json.dumps({"files": {"a.csv": {**a, "sha256": "changed"}}}))
+    git(gitrepo, "commit", "-qam", "tamper")
+    assert append_only.check_range(gitrepo, base)

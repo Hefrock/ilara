@@ -44,6 +44,10 @@ def verify_raw(root: Path) -> list[str]:
     return problems
 
 
+# Operational tables carry their own references (ingest_run_id, ref) instead of raw_sha256.
+OPERATIONAL_TABLES = ("quarantine", "data_quality_flag")
+
+
 def verify_curated(root: Path) -> list[str]:
     """Every curated or sensitivity row must reference a raw file or a seed file that exists."""
     import polars as pl
@@ -53,6 +57,9 @@ def verify_curated(root: Path) -> list[str]:
     known_seed = _seed_hashes(root)
     for store in (paths.curated_dir(root), paths.sensitivity_dir(root)):
         for pq in sorted(store.rglob("*.parquet")):
+            rel_parts = pq.relative_to(store).parts
+            if rel_parts[0] in OPERATIONAL_TABLES:
+                continue
             df = pl.read_parquet(pq)
             if "raw_sha256" not in df.columns:
                 problems.append(f"{pq.relative_to(root)}: no raw_sha256 column")
