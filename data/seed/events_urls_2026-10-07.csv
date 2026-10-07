@@ -1,0 +1,8 @@
+event_id,event_type,event_date,county_scope,title,detail,source_tier,source_label,source_url,url_status
+ev-007,program,2026-07-14,state,Dashboard launched,More than 600 doses given in Lancaster since late April versus 179 in all of 2025,T1,DOH release,https://www.pa.gov/agencies/health/newsroom/shapiro-administration-launches-measles-dashboard,verified
+ev-010,program,2026-09-11,state,DOH pop-up vaccination clinics,Nearly 4300 doses at 130 pop-up clinics by Sept 11,T1,DOH release,https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-091126,verified
+ev-014,exposure,2026-05-29,Lancaster,Exposure notice,Lancaster exposure notice,T1,DOH press release,https://www.pa.gov/agencies/health/newsroom/department-of-health-responding-to-potential-measles-exposure,verified
+ev-015,exposure,2026-06-12,Lancaster,Exposure notice: Lancaster County Courthouse,Lancaster County Courthouse,T1,DOH press release,https://www.pa.gov/agencies/health/newsroom/doh-responding-to-measles-exposure-at-lancaster-courthouse,verified
+ev-016,exposure,2026-07-22,Snyder,Exposure notice: Snyder County Lowe's,Snyder County Lowe's,T1,DOH press release,https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-responding-to-potential-measle,verified
+ev-017,exposure,2026-08-19,Lancaster,Exposure notice: two Lancaster locations,Two Lancaster locations,T1,DOH press release,https://www.pa.gov/agencies/health/newsroom/doh-responding-to-two-separate-potential-measles-exposures-in-la,verified
+ev-018,exposure,2026-09-02,Westmoreland,Exposure notice,Westmoreland exposure notice,T1,DOH press release,https://www.pa.gov/agencies/health/newsroom/dept-of-health-responding-to-potential-measles-exposure-in-westm,verified

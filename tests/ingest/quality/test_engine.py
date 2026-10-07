@@ -185,3 +185,49 @@ def test_stale_snapshot(seeded: Path) -> None:
     f = engine.Findings()
     engine.freshness(seeded, datetime(2026, 10, 2, tzinfo=UTC), f)
     assert f.flags == []
+
+
+def _release_row(root: Path, url: str, counties: int, sha: str, fetched: datetime) -> None:
+    run_id = store.ingest_run_id(sha, "1.0.0")
+    store.write(
+        "curated",
+        "case_state",
+        pl.DataFrame(
+            [
+                {
+                    "jurisdiction": "PA",
+                    "disease": "measles",
+                    "source_id": "doh_release",
+                    "source_tier": "T1",
+                    "as_of_date": date(2026, 8, 25),
+                    "fetched_at_utc": fetched,
+                    "ingest_run_id": run_id,
+                    "raw_sha256": sha,
+                    "parser_version": "1.0.0",
+                    "source_url": url,
+                    "cum_cases": 393,
+                    "counties_with_cases": counties,
+                    "count_definition": "calendar_year",
+                    "date_precision": "exact",
+                }
+            ]
+        ),
+        run_id,
+        fetched,
+        root,
+    )
+
+
+def test_source_conflict_between_documents_not_revisions(seeded: Path) -> None:
+    t1, t2 = datetime(2026, 10, 7, 11, 54, tzinfo=UTC), datetime(2026, 10, 7, 11, 55, tzinfo=UTC)
+    _release_row(seeded, "https://a.gov/r1", 29, "1" * 64, t1)
+    _release_row(seeded, "https://a.gov/r1", 30, "3" * 64, t2)  # revision of r1: not a conflict
+    f = engine.Findings()
+    engine.source_conflicts(seeded, f)
+    assert f.flags == []
+    _release_row(seeded, "https://a.gov/r2", 28, "2" * 64, t2)  # a second document disagrees
+    f = engine.Findings()
+    engine.source_conflicts(seeded, f)
+    assert [x.code for x in f.flags] == ["SOURCE_CONFLICT"]
+    cur = access.current("case_state", root=seeded).filter(pl.col("source_id") == "doh_release")
+    assert cur["raw_sha256"].to_list() == ["3" * 64]  # fixed tie-break on equal fetch time

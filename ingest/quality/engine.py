@@ -93,7 +93,11 @@ def implied_counts(root: Path, f: Findings) -> list[dict[str, Any]]:
             cum = _int(r.get("cum_cases"))
             if n is None or cum is None:
                 continue
-            who = r.get("row_id") or r.get("seed_row") or "?"
+            who = (
+                r.get("row_id")
+                or r.get("seed_row")
+                or f"{r.get('source_id')}:{(r.get('raw_sha256') or '')[:12]}"
+            )
             if since is None:
                 f.add(
                     "Implied counts",
@@ -360,6 +364,53 @@ def series_review(root: Path, f: Findings) -> None:
                 )
 
 
+# ---------------------------------------------------------------- same-key conflicts
+
+VALUE_COLS = {
+    "case_state": ["cum_cases", "counties_with_cases", "hospitalizations", "deaths"],
+    "case_county": ["cum_cases"],
+}
+
+
+def source_conflicts(root: Path, f: Findings) -> None:
+    """Two documents fetched together that give different values for the same key (for
+    example two releases of one day). ``current`` keeps one by a fixed tie-break; the
+    disagreement is flagged, never resolved by hand."""
+    from ingest.curate.schema import NATURAL_KEYS
+
+    for st in STORES:
+        for table, vals in VALUE_COLS.items():
+            df = access.all_rows(table, st, root)
+            if df.height == 0:
+                continue
+            keys = list(NATURAL_KEYS[table])
+            # Latest row per document (source_url); a later capture of the same document is a
+            # revision, not a conflict.
+            per_doc = df.sort("fetched_at_utc").group_by([*keys, "source_url"]).last()
+            g = per_doc.group_by(keys).agg(
+                pl.col("source_url").n_unique().alias("docs"),
+                pl.struct(vals).n_unique().alias("variants"),
+                pl.struct([*vals, "raw_sha256", "seed_row"]).alias("rows"),
+            )
+            for r in g.filter((pl.col("docs") > 1) & (pl.col("variants") > 1)).to_dicts():
+                subject = "|".join(str(r[k]) for k in keys)
+                desc = "; ".join(
+                    ", ".join(f"{c} {x[c]}" for c in vals if x[c] is not None)
+                    + f" ({x['seed_row'] or (x['raw_sha256'] or '')[:12]})"
+                    for x in r["rows"]
+                )
+                f.flags.append(
+                    Flag(
+                        "SOURCE_CONFLICT",
+                        f"{st}|{table}|{subject}",
+                        f"{st} {table} {subject}: {desc}",
+                    )
+                )
+                f.add("Source conflicts", f"- {st} {table} {subject}: {desc}")
+    if "Source conflicts" not in f.sections:
+        f.add("Source conflicts", "- none")
+
+
 # ---------------------------------------------------------------- freshness
 
 
@@ -410,6 +461,7 @@ def run_checks(root: Path, now: datetime) -> Findings:
     monotonic(root, f)
     county_sums(root, f)
     series_review(root, f)
+    source_conflicts(root, f)
     freshness(root, now, f)
     return f
 
@@ -482,6 +534,7 @@ def render(f: Findings, root: Path, now: datetime) -> str:
         "Capture freshness",
         "Implied counts",
         "Seed conflicts",
+        "Source conflicts",
         "Non-monotonic series",
         "County sums",
         "Count definitions",

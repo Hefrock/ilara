@@ -154,16 +154,16 @@ sources:
 
   - source_id: census_commuting
     name: Census ACS 2016-2020 county-to-county commuting flows
-    url: https://www2.census.gov/programs-surveys/demo/tables/metro-micro/commuting-flows/2020/table1.xlsx
-    url_status: to_find
+    url: https://www2.census.gov/programs-surveys/demo/tables/metro-micro/2020/commuting-flows-2020/table1.xlsx
+    url_status: verified
     tier: T1
     cadence: daily
-    access_path: none
+    access_path: http
     ext: xlsx
     robots_checked_utc: null
     terms_note: US federal government work, public domain.
     last_verified_utc: null
-    notes: The guessed file URL returned 404 on 2026-10-07 (capture gh-37612900766-1). Disabled until the correct link is read from census_commuting_index; then set access_path back to http (U7).
+    notes: Link read from the captured census_commuting_index page (capture gh-37617137202-1, "Table 1. Residence County to Workplace County Commuting Flows ... 5-Year ACS, 2016-2020"). An earlier guessed URL returned 404 (issue 7).
 
   - source_id: census_commuting_index
     name: Census commuting flows 2016-2020 table page

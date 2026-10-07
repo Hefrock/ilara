@@ -38,7 +38,7 @@ def test_all_seed_files_load(seeded: Path) -> None:  # T3.3
     rep = seed.load(seeded, NOW)
     assert rep.loaded == {
         "curated/case_state": 5,
-        "curated/event": 15,
+        "curated/event": 15 + 7,  # events.csv plus the 2026-10-07 URL corrections
         "sensitivity/case_county": 27,
         "sensitivity/case_state": 8,
         "sensitivity/event": 6,

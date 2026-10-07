@@ -4,6 +4,10 @@
       "seeded_utc": "2026-10-07T03:44:34Z",
       "sha256": "5433e0af20dc6b450dce52374df1168d540c99d89b7ab7f5068aeb99b64c6279"
     },
+    "events_urls_2026-10-07.csv": {
+      "seeded_utc": "2026-10-07T11:59:54Z",
+      "sha256": "7e170d8e9053e6857986e627dca85c51b28a292423b95ffcccb4445202baa0d6"
+    },
     "statewide_backfill.csv": {
       "seeded_utc": "2026-10-07T03:44:34Z",
       "sha256": "d42bd061ee8f15c48de313f43917a6942b1f4c7fd4472dad4bdd43fde4708cec"

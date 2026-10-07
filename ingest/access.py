@@ -1,7 +1,9 @@
 """The only data access module for ``project/`` (I8). DuckDB over Parquet (E01, 4.5).
 
 - ``current(table)``: per natural key, the row with the greatest ``fetched_at_utc``, then
-  the highest ``parser_version`` (E20).
+  the highest ``parser_version`` (E20), then the highest ``raw_sha256`` so that ties between
+  documents are broken the same way every time. The quality engine flags such ties when the
+  documents disagree (``SOURCE_CONFLICT``).
 - ``as_known_at(table, T)``: ``current`` over rows with ``fetched_at_utc <= T`` only. The only
   source for validation replay (E11).
 - ``capture_status()``: latest capture outcome per source.
@@ -46,6 +48,8 @@ def _latest(df: pl.DataFrame, table: str) -> pl.DataFrame:
         "list_transform(string_split(coalesce(parser_version, '0'), '.'), "
         "x -> TRY_CAST(x AS INTEGER)) DESC"
     )
+    if "raw_sha256" in df.columns:  # deterministic when two documents share a key (rebuild)
+        order += ", raw_sha256 DESC"
     part = ", ".join(f'"{k}"' for k in keys)
     sql = (
         f"SELECT * FROM t QUALIFY row_number() OVER (PARTITION BY {part} ORDER BY {order}) = 1 "

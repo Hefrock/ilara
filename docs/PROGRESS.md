@@ -15,7 +15,7 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 | WP0 Foundation | done | T0.1 to T0.7 | `make check`; first `ci` run green (commit c69a446); `docs/adr/0001-github-free-limits.md` | |
 | WP1 Reference data | in progress | T1.1 to T1.5, T1.7 on real Census files; T1.6 on synthetic only | `data/reference/` built 2026-10-07 (statewide 13,059,432); commuting file URL still to find (issue 7) | |
 | WP2 Capture | in progress | T2.1 to T2.11 | MVC live on `main` (merge 310f47f); probe run 37562037581, `docs/probe_report.md` | |
-| WP3 Parse and curate | in progress | T3.1 (dashboard, school county, school level), T3.2 to T3.11, T3.13 to T3.15 | Seed loader `ingest/curate/seed.py`; dashboard parser `ingest/parse/`; quality engine `ingest/quality/` and `data/quality/quality_report.md`; first seed load and Oct 5 snapshot in `data/curated/` | |
+| WP3 Parse and curate | in progress | T3.1 (dashboard, school, release), T3.2 to T3.15 | Seed loader `ingest/curate/seed.py`; dashboard parser `ingest/parse/`; quality engine `ingest/quality/` and `data/quality/quality_report.md`; first seed load and Oct 5 snapshot in `data/curated/` | |
 | WP4 Release | in progress | T4.1 to T4.6 | `ingest/release/weekly.py`, `release.yml`; first scheduled release Monday 2026-10-12 13:30 UTC (data-2026-W41) | |
 | WP5 Dashboard | not started | | | |
 | WP6 Susceptibility and model | not started | T6.16 (outputs guard) | `ingest/guards/outputs.py` | |
@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-07 (12) | Backfill captured (14 releases, 3 HAN PDFs, Wayback index); release parser adds dated T1 statewide rows; U11 and U16 resolved; SOURCE_CONFLICT check; 7 event URLs verified; commuting link found; docs/backfill_report.md (T3.12) | Next capture fetches the commuting file and 9 more releases; HAN PDF text; dashboard captures tonight |
 | 2026-10-07 (11) | Backfill capture: `data/registry/backfill_urls.yml` (14 DOH releases, 3 HAN PDFs, a Wayback CDX query) fetched once each by `measles capture --backfill` inside capture-light | Parse release stats blocks and HAN PDFs; write docs/backfill_report.md (T3.12) |
 | 2026-10-07 (10) | School-level immunization parser (U4, T3.14): 5,943 school-grade rows, 2,228 suppressed kept as null; issue 7 closed with the commuting-page solution | Backfill capture of DOH releases and HAN PDFs (WP3c); commuting link from the Census page |
 | 2026-10-07 (9) | Manual capture-light run: 10 of 11 HTTP sources captured, commuting URL 404 (issue 7, alert worked); reference tables built from real Census files; school county immunization parser (T3.13 met) | Read the commuting link from the captured Census page; school-level page (U4); backfill (WP3c) |

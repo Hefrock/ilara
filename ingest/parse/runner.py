@@ -19,7 +19,7 @@ import polars as pl
 
 from ingest import access, paths, rawstore
 from ingest.curate import store
-from ingest.parse import doh_dashboard, school_imm
+from ingest.parse import doh_dashboard, doh_release, school_imm
 from ingest.timeutil import ET, parse_utc
 
 
@@ -103,10 +103,17 @@ def _school_level(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     return {"immunization_school": [{**common, **r} for r in rows], "flags": []}
 
 
+def _release(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
+    out = doh_release.parse(rawstore.read_payload(m, root))
+    common = _common(m, run_id, doh_release.PARSER_VERSION, label=doh_release.SOURCE_LABEL)
+    return {"case_state": [{**common, **r} for r in out["state"]], "flags": []}
+
+
 PARSERS = {
     ("doh_dashboard", "responses"): (doh_dashboard.PARSER_VERSION, _dashboard),
     ("doh_school_imm_county", None): (school_imm.PARSER_VERSION, _school_county),
     ("doh_school_imm_school", None): (school_imm.PARSER_VERSION, _school_level),
+    ("doh_release", "*"): (doh_release.PARSER_VERSION, _release),  # one document per URL
 }
 OUTPUT_TABLES = ("case_state", "case_county", "immunization_county", "immunization_school")
 
@@ -148,7 +155,9 @@ def run(root: Path | None = None, source: str | None = None) -> ParseReport:
     for m in manifests:
         key = (m["source_id"], m.get("capture_key"))
         if key not in PARSERS:
-            continue
+            key = (m["source_id"], "*")
+            if key not in PARSERS:
+                continue
         version, fn = PARSERS[key]
         run_id = store.ingest_run_id(m["sha256"], version)
         when = parse_utc(m["fetched_at_utc"])
