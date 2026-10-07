@@ -15,8 +15,8 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 | WP0 Foundation | done | T0.1 to T0.7 | `make check`; first `ci` run green (commit c69a446); `docs/adr/0001-github-free-limits.md` | |
 | WP1 Reference data | in progress | T1.1 to T1.7 on synthetic Census-shaped inputs | `ingest/reference/`, `tests/ingest/reference/test_build.py` | B12 (real files arrive with the first `capture-light` run; then U5, U6, U7) |
 | WP2 Capture | in progress | T2.1 to T2.11 | MVC live on `main` (merge 310f47f); probe run 37562037581, `docs/probe_report.md` | |
-| WP3 Parse and curate | in progress | T3.1 (dashboard), T3.3 to T3.11, T3.15 | Seed loader `ingest/curate/seed.py`; dashboard parser `ingest/parse/`; quality engine `ingest/quality/` and `data/quality/quality_report.md`; first seed load and Oct 5 snapshot in `data/curated/` | |
-| WP4 Release | not started | | Workflow skeleton only (`release.yml`) | |
+| WP3 Parse and curate | in progress | T3.1 (dashboard), T3.2 to T3.11, T3.15 | Seed loader `ingest/curate/seed.py`; dashboard parser `ingest/parse/`; quality engine `ingest/quality/` and `data/quality/quality_report.md`; first seed load and Oct 5 snapshot in `data/curated/` | |
+| WP4 Release | in progress | T4.1 to T4.6 | `ingest/release/weekly.py`, `release.yml`; first scheduled release Monday 2026-10-12 13:30 UTC (data-2026-W41) | |
 | WP5 Dashboard | not started | | | |
 | WP6 Susceptibility and model | not started | T6.16 (outputs guard) | `ingest/guards/outputs.py` | |
 | WP7 Documentation | in progress | | README with unofficial notice, "counts are a floor", "forecasts withheld until validated" | |
@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-07 (8) | `measles rebuild` (T3.2, also in CI); weekly release with coverage, exports, notes, fail-closed verify and immutable manifests (T4.1 to T4.6) | Confirm tonight's scheduled captures; first release Monday; then backfill (WP3c) and school immunization parsers |
 | 2026-10-07 (7) | Quality engine: implied counts, monotonicity, county sums, growth steps, values by month, weekly seed conflicts, capture freshness; idempotent flags; report regenerated on every capture run | `measles rebuild` (T3.2), weekly release (WP4) |
 | 2026-10-07 (6) | Seed loader and first seed load; manual probe of the multi-view capture (all 9 views, 44 data responses, none refused); dashboard parser (path A) with golden test; G1 done | Quality engine (WP3d), rebuild (T3.2), weekly release (WP4) |
 | 2026-10-07 (5) | Dashboard capture clicks the visible tabs and slicer states in one page load; case-level safeguard refuses identifier-bearing responses; static Power BI files no longer stored; partial captures raise an anomaly issue; offline fake-report tests (ADR 0002) | Merge, then confirm the first scheduled capture; county parser from it; seed loader |
