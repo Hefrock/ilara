@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from ingest import rawstore
-from ingest.capture.http import PoliteClient, looks_like_challenge
+from ingest.capture.http import UA_TOKEN, PoliteClient, looks_like_challenge
 from ingest.capture_log import CaptureLog, CaptureRecord, runner_label
 from ingest.registry import Source
 from ingest.timeutil import iso_utc, utc_now
@@ -117,7 +117,13 @@ def capture_browser(src: Source, log: CaptureLog, root: Path) -> list[CaptureRec
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         try:
-            page = browser.new_page(viewport={"width": 1600, "height": 1200}, user_agent=None)
+            # I7: identify the archive; keep the browser's own UA so the page renders normally.
+            probe_page = browser.new_page()
+            base_ua = probe_page.evaluate("navigator.userAgent")
+            probe_page.close()
+            page = browser.new_page(
+                viewport={"width": 1600, "height": 1200}, user_agent=f"{base_ua} {UA_TOKEN}"
+            )
             page.on("response", on_response)
             nav = page.goto(src.url, wait_until="networkidle", timeout=NAV_TIMEOUT_MS)
             status = nav.status if nav else None

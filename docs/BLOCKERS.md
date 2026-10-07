@@ -1,45 +1,31 @@
-# Blockers and owner actions
+# BLOCKERS: things the agent cannot do or decide
 
-Items that need the owner. Newest first. Remove an item only when it is resolved, and note
-the resolution in `docs/PROGRESS.md`.
+Purpose: the single place where work waits on the repository owner. The agent appends entries and updates their status; the owner resolves them. This file is committed, so it must stay public-safe: no secrets, tokens, personal email addresses or affiliation text. Describe what is needed in neutral wording.
 
-## Open
+## Rules
+1. One row per blocker. IDs are `B01`, `B02`, and so on, never reused.
+2. `Type`: `action` (the owner must do something), `decision` (the owner must choose), `info` (the owner is asked to report something, not blocking).
+3. `Blocks` names the work package or gate that cannot finish (for example `WP0`, `G2`) or `none`.
+4. `Status`: `open`, `resolved`, `withdrawn`. Never delete a row. When resolved, fill `Resolved` (date) and `Resolution` (one line, no secrets).
+5. The agent adds a row the moment it hits a limit (CLAUDE.md, "Stop and ask"), states exactly what is needed, and continues with any unblocked work.
+6. If a blocker is older than 3 days and still blocks a gate on the critical path (G1, G2), the agent says so at the top of its next session summary.
+7. A capture failure is not a blocker. Capture and parse failures go to GitHub issues (HANDOFF.md 8.2). Use this file only for owner-dependent items.
 
-### B1. Package documents missing from the repository (blocks WP3b and the I1 to I11 rules)
-Only `docs/HANDOFF.md` was provided. Still needed, placed as listed in HANDOFF section 0:
-- `CLAUDE.md` (repository root): invariants I1 to I11, commands, session protocol. Until it
-  arrives, the work follows the invariants as HANDOFF cites them (raw first, provenance
-  columns, tier isolation, politeness, append-only history, hygiene).
-- `docs/sources.md` (SOURCES.md): source URLs (S1 dashboard URL), check values (S3 statewide
-  population for T1.3), register U1 to U23. The source registry URLs are marked `candidate`
-  until it arrives.
-- `docs/dashboard.md` (DASHBOARD.md): needed for WP5.
-- `data/seed/*.csv`: needed for WP3b (seed load) and the T3.5 and T3.8 checks.
-- `data/sensitivity/seed/*.csv`: only after decision H6 (B2).
+## Entries
 
-### B2. Decision H6 before any sensitivity seed is committed (E08)
-Decide whether the news-derived and secondary figures (numbers, source name and URL only)
-may enter history, which becomes public at G5. If no, they stay in `local/` (gitignored).
-
-### B3. Turn on scheduled capture: merge to the default branch and allow workflow writes
-- GitHub runs `schedule` triggers only from workflows on the default branch. Capture starts
-  once this work is merged into `main`.
-- Settings, Actions, General, Workflow permissions: choose "Read and write permissions" so
-  the workflows can push `data:` commits and open issues.
-- Then run `probe-dashboard` once by hand (Actions tab, Run workflow). It saves the first
-  dashboard capture and uploads `probe_summary.json`, which is the input for
-  `docs/probe_report.md` and Gate G1.
-
-### B4. The first commit's author address is a personal address (I10, E15, G5)
-Commit `460104a` ("Create README") carries a personal email address in its author metadata.
-Commits from this point use the GitHub noreply address. Because history is never rewritten
-(I8), this commit will fail the full-history hygiene scan at G5 unless the owner decides
-otherwise. Options: (a) accept and record it in the G5 checklist; (b) a one-time owner
-decision to recreate the repository history before captures begin, while it holds nothing
-of value. This is the owner's call; nothing has been changed.
-
-### B5. Live sources are unreachable from the cloud development sandbox
-`census.gov`, `pa.gov` and `cdc.gov` are blocked by this environment's network policy, so the
-probe (T2.10) and the WP1 downloads run on GitHub-hosted runners through the workflows. This
-does not block anything once B3 is done. To run them from a Claude Code cloud session as
-well, add those hosts to the environment's allowed domains.
+| ID | Opened | Type | Blocks | Needed from the owner | Why | Status | Resolved | Resolution |
+|---|---|---|---|---|---|---|---|---|
+| B01 | seed | action | WP0 | Create the private GitHub repository for this project, or authorise the agent's GitHub login to create it | Nothing can be committed or scheduled without a repository | resolved | 2026-10-07 | Repository exists; agent pushes to a working branch |
+| B02 | seed | action | WP0 | Set repository notifications so issue emails reach the owner (watch Issues at minimum). Actions is already enabled: the first `ci` run was green | CI and scheduled capture need Actions; failure alerts rely on issue emails | open | | |
+| B03 | seed | action | WP0 | Provide the GitHub noreply commit identity (name and noreply address) | Commits must not carry a personal email address | resolved | 2026-10-07 | Noreply identity read from the GitHub account and set in the repository git config |
+| B04 | seed | decision | WP0 | Confirm or veto engineering decisions E01 to E20 in docs/HANDOFF.md | The build follows those defaults until vetoed | open | | |
+| B05 | seed | decision | WP3 (seed load) | Decide whether files in `data/sensitivity/seed/` may enter repository history. Until decided they stay local and gitignored | History becomes public if the repository is flipped, and history is never rewritten | open | | |
+| B06 | seed | info | none | Open the DOH measles dashboard in a normal browser and report the fields shown, any export option, any history shown, and the time of day it updates on a Monday, Wednesday or Friday | Helps the dashboard probe (WP2a) | open | | |
+| B07 | seed | action | G2 | Only if the probe shows GitHub-hosted runners are blocked: provide an always-on machine and register it as a self-hosted runner | Capture must run unattended | withdrawn | | Reopen only if the probe report says runners are blocked |
+| B08 | seed | action | county data | Only if the probe selects screenshots only (path C): transcribe county counts from saved screenshots using the format the agent specifies | County data cannot be read automatically under path C | withdrawn | | Reopen only if the probe selects path C |
+| B09 | seed | info | none | Locate the Chester County Health Department measles page and any other county health pages worth monitoring | Adds cross-check sources (WP2c) | open | | |
+| B10 | seed | info | none | Check whether PA EDDIE exposes measles, whether the state wastewater program publishes measles results, and whether any Pennsylvania measles sequences are public | Optional covariates and context (SOURCES U9, U10, U20) | open | | |
+| B11 | seed | decision | G5 | Final go or no-go on making the repository public | Public flip is irreversible for history | open | | |
+| B12 | 2026-10-07 | action | WP2 (MVC), G1, G2 | Merge the working branch into the default branch, set Settings > Actions > General > Workflow permissions to "Read and write", then run the `probe-dashboard` workflow once by hand | Scheduled workflows run only from the default branch; capture and alerts need write access; the probe decides G1 | open | | |
+| B13 | 2026-10-07 | decision | G5 | Decide how to treat the repository's first commit, whose author metadata predates the noreply identity: record it as a known exception in the G5 checklist, or recreate the repository history before any data is captured | The full-history hygiene scan at G5 checks commit metadata, and history is never rewritten after capture starts | open | | |
+| B14 | 2026-10-07 | info | none | Optional: allow the cloud development environment to reach census.gov, pa.gov and cdc.gov (environment network settings) | Lets agent sessions run network tests directly; GitHub-hosted runners already reach them | open | | |

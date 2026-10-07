@@ -16,9 +16,9 @@ from urllib.parse import urlsplit
 
 import httpx
 
-USER_AGENT = (
-    "ilara-measles-archive/0.1 (unofficial independent research archive; polite, 3x weekly)"
-)
+REPO_URL = "https://github.com/Hefrock/ilara"
+UA_TOKEN = f"ilara-measles-archive/0.1 (+{REPO_URL})"
+USER_AGENT = f"{UA_TOKEN} unofficial independent data archive"
 MIN_INTERVAL_S = 5.0
 MAX_RETRIES = 2
 BACKOFF_S = (10.0, 30.0)

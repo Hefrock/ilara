@@ -13,6 +13,8 @@ Version 2, 2026-10-07. Supersedes the version 1 handoff (single file, sections 1
 | `seed/*.csv` | Dated T1 figures and events already collected, ready to load | `data/seed/` |
 | `sensitivity_seed/*.csv` | Figures and events not taken from a primary government source (news-derived, secondary) | `data/sensitivity/seed/` |
 | `HUMAN_STEPS.md` | Owner-only actions, with blocking status | kept outside the repository |
+| `templates/BLOCKERS.md` | In-repo, public-safe register of what waits on the owner; pre-filled from the owner-only steps | `docs/BLOCKERS.md` |
+| `templates/PROGRESS.md` | Build status by work package and gate, so any session can resume | `docs/PROGRESS.md` |
 
 Rules for reading this package. Each requirement appears in exactly one place. Behaviour rules live in CLAUDE.md, never here. Facts live in SOURCES.md, never here. If two documents disagree, stop and ask (CLAUDE.md, "Stop and ask").
 
@@ -195,7 +197,7 @@ Tasks:
 1. Scaffold the repository layout (3.2), `pyproject.toml` (Python 3.12, uv, pinned), `Makefile` targets from CLAUDE.md, `.gitignore`, MIT licence, README skeleton with the D01 notice.
 2. CLI skeleton (4.4) with stubbed commands.
 3. `ci.yml`: ruff, type check, tests, path guard (bot commits may touch only `data/`), size budget and per-file size check (8.3), append-only guard for `data/raw`, `data/capture_log`, `data/curated`. The same guards also run inside the capture and release workflows before any push (E18).
-4. `docs/PROGRESS.md`, `docs/BLOCKERS.md`, `docs/adr/`.
+4. Copy `templates/PROGRESS.md` and `templates/BLOCKERS.md` to `docs/` unchanged (their rules are part of the template), and create `docs/adr/`. `docs/BLOCKERS.md` is the only in-repo channel for owner-dependent items; capture and parse failures use GitHub issues instead (8.2).
 5. Hygiene scan: tracked files outside `data/raw/` contain no personal email addresses or secret patterns (the GitHub noreply address is allowed). Raw captures of agency pages may legitimately contain agency contact emails.
 6. ADR recording the GitHub Free limits (no branch protection on private repositories, `GITHUB_TOKEN` pushes do not trigger workflows; U23) and how E18 compensates.
 7. `.gitignore`: `project/outputs/`, `local/`.
@@ -207,6 +209,7 @@ Acceptance:
 - T0.4 The size script applies the 8.3 thresholds to `.git` plus working tree on synthetic inputs, and flags a file over 50 MB (warn) or 95 MB (fail).
 - T0.5 The hygiene scan fails on a planted personal email address or secret pattern, allows the noreply address, ignores `data/raw/`, and passes on the clean tree.
 - T0.6 Workflow files parse and contain required keys (`concurrency`, minimal `permissions`, guard steps before push).
+- T0.7 `docs/BLOCKERS.md` and `docs/PROGRESS.md` exist; BLOCKERS has the columns of the template, unique IDs, only the statuses `open`, `resolved`, `withdrawn`, and passes the hygiene scan; PROGRESS lists every work package and gate of this document.
 
 ### WP1 Reference data
 Depends on: WP0. Can run in parallel with WP2.
@@ -424,4 +427,87 @@ Each issue states: failure type, source id, capture id, run link, raw hash if an
 
 ---
 
-Appendices A (engineering review findings) and B (version 1 coverage trace) are kept in the owner's copy of the handoff package; they record review history only and contain no requirements.
+## Appendix A: engineering review findings and what changed
+
+| # | Finding in v1 | Fix in v2 |
+|---|---|---|
+| 1 | Two raw path layouts (section 2 versus 12.2) | One layout (E02) |
+| 2 | Two phase systems (Phases 0 to 7 and D0 to D5) plus decisions as an appendix | One system: WP0 to WP7 and G0 to G5 (E16) |
+| 3 | Two repository layouts (Phase 0 versus 12.2) | One layout (3.2) |
+| 4 | "DuckDB or parquet" and "polars or pandas" undecided | Decided (E01, E10) |
+| 5 | Committed database or rewritten tables bloat git history | Append-only Parquet files, no committed `.duckdb` (E01) |
+| 6 | Volatile fields in dashboard JSON would make every capture "changed" | `content_hash` normalisation (E03) |
+| 7 | "Log no-change snapshots" with no storage design | Monthly append-only JSONL (E04) |
+| 8 | Cron in UTC with DST, drift and dropped runs not handled | Multiple windows, tune from log (E05) |
+| 9 | Concurrent capture runs could race on push | Concurrency group and rebase retry (E06) |
+| 10 | Two release times (Friday and Monday) | One Monday release for the prior ISO week (E07) |
+| 11 | Raw "outside the repo" (section 9) contradicted plain git (12.4) | Plain git only (D05); section 9 text removed |
+| 12 | Full article text kept for `T3-derived` rows conflicts with a repository that later becomes public, because history is exposed on flip | Numbers plus URL and source name only (E08) |
+| 13 | Owner-only matters mentioned in committed docs would contradict the attribution decision | Owner-only steps kept outside the repository; committed docs sanitised (E09) |
+| 14 | Three event tables with identical shape | One `event` table (4.3) |
+| 15 | Schema lacked `jurisdiction`, `disease`, `is_backfill`, `date_precision`, release and quarantine tables | Added (4.1, 4.3) |
+| 16 | `count_definition` had two values though several are unresolved | Added `unknown` (E14) |
+| 17 | Validation replay could leak future data | `as_known_at` (E11, T6.13) |
+| 18 | "Four weeks" modelling gate not measurable | 10 distinct county snapshot dates (E12) |
+| 19 | Rule "one request per 5 seconds" ambiguous for a browser page load | Applies to HTTP fetchers; one navigation per browser capture (CLAUDE.md I7) |
+| 20 | UNVERIFIED items scattered with no owner | Register U1 to U22 with resolving package (SOURCES.md) |
+| 21 | Prose collections of dated figures to be hand-transcribed | Seed CSVs, loader tests (T3.3, T3.4) |
+| 22 | No CLI contract, no fixture strategy, no layer-boundary tests | 4.4, golden fixtures (T3.1), T0.2 |
+| 23 | Parser tied to capture would risk data loss on parser bugs | Capture and parse separated (E13) |
+| 24 | Many behaviours were instructions mixed with facts | Facts in SOURCES.md, rules in CLAUDE.md, tasks in work packages |
+
+Second review (independent audit of v2 draft), findings fixed:
+
+| # | Finding | Fix |
+|---|---|---|
+| 25 | No step ran parse, seed load or quality in CI; quality report outside `data/` | E19, WP2d workflow steps; report in `data/quality/` |
+| 26 | `GITHUB_TOKEN` pushes do not trigger CI; no branch protection on Free | E18, U23, WP0 ADR |
+| 27 | Two workflows appending to one log file would conflict | Per-run log files (E04) |
+| 28 | `T3-derived` seed rows and article text committed outside `sensitivity/` | Seeds split (`sensitivity_seed/`), E08, H6 before first commit |
+| 29 | Schema could not hold seed columns; seed provenance undefined | 4.1 seed manifest, 4.3 columns and natural keys |
+| 30 | Loading rules incomplete (approx, range, T2, T3 events) | Location-based loading rules (4.3) |
+| 31 | T3.5 and T3.7 vacuous or false-flagging | Rewritten; seed conflict 792 versus 788 recorded |
+| 32 | Rebuild versus parser versions, `current` tie-break, run ids | E20, T3.2 |
+| 33 | Raw saving rule contradicted change detection | I1 reworded; `content_hash` used throughout |
+| 34 | Hygiene scan versus raw agency emails and noreply identity | Scope and allowlist (T0.5) |
+| 35 | Unvalidated outputs could enter public history | `project/outputs/` gitignored (T6.16) |
+| 36 | G4 versus 6d scoring mismatch; too few origins | 50, 80, 90 intervals; 8 origins pooled |
+| 37 | Path C under-specified | Defined in WP2a |
+| 38 | Dependency contradictions (H2, MVC alerts, kickoff sections) | Fixed |
+| 39 | Dashboard stage D1 read seed directly and used a stale banner | D1 reads curated via access module |
+| 40 | `capture_log` reads, demographics table, map library, release artifact undefined | `capture_status()`, `case_demographics`, E17, WP4 |
+| 41 | T2.6 versus I7; "expected capture" undefined | Aligned; "covered" defined (8.1) |
+| 42 | Duplicated schedule, budget, G4 rule and seed-name tests | Single sources in 8.1, 8.3, G4, T3.4 |
+
+## Appendix B: coverage trace (v1 section to v2 location)
+
+| v1 | v2 |
+|---|---|
+| 1 Goal and scope | HANDOFF 1 |
+| 2 Engineering rules 1 to 7 | CLAUDE I1 to I9 (rule 3 tiers: I4; rule 6 politeness: I7; rule 7: I9) |
+| 3.1 DOH dashboard and statewide series | SOURCES S1; dated figures in `seed/statewide_backfill.csv` and `sensitivity_seed/statewide_t3_derived.csv`, `sensitivity_seed/county_t3_derived.csv`; access probe in WP2a |
+| 3.2 School immunization | SOURCES S2; parsing in WP3a; coverage tests T3.13, T3.14 |
+| 3.3 Population | SOURCES S3; WP1; T1.3 |
+| 3.4 Mobility | SOURCES S4; WP1; T1.6 |
+| 3.5 Geometry | SOURCES S5; WP1; T1.1, T1.2, T1.4 |
+| 3.6 CDC cross-check | SOURCES S6; WP2c, WP3a |
+| 3.7 Parameters and literature | SOURCES S7; WP6c |
+| 3.8 Alerts, notices, interventions | SOURCES S8; dated items in `seed/events.csv` and `sensitivity_seed/events_t3.csv`; accounting rule in WP6a |
+| 3.9 Local health departments | SOURCES S9; WP2c; H10 |
+| 3.10 Wastewater | SOURCES S10; WP3a, WP6e |
+| 3.11 Importation | SOURCES S11; WP6b |
+| 4 Data model | HANDOFF 4 |
+| 5 Phases 0 to 7 | WP0 to WP6 (Phase 0 to WP0; 1 to WP1 and WP2; 2 to WP3c; 3 to WP6a; 4 to WP6b; 5 to WP6c; 6 to WP6d; 7 to WP6e) |
+| 6 Known data issues 1 to 14 | SOURCES S12; quality checks T3.5 to T3.8 |
+| 7 Open items 1 to 8 | HUMAN_STEPS H4 to H10 and WP2a |
+| 8 First instructions | HANDOFF 7 execution order |
+| 9 Operations | HANDOFF 8 |
+| 10 Deliverables | HANDOFF 10 |
+| 11 Dashboard and GIS | DASHBOARD.md; WP5 |
+| 12.1 to 12.8 decisions | HANDOFF 2.1 (D01 to D17) |
+| 12.2 layout | HANDOFF 3.2 |
+| 12.3 monorepo safeguards | CLAUDE I8; T0.2, T0.3 |
+| 12.4 storage rules | HANDOFF 8.3 |
+| 12.5 release | WP4; E07 |
+| 12.6 alerting | WP2e; HANDOFF 8.2 |
+| 12.7 acceptance additions | T0.x, T2.x, T5.5, T7.1 |

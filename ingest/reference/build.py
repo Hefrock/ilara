@@ -26,6 +26,8 @@ STATE_FIPS = "42"
 EXPECTED_COUNTIES = 67
 EQUAL_AREA = "EPSG:5070"  # CONUS Albers, metres
 PERIOD_COMMUTING = "ACS 2016-2020"
+# docs/sources.md S3 (VERIFIED, QuickFacts): Pennsylvania July 1, 2025 estimate.
+STATE_CHECK = {"2025": 13_059_432}
 
 
 class ReferenceError(Exception):
@@ -280,6 +282,11 @@ def build(root: Path | None = None, vintage: str = "2025", force: bool = False) 
     ages = population_agesex(payload["census_popest_agesex"])
     if set(totals["county_fips"]) != set(geo["county_fips"]):
         raise ReferenceError("population FIPS set differs from geometry FIPS set (T1.2)")
+    expected = STATE_CHECK.get(vintage)
+    if expected is not None and state_total != expected:
+        raise ReferenceError(
+            f"statewide row {state_total} differs from the sources S3 check value {expected}"
+        )
     if int(totals["total"].sum()) != state_total:
         raise ReferenceError(
             f"county populations sum to {int(totals['total'].sum())}, state row {state_total}"

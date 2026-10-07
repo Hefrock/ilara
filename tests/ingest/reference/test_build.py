@@ -65,6 +65,8 @@ def _totals_csv() -> bytes:
     total = 0
     for i, f in enumerate(FIPS):
         pop = 10_000 + 1_000 * i
+        if i == len(FIPS) - 1:
+            pop = rb.STATE_CHECK["2025"] - total  # sum to the sources S3 check value
         total += pop
         lines.append(f"050,42,{f[2:]},Pennsylvania,{pa_counties.COUNTIES[f]} County,1,{pop}")
     lines.insert(1, f"040,42,000,Pennsylvania,Pennsylvania,1,{total}")
@@ -169,7 +171,7 @@ def test_fips_sets(built) -> None:  # T1.2
 def test_population_sum(built) -> None:  # T1.3
     root, m = built
     pop = ref(root, "population_county.csv")
-    assert pop["total"].sum() == m["statewide_population_check"]
+    assert pop["total"].sum() == m["statewide_population_check"] == 13_059_432
     assert pop["agesex_year_code"].unique().to_list() == [7]
     assert "under5_tot" in pop.columns and "median_age_tot" not in pop.columns
 

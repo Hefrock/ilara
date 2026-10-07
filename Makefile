@@ -2,7 +2,7 @@
 UV ?= uv
 RUN = $(UV) run --frozen
 
-.PHONY: check lint fmt typecheck test guards verify rebuild quality network-test
+.PHONY: check lint fmt typecheck test guards verify rebuild quality dashboard network-test
 
 check: lint typecheck test guards
 
@@ -35,6 +35,9 @@ rebuild:
 
 quality:
 	$(RUN) measles quality
+
+dashboard:
+	$(RUN) measles dashboard build
 
 network-test:
 	$(RUN) pytest -q -m network

@@ -1,46 +1,48 @@
-# Progress
+# PROGRESS: where the build stands
 
-Work packages and gates follow `docs/HANDOFF.md` (E16). Blockers: `docs/BLOCKERS.md`.
+Purpose: lets a new session (or a returning owner) pick up without rereading history. The agent reads this first and updates it before ending every session. Keep it short; evidence lives in linked files, not here.
 
-## 2026-10-07 session 1
+## Rules
+1. Update `Status` and `Evidence` for any work package or gate whose state changed. Evidence is a file path, test IDs that passed, or a commit hash, never a claim without a pointer.
+2. `Status` values: `not started`, `in progress`, `done`, `blocked` (link the blocker ID from docs/BLOCKERS.md).
+3. A work package is `done` only when every acceptance test listed for it in docs/HANDOFF.md passes (CLAUDE.md session protocol).
+4. Record non-obvious decisions as `docs/adr/NNN-title.md` and link them in the log below.
 
-Done:
-- WP0 scaffold: layout (3.2), `pyproject.toml` (Python 3.12, uv, `uv.lock`), `Makefile`,
-  MIT licence, README with the unofficial notice, `.gitignore` (`project/outputs/`, `local/`).
-- CLI (`uv run measles`): `capture`, `verify`, `guard`, `alerts` implemented; `parse`, `seed
-  load`, `rebuild`, `quality`, `release`, `dashboard build` stubbed (exit 0, say which WP).
-- Guards (`ingest/guards/`): path guard, append-only guard, size budget, hygiene scan, layer
-  boundary, outputs gate. ADR 0001 records the GitHub Free limits (E18).
-- WP2 minimum viable capture:
-  - raw store `ingest/rawstore.py` (E02 layout, sidecar manifest, `content_hash` gating E03,
-    exclusive create, gzip over 256 KB);
-  - per-run `capture_log` JSONL (E04);
-  - polite HTTP client (robots.txt, 5 s per host, blocked vs failed, 2 retries);
-  - Playwright dashboard capture saving JSON responses, rendered text, html and a screenshot,
-    so no access path (A, B or C) loses data before the probe decides;
-  - issue alerts (open, comment on repeat, close on recovery);
-  - workflows `capture-dashboard.yml`, `capture-light.yml`, `release.yml` (stub release),
-    `probe.yml`, `ci.yml`, with guards before every push and rebase retry.
-- Source registry `data/registry/source_registry.yml` (URLs marked `candidate`).
+## Work packages
 
-Tests: `make check` green (ruff, mypy, pytest, guards, verify). Covered: T0.2 to T0.6,
-T2.1 to T2.9 (T2.9 against a local bare repository), T2.11, T3.10, T6.16. T0.1 holds locally;
-confirm on GitHub with the first `ci` run.
+| WP | Status | Tests passing | Evidence | Blocker |
+|---|---|---|---|---|
+| WP0 Foundation | done | T0.1 to T0.7 | `make check`; first `ci` run green (commit c69a446); `docs/adr/0001-github-free-limits.md` | |
+| WP1 Reference data | in progress | T1.1 to T1.7 on synthetic Census-shaped inputs | `ingest/reference/`, `tests/ingest/reference/test_build.py` | B12 (real files arrive with the first `capture-light` run; then U5, U6, U7) |
+| WP2 Capture | in progress | T2.1 to T2.9, T2.11 | MVC: `ingest/rawstore.py`, `ingest/capture/`, `.github/workflows/` | B12 (T2.10 probe, schedule switched on only from the default branch) |
+| WP3 Parse and curate | in progress | T3.9, T3.10 | Curated store and views: `ingest/curate/`, `ingest/access.py`. T1 seeds in `data/seed/` | B05 for sensitivity seeds |
+| WP4 Release | not started | | Workflow skeleton only (`release.yml`) | |
+| WP5 Dashboard | not started | | | |
+| WP6 Susceptibility and model | not started | T6.16 (outputs guard) | `ingest/guards/outputs.py` | |
+| WP7 Documentation | in progress | | README with unofficial notice, "counts are a floor", "forecasts withheld until validated" | |
 
-- WP1 reference builder (`measles reference build`): reads the latest saved raw Census files
-  and writes `data/reference/` (geography, GeoPackage, simplified GeoJSON, rook adjacency with
-  shared boundary length, centroid distances, crosswalk, population with age bands, commuting
-  edges with `EXTERNAL`) plus `MANIFEST.json` (inputs and output hashes; `verify` checks it).
-  It runs inside `capture-light` after the Census files are captured, and skips when the
-  inputs are unchanged. T1.1 to T1.7 pass on synthetic inputs shaped like the Census files.
-  Real-data confirmation (and U5, U6, U7) follows the first `capture-light` run.
+## Gates
 
-- WP3e foundations: table contracts (`ingest/curate/schema.py`, HANDOFF 4.3), append-only
-  Parquet writer (one file per `ingest_run_id`, idempotent), and `ingest/access.py` with
-  `current`, `as_known_at` and `capture_status` over DuckDB. T3.9 and the E20 tie-break pass.
+| Gate | Status | Evidence |
+|---|---|---|
+| G0 Repo and CI | done | `ci` run 37558441571 green on the working branch; T0.1 to T0.7 |
+| G1 Dashboard access path decided | not started | blocked by B12 |
+| G2 Unattended capture proven | not started | |
+| G3 Modelling go | not started | |
+| G4 Forecast publication | not started | |
+| G5 Public flip | not started | B13 must be decided first |
 
-Not yet: T2.10 (network probe) needs B3. WP2c remainder (HAN, school files, local health
-departments) needs `docs/sources.md`. WP3 onward.
+## Capture clock
+First scheduled capture (UTC): not started (B12). Covered capture days so far: 0 (definition in docs/HANDOFF.md 8.1).
 
-Gate status: G0 met on the working branch (first `ci` run on GitHub green, T0.1 to T0.6).
-G1 to G5 not started.
+## Session log (newest first, 5 lines max per session)
+
+| Date | Work done | Next step |
+|---|---|---|
+| 2026-10-07 (2) | Brought in the full package: CLAUDE.md, docs/sources.md, docs/dashboard.md, T1 seeds; registry URLs from sources S1, S2, S8, S9, S10; user agent names the repository (I7); S3 population check in the reference build; tests mirror the code tree | Owner: B12, B05, B13. Agent: seed loader (WP3b), then WP4 release logic |
+| 2026-10-07 (1) | WP0 scaffold and guards; WP2 MVC (raw store, capture log, polite HTTP, Playwright capture, alerts, workflows); WP1 builder; WP3e store and views | Bring in the package documents |
+
+## Decisions and ADRs
+- `docs/adr/0001-github-free-limits.md`: GitHub Free limits and the in-workflow guards (E18, U23).
+- Raw manifests sit beside their file as `<name>.manifest.json`, so a JSON capture and its manifest never share a name (E02 detail).
+- The dashboard capture saves JSON responses, rendered text, html and a screenshot until the probe picks a path; html and screenshot are kept only alongside a substantive change (8.3 storage rule 1).

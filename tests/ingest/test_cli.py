@@ -32,7 +32,7 @@ def test_registry_loads_initial_sources(root: Path) -> None:
 def test_dry_run(root: Path, capsys) -> None:
     assert cli.main(["capture", "--all-due", "--dry-run"]) == 0
     out = capsys.readouterr().out
-    assert "doh_dashboard" in out and "doh_han_index" not in out
+    assert "doh_dashboard" in out and "cdc_nwss_measles" not in out
 
 
 def test_stub_commands_exit_zero(root: Path) -> None:

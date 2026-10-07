@@ -1,0 +1,16 @@
+event_id,event_type,event_date,county_scope,title,detail,source_tier,source_label,source_url,url_status
+ev-001,health_alert,2026-02-03,Lancaster,HAN 817,Five confirmed measles cases in Lancaster County identified Jan 30,T1,DOH HAN,https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-817-2-3-ADV-%20Measles.pdf,verified
+ev-002,health_alert,2026-05-01,Lebanon,HAN 822,Advisory after cases in Lebanon County,T1,DOH HAN,,url_to_find
+ev-003,health_alert,2026-06-17,Delaware,HAN 830,Measles RNA detected in wastewater in Delaware County (June 9 and 11),T1,DOH HAN,,url_to_find
+ev-004,health_alert,2026-06-24,state,HAN 831,Recommendations for catch-up and early MMR vaccination,T1,DOH HAN,https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-831-06-24-ALT-Measles_Early%20MMR.pdf,verified
+ev-005,health_alert,2026-08-24,state,HAN 838,Update: 379 cases in 28 counties as of Aug 21; recommendations tied to counties with sustained community transmission,T1,DOH HAN,https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-838-08-24-upd-update%20measles.pdf,verified
+ev-006,intervention,2026-06-24,affected_counties,Early MMR and catch-up recommendations,Early MMR for infants 6 to 11 months; early second dose; catch-up two-dose recommendations for people living in or visiting affected counties. The early infant dose is supplementary and does not count toward the routine two-dose series (HAN 838).,T1,DOH HAN 831,,url_to_find
+ev-007,program,2026-07-14,state,Dashboard launched,More than 600 doses given in Lancaster since late April versus 179 in all of 2025,T1,DOH release,,url_to_find
+ev-008,program,2026-07-31,state,School-level vaccination tool published,School-level immunization rates tool published,T1,DOH release,https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/healthstatistics/school-immunizations/current/school-immunization-rates.html,verified
+ev-010,program,2026-09-11,state,DOH pop-up vaccination clinics,Nearly 4300 doses at 130 pop-up clinics by Sept 11,T1,DOH release,,url_to_find
+ev-013,exposure,2026-05-06,Lebanon,Exposure notice: vaccination clinic,Lebanon vaccination clinic,T1,DOH press release,,url_to_find
+ev-014,exposure,2026-05-29,Lancaster,Exposure notice,Lancaster exposure notice,T1,DOH press release,,url_to_find
+ev-015,exposure,2026-06-12,Lancaster,Exposure notice: Lancaster County Courthouse,Lancaster County Courthouse,T1,DOH press release,,url_to_find
+ev-016,exposure,2026-07-22,Snyder,Exposure notice: Snyder County Lowe's,Snyder County Lowe's,T1,DOH press release,,url_to_find
+ev-017,exposure,2026-08-19,Lancaster,Exposure notice: two Lancaster locations,Two Lancaster locations,T1,DOH press release,,url_to_find
+ev-018,exposure,2026-09-02,Westmoreland,Exposure notice,Westmoreland exposure notice,T1,DOH press release,,url_to_find
