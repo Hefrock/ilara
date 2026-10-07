@@ -1,0 +1,53 @@
+=== frame 0: https://app.powerbigov.us/view?r=eyJrIjoiOGVkYzBiYjYtYTBhNy00MjVjLWFjZGQtM2Y3NDc4NmYxYzBiIiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+2026 Overview: Pennsylvania Measles Cases​
+
+October 5, 2026
+
+Last Updated:
+
+Updated at 2 p.m. on Monday, Wednesday, and Friday
+
+Year to date
+January - March
+April - Present
+
+1,004
+
+Total cases
+
+106
+
+New cases (Last 7 days)
+
+<1%
+
+Fully Vaccinated
+
+198
+
+Hospitalized
+
+32%
+
+Under 18 Years Old
+
+5
+
+Measles-associated Deaths
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+1of6
+Report Zoomed To 125%
