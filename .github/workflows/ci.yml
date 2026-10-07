@@ -36,6 +36,9 @@ jobs:
       - name: make check (lint, type check, tests, guards)
         run: make check
 
+      - name: Rebuild matches the committed tables (T3.2)
+        run: uv run --frozen measles rebuild
+
       - name: Range for push guards
         id: range
         run: |

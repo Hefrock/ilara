@@ -41,7 +41,6 @@ def test_stub_commands_exit_zero(root: Path) -> None:
         ["quality"],
         ["rebuild"],
         ["seed", "load"],
-        ["release", "--week", "2026-W41"],
         ["dashboard", "build", "--public"],
     ):
         assert cli.main(argv) == 0
@@ -49,3 +48,8 @@ def test_stub_commands_exit_zero(root: Path) -> None:
 
 def test_verify_empty_root(root: Path) -> None:
     assert cli.main(["verify"]) == 0
+
+
+def test_release_refuses_open_or_bad_week(root: Path) -> None:
+    assert cli.main(["release", "--week", "2999-W01"]) == 1
+    assert cli.main(["release", "--week", "W41"]) == 1

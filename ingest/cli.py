@@ -119,6 +119,26 @@ def cmd_guard(a: argparse.Namespace) -> int:
     raise AssertionError(a.name)
 
 
+def cmd_release(a: argparse.Namespace) -> int:
+    from ingest.release.weekly import ReleaseError, last_closed_week, release
+    from ingest.timeutil import utc_now
+
+    week = a.week or last_closed_week(utc_now())
+    try:
+        path = release(week, _root())
+    except ReleaseError as e:
+        print(f"release: {e}", file=sys.stderr)
+        return 1
+    print(f"release: wrote {path.relative_to(_root())}")
+    return 0
+
+
+def cmd_rebuild(a: argparse.Namespace) -> int:
+    from ingest.curate.rebuild import rebuild
+
+    return _report(rebuild(_root()), "rebuild: rebuilt tables match the committed tables")
+
+
 def cmd_quality(a: argparse.Namespace) -> int:
     from ingest.quality.engine import run
 
@@ -217,12 +237,12 @@ def build_parser() -> argparse.ArgumentParser:
     rf.set_defaults(func=cmd_reference)
 
     sub.add_parser("verify").set_defaults(func=cmd_verify)
-    sub.add_parser("rebuild").set_defaults(func=_not_yet("WP3e"))
+    sub.add_parser("rebuild").set_defaults(func=cmd_rebuild)
     sub.add_parser("quality").set_defaults(func=cmd_quality)
 
     r = sub.add_parser("release")
     r.add_argument("--week")
-    r.set_defaults(func=_not_yet("WP4"))
+    r.set_defaults(func=cmd_release)
 
     d = sub.add_parser("dashboard")
     d.add_argument("action", choices=["build"])
