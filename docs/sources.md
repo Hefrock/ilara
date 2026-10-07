@@ -146,12 +146,12 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 | U8 | CDC NWSS Socrata endpoint and schema | WP2 and WP3 (optional) | registry entry, schema doc |
 | U9 | PA EDDIE exposes measles | Human (H9) | owner note in `docs/BLOCKERS.md` |
 | U10 | PaWSS publishes measles | Human (H9) | owner note |
-| U11 | Wayback CDX technique | WP3 backfill | pass or fail recorded in `docs/backfill_report.md` |
+| U11 | Wayback CDX technique | WP3 backfill | pass or fail recorded in `docs/backfill_report.md` VERIFIED 2026-10-07: CDX query works (docs/backfill_report.md) |
 | U12 | R0 prior 12 to 18 | WP6 | literature citation recorded in model config |
 | U13 | Latent and generation time about 10 to 12 days | WP6 | literature citation recorded |
 | U14 | HAN 822 PDF URL | WP3 backfill | `data/seed/events.csv` `url_status` set to `verified` |
 | U15 | Chester County Health Department page | Human (H10) | registry entry |
-| U16 | DOH release dates for 497 and 540; DOH release pages for 792 and 1,004 | WP3 backfill | `to_confirm` rows resolved; T3-derived rows corroborated |
+| U16 | DOH release dates for 497 and 540; DOH release pages for 792 and 1,004 | WP3 backfill | `to_confirm` rows resolved; T3-derived rows corroborated VERIFIED 2026-10-07: 497 is the 2026-08-31 release, 540 the 2026-09-02 release (docs/backfill_report.md) |
 | U17 | Count definition for 379 and later values | WP3 backfill | `count_definition` set, flag cleared PARTIAL 2026-10-07: from now on the dashboard states the definition (Year to date 1,004; April - Present 992; January - March 12, as of Oct 5); earlier seed values remain to confirm |
 | U18 | `epydemix` maintained and suitable | WP6 | ADR |
 | U19 | Amish and Mennonite coverage inference | WP6 | scenario parameter documented as assumption |

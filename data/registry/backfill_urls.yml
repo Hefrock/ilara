@@ -63,3 +63,31 @@ documents:
   - source_id: wayback_cdx
     url: https://web.archive.org/cdx/search/cdx?url=pa.gov/agencies/health/newsroom/*&output=json&fl=timestamp,original,statuscode,digest&filter=statuscode:200&collapse=urlkey&limit=2000
     purpose: U11 (Wayback CDX technique); finds archived DOH releases
+  # Further releases located through the Wayback CDX index (capture gh-37617137202-1, U11)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-on-measles-outbre
+    purpose: statewide update (archived 2026-08-29)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out1
+    purpose: statewide update (archived 2026-09-10)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out2
+    purpose: statewide update (archived 2026-09-15)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out3
+    purpose: statewide update (archived 2026-09-17); sw-m07 (767)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-update-on-measles-outbreak-0923
+    purpose: statewide update around 2026-09-21 to 23; sw-007 (792), U16
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out5
+    purpose: statewide update (archived 2026-09-26)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out7
+    purpose: statewide update (archived 2026-10-04); sw-010 (1,004), U16
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/doh-confirms-two-additional-measles-associated-deaths-
+    purpose: deaths 3 and 4 (archived 2026-09-15)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-confirms-fifth-measles-associated-death
+    purpose: death 5 (archived 2026-09-30)
