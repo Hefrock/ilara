@@ -21,7 +21,7 @@ runner. Raw artefacts (all under `data/raw/doh_dashboard/2026/`, capture id
 | U2 | Report pages | Six visible tabs: Overview, Cases by Age and Time, Hospitalizations, Cases by County, Community Transmission, Measles Vaccine Administered. The report definition also lists hidden pages (Epidemic Curve and three "Duplicate of" pages). County counts are on "Cases by County", not on the landing page. | VERIFIED |
 | U17 (going forward) | Count definition | A slicer on page 1 offers "Year to date" (selected by default), "January - March" and "April - Present". The default 1,004 is therefore a year-to-date (calendar-year) figure. | VERIFIED |
 | U2 | History or export | No history or export control is visible on page 1. The model has a weekly series (`Week Ending`) used by "Cases by Age and Time". | PARTIAL |
-| U1 | Data query responses capturable | Not yet. The report definition (`modelsAndExploration`) and the field list (`conceptualschema`) were captured, but no `querydata` responses, although the tiles rendered. The capture now records every Power BI response and why its body was or was not kept, so the next scheduled run shows the cause. | open |
+| U1 | Data query responses capturable | Yes. The first probe missed them because Power BI serves `querydata` as `text/plain`, not JSON. The multi-view capture (run 37567917285, 2026-10-07 03:42 UTC) kept 44 `querydata` responses, refused none, and parses them. robots.txt allows the report URL; the capture only records responses to the report's own requests (no queries of ours). | VERIFIED |
 | (data refresh) | When the data change | `LastRefreshTime` 2026-10-05T18:19:30 (UTC per Power BI convention, 2:19 p.m. EDT), matching "2 p.m." | VERIFIED |
 
 ## Safety finding: the published data model is case-level
@@ -34,15 +34,17 @@ pages show aggregates, but any query response that returns rows at the level of 
 query hidden pages or build its own queries, and must refuse to save any response that carries
 case-level keys. Only column names (not data) are in the committed raw files.
 
-## Decision for G1 (pending owner answers, see BLOCKERS)
+## Decision for G1: path A (2026-10-07)
 
-- Path B (rendered text) works today for page 1 headline figures and is what the scheduled
-  capture records now.
-- County data need the "Cases by County" page. Reaching it within one page load means clicking
-  report tabs (in-app interaction, no new page navigation).
-- Path A (query responses) is preferred for county parsing once the cause above is known.
-
-G1 stays open until the county page access is agreed and one county snapshot is captured.
+- The capture clicks the visible tabs and slicer states within one page load (owner decision
+  B15, ADR 0002) and keeps the report's `querydata` responses.
+- `ingest/parse/doh_dashboard.py` parses them (golden test on the real capture,
+  `tests/fixtures/doh_dashboard/`): statewide headline figures for "Year to date"
+  (`calendar_year`) and "April - Present" (`since_april`), all 67 counties (zeros included,
+  from the county map), and the community transmission list.
+- First county snapshot: as of 2026-10-05, 1,004 cases in 39 counties; Lancaster 391, Mifflin
+  118, Chester 84 (T3.11 sanity values met). January - March is 12, so 992 + 12 = 1,004.
+- The rendered text (path B) and screenshots (path C) are still saved as fallbacks.
 
 ## Schedule note
 

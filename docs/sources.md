@@ -136,8 +136,8 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 
 | ID | Item | Resolved by | How it is closed |
 |---|---|---|---|
-| U1 | Dashboard JSON query responses capturable and permitted | WP2 probe | `docs/probe_report.md`, Gate G1 |
-| U2 | Dashboard field names, any history, any export | WP2 probe | `docs/probe_report.md` |
+| U1 | Dashboard JSON query responses capturable and permitted | WP2 probe | `docs/probe_report.md`, Gate G1 VERIFIED 2026-10-07: captured and parsed (docs/probe_report.md) |
+| U2 | Dashboard field names, any history, any export | WP2 probe | `docs/probe_report.md` VERIFIED 2026-10-07: six visible pages and their fields listed in docs/probe_report.md; no export or history control seen |
 | U3 | School county Excel sheet layouts | WP3 | `docs/schemas.md` plus golden parser tests |
 | U4 | Location of data in the school-level HTML | WP3 | `docs/schemas.md` |
 | U5 | Census population file URLs | WP1 | URLs recorded in `data/registry/source_registry.yml` |
@@ -152,10 +152,10 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 | U14 | HAN 822 PDF URL | WP3 backfill | `data/seed/events.csv` `url_status` set to `verified` |
 | U15 | Chester County Health Department page | Human (H10) | registry entry |
 | U16 | DOH release dates for 497 and 540; DOH release pages for 792 and 1,004 | WP3 backfill | `to_confirm` rows resolved; T3-derived rows corroborated |
-| U17 | Count definition for 379 and later values | WP3 backfill | `count_definition` set, flag cleared |
+| U17 | Count definition for 379 and later values | WP3 backfill | `count_definition` set, flag cleared PARTIAL 2026-10-07: from now on the dashboard states the definition (Year to date 1,004; April - Present 992; January - March 12, as of Oct 5); earlier seed values remain to confirm |
 | U18 | `epydemix` maintained and suitable | WP6 | ADR |
 | U19 | Amish and Mennonite coverage inference | WP6 | scenario parameter documented as assumption |
 | U20 | Public PA measles sequences | Human (H9) | owner note |
 | U21 | Scheduled-workflow disablement rules for public repos | Gate G5 | checked against current GitHub docs |
-| U22 | GitHub-hosted runners can reach the dashboard | WP2 probe | `docs/probe_report.md` |
+| U22 | GitHub-hosted runners can reach the dashboard | WP2 probe | `docs/probe_report.md` VERIFIED 2026-10-07: GitHub-hosted runners load the report (probe runs 37562037581, 37567917285) |
 | U23 | GitHub Free private repositories lack branch protection; `GITHUB_TOKEN` pushes do not trigger workflows | WP0 | ADR, checked against current GitHub documentation |

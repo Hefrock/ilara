@@ -119,6 +119,18 @@ def cmd_guard(a: argparse.Namespace) -> int:
     raise AssertionError(a.name)
 
 
+def cmd_parse(a: argparse.Namespace) -> int:
+    from ingest.parse.runner import run
+
+    rep = run(_root(), a.source)
+    for p in rep.parsed:
+        print(f"parsed {p}")
+    for f in rep.failed:
+        print(f"FAILED {f}", file=sys.stderr)
+    print(f"rows {rep.rows}; skipped {rep.skipped}; flags {rep.flags}")
+    return 0
+
+
 def cmd_seed(a: argparse.Namespace) -> int:
     from ingest.curate.seed import SeedError, load
 
@@ -184,7 +196,7 @@ def build_parser() -> argparse.ArgumentParser:
     pa = sub.add_parser("parse")
     pa.add_argument("--source")
     pa.add_argument("--since")
-    pa.set_defaults(func=_not_yet("WP3a"))
+    pa.set_defaults(func=cmd_parse)
 
     sd = sub.add_parser("seed")
     sd.add_argument("action", choices=["load"])
