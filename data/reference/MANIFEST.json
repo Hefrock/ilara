@@ -1,0 +1,57 @@
+{
+  "builder_version": "1",
+  "crs_geojson": "EPSG:4326",
+  "crs_geopackage": "EPSG:4269",
+  "files": {
+    "county.gpkg": {
+      "bytes": 442368,
+      "sha256": "8d0fbf9f1661ef7f38579fbeef9b578dc8b6119e3d9c4403cf8a1b99ea124b3d"
+    },
+    "county_adjacency.csv": {
+      "bytes": 6680,
+      "sha256": "1768f9d876a3ffa8a0813e7727f02e73ec0c75075a94e1b86f55ba8f1735b844"
+    },
+    "county_crosswalk.csv": {
+      "bytes": 989,
+      "sha256": "94fc8b6459f4dd1ac439e8b677dd8c5e509410a1290c0bcf15a8cf75caa0dd96"
+    },
+    "county_distance.csv": {
+      "bytes": 87073,
+      "sha256": "78eb28f1fdb8c64523c981dd230c1a0f8797207d2da4877ab5a82390b8790aab"
+    },
+    "county_simplified.geojson": {
+      "bytes": 113240,
+      "sha256": "751f6d26ef5a5243340ffec1431fbedbad29f0075e20e12f1a922cfc8ab2f46a"
+    },
+    "geography_county.csv": {
+      "bytes": 2992,
+      "sha256": "211e4f6a21226d799919c186f5fe6f11ffbd512f5a51b29e677c1d544342fd84"
+    },
+    "population_county.csv": {
+      "bytes": 11824,
+      "sha256": "6369f3cc923e5cb4a2d9ffa069577eccc99f8573eb77dccea656ce536e45e581"
+    }
+  },
+  "inputs": {
+    "census_cartographic": {
+      "fetched_at_utc": "2026-10-07T11:16:45Z",
+      "raw_path": "data/raw/census_cartographic/2026/20261007T111645Z_da4051717cae.zip",
+      "sha256": "da4051717caec55c75e3748c3608c2a3dbde8d1ff401bbaf4f952e3c3fb63ef1"
+    },
+    "census_popest_agesex": {
+      "fetched_at_utc": "2026-10-07T11:16:35Z",
+      "raw_path": "data/raw/census_popest_agesex/2026/20261007T111635Z_b1c6f4c6bd9f.csv",
+      "sha256": "b1c6f4c6bd9fb119ca509782d0b6aee340758ce8182e469b29eaf79b86d79aa9"
+    },
+    "census_popest_totals": {
+      "fetched_at_utc": "2026-10-07T11:16:30Z",
+      "raw_path": "data/raw/census_popest_totals/2026/20261007T111630Z_4f5a499d851e.csv.gz",
+      "sha256": "4f5a499d851e2cb48fd7a5405e5a9235453a8a66933657aacd10df0e264f35d5"
+    }
+  },
+  "missing_inputs": [
+    "census_commuting"
+  ],
+  "statewide_population_check": 13059432,
+  "vintage": "2025"
+}

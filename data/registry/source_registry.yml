@@ -103,15 +103,15 @@ sources:
   - source_id: census_popest_totals
     name: Census Vintage 2025 county population totals
     url: https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv
-    url_status: candidate
+    url_status: verified
     tier: T1
     cadence: daily
     access_path: http
     ext: csv
     robots_checked_utc: null
     terms_note: US federal government work, public domain.
-    last_verified_utc: null
-    notes: Exact file URL is U5 (sources S3 says navigate from the data-sets page). Unchanged content is logged only (E03).
+    last_verified_utc: "2026-10-07T11:16:20Z"
+    notes: Captured 2026-10-07; statewide row equals the sources S3 check value 13,059,432. Exact file URL was U5 (sources S3 says navigate from the data-sets page). Unchanged content is logged only (E03).
 
   - source_id: census_popest_agesex
     name: Census Vintage 2025 county age and sex, Pennsylvania
@@ -129,15 +129,28 @@ sources:
   - source_id: census_commuting
     name: Census ACS 2016-2020 county-to-county commuting flows
     url: https://www2.census.gov/programs-surveys/demo/tables/metro-micro/commuting-flows/2020/table1.xlsx
-    url_status: candidate
+    url_status: to_find
     tier: T1
     cadence: daily
-    access_path: http
+    access_path: none
     ext: xlsx
     robots_checked_utc: null
     terms_note: US federal government work, public domain.
     last_verified_utc: null
-    notes: Resolves U7.
+    notes: The guessed file URL returned 404 on 2026-10-07 (capture gh-37612900766-1). Disabled until the correct link is read from census_commuting_index; then set access_path back to http (U7).
+
+  - source_id: census_commuting_index
+    name: Census commuting flows 2016-2020 table page
+    url: https://www.census.gov/data/tables/2020/demo/metro-micro/commuting-flows-2020.html
+    url_status: verified
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: html
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Page listing the commuting-flow table downloads (sources S4); captured to find the county-to-county file link.
 
   - source_id: census_cartographic
     name: Census cartographic boundary file, counties 1:500k

@@ -19,7 +19,7 @@ import polars as pl
 
 from ingest import access, paths, rawstore
 from ingest.curate import store
-from ingest.parse import doh_dashboard
+from ingest.parse import doh_dashboard, school_imm
 from ingest.timeutil import ET, parse_utc
 
 
@@ -58,7 +58,13 @@ def _flag(
     }
 
 
-def _common(m: dict[str, Any], run_id: str, version: str, tier: str = "T1") -> dict[str, Any]:
+def _common(
+    m: dict[str, Any],
+    run_id: str,
+    version: str,
+    tier: str = "T1",
+    label: str = doh_dashboard.SOURCE_LABEL,
+) -> dict[str, Any]:
     fetched = parse_utc(m["fetched_at_utc"])
     return {
         "jurisdiction": "PA",
@@ -85,7 +91,17 @@ def _dashboard(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     return {"case_state": state, "case_county": county, "flags": out["flags"]}
 
 
-PARSERS = {("doh_dashboard", "responses"): (doh_dashboard.PARSER_VERSION, _dashboard)}
+def _school_county(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
+    rows = school_imm.parse(rawstore.read_payload(m, root))
+    common = _common(m, run_id, school_imm.PARSER_VERSION, label=school_imm.SOURCE_LABEL)
+    return {"immunization_county": [{**common, **r} for r in rows], "flags": []}
+
+
+PARSERS = {
+    ("doh_dashboard", "responses"): (doh_dashboard.PARSER_VERSION, _dashboard),
+    ("doh_school_imm_county", None): (school_imm.PARSER_VERSION, _school_county),
+}
+OUTPUT_TABLES = ("case_state", "case_county", "immunization_county")
 
 
 def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:
@@ -170,7 +186,7 @@ def run(root: Path | None = None, source: str | None = None) -> ParseReport:
             rep.flags += 1
             continue
         flags = [_flag(c, m["sha256"], t, run_id, version, when) for c, t in out["flags"]]
-        drop = _county_drop(out["case_county"], root)
+        drop = _county_drop(out.get("case_county", []), root)
         if drop:
             flags.append(_flag("COUNTY_COUNT_DROP", m["sha256"], drop, run_id, version, when))
             store.write(
@@ -195,8 +211,8 @@ def run(root: Path | None = None, source: str | None = None) -> ParseReport:
                 root,
             )
             out["case_county"] = []
-        for table in ("case_state", "case_county"):
-            if out[table]:
+        for table in OUTPUT_TABLES:
+            if out.get(table):
                 store.write(
                     "curated",
                     table,

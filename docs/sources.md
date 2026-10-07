@@ -138,11 +138,11 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 |---|---|---|---|
 | U1 | Dashboard JSON query responses capturable and permitted | WP2 probe | `docs/probe_report.md`, Gate G1 VERIFIED 2026-10-07: captured and parsed (docs/probe_report.md) |
 | U2 | Dashboard field names, any history, any export | WP2 probe | `docs/probe_report.md` VERIFIED 2026-10-07: six visible pages and their fields listed in docs/probe_report.md; no export or history control seen |
-| U3 | School county Excel sheet layouts | WP3 | `docs/schemas.md` plus golden parser tests |
+| U3 | School county Excel sheet layouts | WP3 | `docs/schemas.md` plus golden parser tests VERIFIED 2026-10-07: layout of the 2025-2026 county file recorded in docs/schemas.md; parser golden test passes |
 | U4 | Location of data in the school-level HTML | WP3 | `docs/schemas.md` |
-| U5 | Census population file URLs | WP1 | URLs recorded in `data/registry/source_registry.yml` |
-| U6 | Cartographic boundary file names; `pygris` usable | WP1 | registry entry plus T1.1 |
-| U7 | PA county FIPS pattern | WP1 | T1.1, T1.2 |
+| U5 | Census population file URLs | WP1 | URLs recorded in `data/registry/source_registry.yml` PARTIAL 2026-10-07: totals and age-sex file URLs work (data/registry); commuting file URL still to find |
+| U6 | Cartographic boundary file names; `pygris` usable | WP1 | registry entry plus T1.1 VERIFIED 2026-10-07: cb_2024_us_county_500k.zip captured; 67 valid PA counties (T1.1) |
+| U7 | PA county FIPS pattern | WP1 | T1.1, T1.2 VERIFIED 2026-10-07: PA FIPS are 42001 to 42133 odd, matching the boundary and population files (T1.2) |
 | U8 | CDC NWSS Socrata endpoint and schema | WP2 and WP3 (optional) | registry entry, schema doc |
 | U9 | PA EDDIE exposes measles | Human (H9) | owner note in `docs/BLOCKERS.md` |
 | U10 | PaWSS publishes measles | Human (H9) | owner note |

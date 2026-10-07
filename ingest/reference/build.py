@@ -26,6 +26,8 @@ STATE_FIPS = "42"
 EXPECTED_COUNTIES = 67
 EQUAL_AREA = "EPSG:5070"  # CONUS Albers, metres
 PERIOD_COMMUTING = "ACS 2016-2020"
+REQUIRED = ("census_cartographic", "census_popest_totals", "census_popest_agesex")
+OPTIONAL = ("census_commuting",)  # mobility edges are built once the file is captured
 # docs/sources.md S3 (VERIFIED, QuickFacts): Pennsylvania July 1, 2025 estimate.
 STATE_CHECK = {"2025": 13_059_432}
 
@@ -223,15 +225,11 @@ def build(root: Path | None = None, vintage: str = "2025", force: bool = False) 
     root = root or paths.repo_root()
     out = paths.reference_dir(root)
     out.mkdir(parents=True, exist_ok=True)
-    inputs = {
-        s: _latest(s, root)
-        for s in (
-            "census_cartographic",
-            "census_popest_totals",
-            "census_popest_agesex",
-            "census_commuting",
-        )
-    }
+    inputs = {s: _latest(s, root) for s in REQUIRED}
+    for s in OPTIONAL:
+        m = rawstore.latest_manifest(s, root)
+        if m is not None:
+            inputs[s] = m
     mf = out / "MANIFEST.json"
     if mf.exists() and not force:
         old = json.loads(mf.read_text())
@@ -297,13 +295,15 @@ def build(root: Path | None = None, vintage: str = "2025", force: bool = False) 
         .select("vintage", pl.exclude("vintage"))
     )
     _write_csv(pop, out / "population_county.csv")
-    _write_csv(commuting_edges(payload["census_commuting"]), out / "mobility_edge.csv")
+    if "census_commuting" in payload:
+        _write_csv(commuting_edges(payload["census_commuting"]), out / "mobility_edge.csv")
 
     files = sorted(p for p in out.iterdir() if p.is_file() and p.name != "MANIFEST.json")
     manifest = {
         "builder_version": BUILDER_VERSION,
         "crs_geopackage": str(gdf.crs),
         "crs_geojson": "EPSG:4326",
+        "missing_inputs": [s for s in OPTIONAL if s not in inputs],
         "vintage": vintage,
         "statewide_population_check": state_total,
         "inputs": {
