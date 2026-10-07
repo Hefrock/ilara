@@ -1,0 +1,11 @@
+row_id,as_of_date,date_precision,as_of_date_end,cum_cases,counties_with_cases,hospitalizations,deaths,vaccinated_cases,new_since_count,new_since_date,new_7day,count_definition,source_tier,source_label,source_url,notes
+sw-007,2026-09-21,exact,,792,,,4,,,,,unknown,T3-derived,News report (Monday 2026-09-21),,"Find the DOH release for this date. Conflict for the quality report: sw-008 gives 903 with 115 new in the week, which implies 788 a week earlier, versus 792 here."
+sw-008,2026-09-28,exact,,903,39,176,4,,115,,,unknown,T3-derived,News report plus DOH release (release exists; locate),,115 new in the week.
+sw-010,2026-10-05,exact,,1004,39,198,5,,,,106,unknown,T3-derived,News report,,"Rolling 7-day new cases 106, versus 114 the prior week (news). Find the DOH release."
+sw-m01,,to_confirm,,12,,,,,,,,calendar_year,T3-derived,News,,"12 cases January to March, none linked to the main outbreak. Date of the figure not captured."
+sw-m02,2026-05-22,exact,,32,,,,,,,,unknown,T3-derived,News,,Unverified against DOH.
+sw-m03,2026-06-26,exact,,84,,,,,,,,unknown,T3-derived,News,,72 of these were in the Lancaster and Lebanon region. Unverified against DOH.
+sw-m04,,to_confirm,,114,,,,,,,,unknown,T3-derived,News,,"Late July figure. A journal article citing CDC gave 134 on July 23 (sw-m05), which does not match."
+sw-m05,2026-07-23,exact,,134,,,,,,,,unknown,T2,Journal article citing CDC data,,Conflicts with 114 late July. Check both against DOH.
+sw-m06,2026-08-25,approx,,393,,,,,,,,unknown,T3-derived,News,,Lancaster 185 at the same time. About Aug 25. Compare with HAN 838 (379 as of Aug 21).
+sw-m07,2026-09-17,range,2026-09-18,767,,150,,,,,,unknown,T3-derived,News,,Range Sept 17 to 18 (150 hospitalized). County detail in county_t3_derived.csv.
