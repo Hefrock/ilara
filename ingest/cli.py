@@ -132,6 +132,18 @@ def cmd_guard(a: argparse.Namespace) -> int:
     raise AssertionError(a.name)
 
 
+def cmd_dashboard(a: argparse.Namespace) -> int:
+    from project.dashboard.build import write_site
+
+    try:
+        path = write_site(_root() / a.out, _root(), public=a.public)
+    except FileNotFoundError as e:
+        print(f"dashboard: {e}", file=sys.stderr)
+        return 1
+    print(f"dashboard: wrote {path.relative_to(_root())} ({'public' if a.public else 'private'})")
+    return 0
+
+
 def cmd_release(a: argparse.Namespace) -> int:
     from ingest.release.weekly import ReleaseError, last_closed_week, release
     from ingest.timeutil import utc_now
@@ -265,7 +277,8 @@ def build_parser() -> argparse.ArgumentParser:
     d = sub.add_parser("dashboard")
     d.add_argument("action", choices=["build"])
     d.add_argument("--public", action="store_true")
-    d.set_defaults(func=_not_yet("WP5"))
+    d.add_argument("--out", default="site")
+    d.set_defaults(func=cmd_dashboard)
 
     gd = sub.add_parser("guard", help="repository guards (E18)")
     gd.add_argument(

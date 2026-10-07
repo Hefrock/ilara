@@ -10,6 +10,7 @@ dependencies = [
     "httpx",
     "openpyxl",
     "playwright",
+    "plotly>=7.1.0",
     "polars",
     "pyarrow",
     "pydantic>=2",
