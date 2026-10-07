@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-07 (11) | Backfill capture: `data/registry/backfill_urls.yml` (14 DOH releases, 3 HAN PDFs, a Wayback CDX query) fetched once each by `measles capture --backfill` inside capture-light | Parse release stats blocks and HAN PDFs; write docs/backfill_report.md (T3.12) |
 | 2026-10-07 (10) | School-level immunization parser (U4, T3.14): 5,943 school-grade rows, 2,228 suppressed kept as null; issue 7 closed with the commuting-page solution | Backfill capture of DOH releases and HAN PDFs (WP3c); commuting link from the Census page |
 | 2026-10-07 (9) | Manual capture-light run: 10 of 11 HTTP sources captured, commuting URL 404 (issue 7, alert worked); reference tables built from real Census files; school county immunization parser (T3.13 met) | Read the commuting link from the captured Census page; school-level page (U4); backfill (WP3c) |
 | 2026-10-07 (8) | `measles rebuild` (T3.2, also in CI); weekly release with coverage, exports, notes, fail-closed verify and immutable manifests (T4.1 to T4.6) | Confirm tonight's scheduled captures; first release Monday; then backfill (WP3c) and school immunization parsers |

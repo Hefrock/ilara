@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from ingest import paths
 
 Tier = Literal["T1", "T2", "T3", "T3-derived"]
-AccessPath = Literal["browser", "http", "seed", "manual", "none"]
+AccessPath = Literal["browser", "http", "seed", "manual", "backfill", "none"]
 
 
 class Source(BaseModel):

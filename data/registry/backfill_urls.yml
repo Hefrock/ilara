@@ -1,0 +1,65 @@
+# One-off documents for the backfill (WP3c). `measles capture --backfill` fetches each URL
+# once through the raw store (I1, I7) and never again once a copy is saved. Add URLs here;
+# never remove one that was captured (its raw file stays the record).
+#
+# purpose: the register item or seed row the document should resolve.
+
+documents:
+  # DOH releases linked from the measles page (captured 2026-10-07)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/shapiro-administration-launches-measles-dashboard
+    purpose: ev-007 (dashboard launch, 2026-07-14)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-takes-action-to-prevent-spread-of-measle
+    purpose: early outbreak releases; event dates
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/shapiro-administration-taking-action-to-contain-spread-of-measle
+    purpose: early outbreak releases; event dates
+  - source_id: doh_release
+    url: https://www.pa.gov/governor/newsroom/2026-press-releases/shapiro-administration-expands-measles-response-efforts
+    purpose: ev-010 (pop-up clinics), statewide stats block
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-confirms-two-measles-associate
+    purpose: deaths; statewide stats block
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/department-of-health-responding-to-potential-measles-exposure
+    purpose: exposure events (ev-013 to ev-018)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/dept-of-health-responding-to-potential-measles-exposure-in-westm
+    purpose: ev-018 (Westmoreland exposure)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/doh-responding-to-measles-exposure-at-lancaster-courthouse
+    purpose: ev-015 (Lancaster County Courthouse exposure)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/doh-responding-to-two-separate-potential-measles-exposures-in-la
+    purpose: ev-017 (two Lancaster exposures)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pennsylvania-department-of-health-responding-to-potential-measle
+    purpose: exposure events
+  # DOH statewide update releases found by search (2026-10-07)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/doh-provides-update-on-measles-outbreak-as-cases-reach-497-in-34
+    purpose: U16 (as-of date of the 497 row, sw-004)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-dept-of-health-provides-update-on-measles-outbreak-as-cases-r
+    purpose: U16 (540 row, sw-005) or later update
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-091126
+    purpose: sw-006 (2026-09-11 update)
+  - source_id: doh_release
+    url: https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out6
+    purpose: U16 (DOH release for 792 or 1,004)
+  # HAN PDFs (URLs verified in data/seed/events.csv)
+  - source_id: doh_han_pdf
+    url: https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-817-2-3-ADV-%20Measles.pdf
+    purpose: sw-001, ev-001
+  - source_id: doh_han_pdf
+    url: https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-831-06-24-ALT-Measles_Early%20MMR.pdf
+    purpose: sw-002, ev-004, ev-006
+  - source_id: doh_han_pdf
+    url: https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/2026%20HAN/2026-838-08-24-upd-update%20measles.pdf
+    purpose: sw-003 (379 as of Aug 21), U17, ev-005
+  # Wayback Machine capture index for DOH newsroom pages (U11)
+  - source_id: wayback_cdx
+    url: https://web.archive.org/cdx/search/cdx?url=pa.gov/agencies/health/newsroom/*&output=json&fl=timestamp,original,statuscode,digest&filter=statuscode:200&collapse=urlkey&limit=2000
+    purpose: U11 (Wayback CDX technique); finds archived DOH releases

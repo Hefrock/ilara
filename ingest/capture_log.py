@@ -58,7 +58,8 @@ class CaptureLog:
             paths.capture_log_dir(self.root) / now.strftime("%Y-%m") / f"{self.run_id}.jsonl"
         )
         self.records: list[CaptureRecord] = []
-        self._seq = 0
+        # Continue numbering when a later step of the same run appends to the same file.
+        self._seq = len(self.path.read_text().splitlines()) if self.path.exists() else 0
 
     def next_capture_id(self, source_id: str) -> str:
         self._seq += 1

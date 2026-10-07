@@ -64,15 +64,41 @@ sources:
   - source_id: doh_han_pdf
     name: Pennsylvania HAN advisories (PDF)
     url: null
-    url_status: to_find
+    url_status: n/a
     tier: T1
-    cadence: on_link
-    access_path: none
+    cadence: once
+    access_path: backfill
     ext: pdf
     robots_checked_utc: null
     terms_note: null
     last_verified_utc: null
-    notes: Discovered from the HAN index.
+    notes: One document per URL, listed in data/registry/backfill_urls.yml (the HAN index page loads its list in the browser, so links are not in the captured HTML).
+
+  - source_id: doh_release
+    name: Pennsylvania DOH newsroom releases
+    url: null
+    url_status: n/a
+    tier: T1
+    cadence: once
+    access_path: backfill
+    ext: html
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: One release per URL, listed in data/registry/backfill_urls.yml (WP3c).
+
+  - source_id: wayback_cdx
+    name: Internet Archive Wayback Machine CDX index
+    url: null
+    url_status: n/a
+    tier: T3
+    cadence: once
+    access_path: backfill
+    ext: json
+    robots_checked_utc: null
+    terms_note: Used to locate archived copies of DOH pages only (U11); archived pages keep their original source tier.
+    last_verified_utc: null
+    notes: Queries listed in data/registry/backfill_urls.yml.
 
   - source_id: doh_school_imm_county
     name: Pennsylvania school immunization rates by county

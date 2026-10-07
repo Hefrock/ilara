@@ -39,7 +39,9 @@ jobs:
           echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Capture (HTTP sources; unchanged content is logged only)
-        run: uv run --frozen measles capture --all-due --access http --run-id "$MEASLES_RUN_ID"
+        run: |
+          uv run --frozen measles capture --all-due --access http --run-id "$MEASLES_RUN_ID"
+          uv run --frozen measles capture --backfill --run-id "$MEASLES_RUN_ID"
 
       - name: Commit raw and capture log
         run: .github/scripts/commit-data.sh "capture http sources ${MEASLES_RUN_ID}"
