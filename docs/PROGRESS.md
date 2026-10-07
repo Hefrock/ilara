@@ -27,6 +27,16 @@ Tests: `make check` green (ruff, mypy, pytest, guards, verify). Covered: T0.2 to
 T2.1 to T2.9 (T2.9 against a local bare repository), T2.11, T3.10, T6.16. T0.1 holds locally;
 confirm on GitHub with the first `ci` run.
 
-Not yet: T2.10 (network probe) needs B3. WP1, WP2c remainder, WP3 onward.
+- WP1 reference builder (`measles reference build`): reads the latest saved raw Census files
+  and writes `data/reference/` (geography, GeoPackage, simplified GeoJSON, rook adjacency with
+  shared boundary length, centroid distances, crosswalk, population with age bands, commuting
+  edges with `EXTERNAL`) plus `MANIFEST.json` (inputs and output hashes; `verify` checks it).
+  It runs inside `capture-light` after the Census files are captured, and skips when the
+  inputs are unchanged. T1.1 to T1.7 pass on synthetic inputs shaped like the Census files.
+  Real-data confirmation (and U5, U6, U7) follows the first `capture-light` run.
 
-Gate status: G0 pending the first green `ci` run on GitHub. G1 to G5 not started.
+Not yet: T2.10 (network probe) needs B3. WP2c remainder (HAN, school files, local health
+departments) needs `docs/sources.md`. WP3 onward.
+
+Gate status: G0 met on the working branch (first `ci` run on GitHub green, T0.1 to T0.6).
+G1 to G5 not started.

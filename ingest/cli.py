@@ -119,6 +119,23 @@ def cmd_guard(a: argparse.Namespace) -> int:
     raise AssertionError(a.name)
 
 
+def cmd_reference(a: argparse.Namespace) -> int:
+    from ingest.reference.build import ReferenceError, build
+
+    try:
+        m = build(_root(), vintage=a.vintage, force=a.force)
+    except ReferenceError as e:
+        print(f"reference build: {e}", file=sys.stderr)
+        return 1
+    if m.get("skipped"):
+        print("reference build: inputs unchanged, nothing to do")
+        return 0
+    print(json.dumps({k: m[k] for k in ("vintage", "statewide_population_check")}))
+    for name, entry in m["files"].items():
+        print(f"  {name:32s} {entry['bytes']:>10d}  {entry['sha256'][:12]}")
+    return 0
+
+
 def _not_yet(wp: str):
     def run(a: argparse.Namespace) -> int:
         print(f"{a.command}: not implemented yet ({wp}); nothing to do")
@@ -153,6 +170,12 @@ def build_parser() -> argparse.ArgumentParser:
     sd = sub.add_parser("seed")
     sd.add_argument("action", choices=["load"])
     sd.set_defaults(func=_not_yet("WP3b"))
+
+    rf = sub.add_parser("reference", help="build data/reference from saved raw Census files")
+    rf.add_argument("action", choices=["build"])
+    rf.add_argument("--vintage", default="2025")
+    rf.add_argument("--force", action="store_true")
+    rf.set_defaults(func=cmd_reference)
 
     sub.add_parser("verify").set_defaults(func=cmd_verify)
     sub.add_parser("rebuild").set_defaults(func=_not_yet("WP3e"))

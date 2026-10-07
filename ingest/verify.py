@@ -78,6 +78,28 @@ def _seed_hashes(root: Path) -> set[str]:
     return out
 
 
+def verify_reference(root: Path) -> list[str]:
+    """Reference outputs match their manifest, and every input is a saved raw file (T1.7)."""
+    import json
+
+    mf = paths.reference_dir(root) / "MANIFEST.json"
+    if not mf.exists():
+        return []
+    m = json.loads(mf.read_text())
+    problems: list[str] = []
+    for name, entry in m["files"].items():
+        p = paths.reference_dir(root) / name
+        if not p.exists():
+            problems.append(f"HASH_MISMATCH reference/{name}: missing")
+        elif hashlib.sha256(p.read_bytes()).hexdigest() != entry["sha256"]:
+            problems.append(f"HASH_MISMATCH reference/{name}: differs from MANIFEST.json")
+    known = {rawstore.load_manifest(x)["sha256"] for x in rawstore.iter_manifests(None, root)}
+    for sid, inp in m["inputs"].items():
+        if inp["sha256"] not in known:
+            problems.append(f"reference input {sid} {inp['sha256'][:12]} is not in data/raw")
+    return problems
+
+
 def verify_all(root: Path | None = None) -> list[str]:
     root = root or paths.repo_root()
-    return verify_raw(root) + verify_curated(root)
+    return verify_raw(root) + verify_curated(root) + verify_reference(root)

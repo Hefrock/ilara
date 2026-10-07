@@ -48,6 +48,7 @@ jobs:
       - name: Parse, curate, quality report
         continue-on-error: true
         run: |
+          uv run --frozen measles reference build || echo "reference build did not run (see log)"
           uv run --frozen measles parse
           uv run --frozen measles quality
           .github/scripts/commit-data.sh "parse http sources ${MEASLES_RUN_ID}"
