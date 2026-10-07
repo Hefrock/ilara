@@ -1,0 +1,53 @@
+name: ci
+
+# Runs on human pushes and pull requests. Bot pushes made with GITHUB_TOKEN do not trigger
+# workflows, so the capture and release workflows run the same guards themselves (E18).
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: make check (lint, type check, tests, guards)
+        run: make check
+
+      - name: Range for push guards
+        id: range
+        run: |
+          before="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            before="${{ github.event.pull_request.base.sha }}"
+          fi
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
+            before=$(git rev-list --max-parents=0 HEAD | tail -1)
+          fi
+          echo "base=${before}" >> "$GITHUB_OUTPUT"
+
+      - name: Path guard (bot commits touch only data/)
+        run: uv run --frozen measles guard paths --range "${{ steps.range.outputs.base }}..HEAD"
+
+      - name: Append-only guard
+        run: uv run --frozen measles guard append-only --base "${{ steps.range.outputs.base }}" --head HEAD

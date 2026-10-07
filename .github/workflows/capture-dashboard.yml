@@ -1,0 +1,89 @@
+name: capture-dashboard
+
+# Schedule: docs/HANDOFF.md section 8.1 (single source; mirrored in ingest/schedule.py).
+on:
+  schedule:
+    - cron: "0 18,20,22 * * 1,3,5"
+    - cron: "0 13 * * 2,4,6"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: capture-dashboard
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MEASLES_RUN_ID: gh-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(uv run --frozen python -c 'import importlib.metadata as m; print(m.version("playwright"))')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install browser
+        run: uv run --frozen playwright install --with-deps --only-shell chromium
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Capture (save raw first, never parse)
+        run: uv run --frozen measles capture --source doh_dashboard --run-id "$MEASLES_RUN_ID"
+
+      - name: Commit raw and capture log
+        run: .github/scripts/commit-data.sh "capture doh_dashboard ${MEASLES_RUN_ID}"
+
+      # E19: parse and curate run after the raw commit; a failure here never reverts it.
+      - name: Parse, curate, quality report
+        continue-on-error: true
+        run: |
+          uv run --frozen measles parse --source doh_dashboard
+          uv run --frozen measles quality
+          .github/scripts/commit-data.sh "parse doh_dashboard ${MEASLES_RUN_ID}"
+
+      - name: Guards before push
+        run: |
+          uv run --frozen measles guard paths --bot --range "${BASE_SHA}..HEAD"
+          uv run --frozen measles guard append-only --base "${BASE_SHA}" --head HEAD
+          uv run --frozen measles guard size
+          uv run --frozen measles verify
+
+      - name: Push with rebase retry
+        run: .github/scripts/push-with-retry.sh "${GITHUB_REF_NAME}"
+
+      - name: Alerts
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          log=$(ls data/capture_log/*/"${MEASLES_RUN_ID}".jsonl 2>/dev/null | head -1 || true)
+          if [ -n "$log" ]; then
+            uv run --frozen measles alerts --log-file "$log"
+          else
+            echo "no capture log for this run"
+          fi

@@ -1,0 +1,64 @@
+name: probe-dashboard
+
+# WP2a: one manual probe of the DOH dashboard from a GitHub-hosted runner. Saves raw
+# through the raw store like any capture and uploads a field summary for docs/probe_report.md.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: capture-dashboard
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MEASLES_RUN_ID: gh-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Install browser
+        run: uv run --frozen playwright install --with-deps --only-shell chromium
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Probe
+        run: uv run --frozen python -m ingest.capture.probe --run-id "$MEASLES_RUN_ID" --out probe-out
+
+      - name: Commit raw and capture log
+        run: .github/scripts/commit-data.sh "probe doh_dashboard ${MEASLES_RUN_ID}"
+
+      - name: Guards before push
+        run: |
+          uv run --frozen measles guard paths --bot --range "${BASE_SHA}..HEAD"
+          uv run --frozen measles guard append-only --base "${BASE_SHA}" --head HEAD
+          uv run --frozen measles guard size
+          uv run --frozen measles verify
+
+      - name: Push with rebase retry
+        run: .github/scripts/push-with-retry.sh "${GITHUB_REF_NAME}"
+
+      - name: Upload probe summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-${{ github.run_id }}
+          path: probe-out/

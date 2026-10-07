@@ -1,0 +1,217 @@
+# Source registry (HANDOFF 4.2). Facts about each source live in docs/sources.md;
+# this file is the machine-readable list the capture layer reads.
+#
+# access_path: browser (Playwright, one navigation per capture), http (polite fetcher),
+#              seed (loaded from data/seed or data/sensitivity/seed), none (not captured yet).
+# url_status:  candidate = taken from search results or memory, not yet confirmed against
+#              docs/sources.md or a successful capture; verified = confirmed.
+# robots_checked_utc / last_verified_utc are filled from the first successful capture.
+
+sources:
+  - source_id: doh_dashboard
+    name: Pennsylvania DOH measles dashboard
+    url: https://www.pa.gov/measles
+    url_status: candidate
+    tier: T1
+    cadence: mon_wed_fri
+    access_path: browser
+    ext: html
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: Entry URL reported in press coverage; the probe (WP2a) records the final dashboard URL and platform (U1, U2).
+
+  - source_id: doh_measles_page
+    name: Pennsylvania DOH measles information page
+    url: https://www.pa.gov/agencies/health/diseases-conditions/infectious-disease/measles
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: html
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: Path guessed from pa.gov structure; confirm from docs/sources.md S1.
+
+  - source_id: doh_newsroom
+    name: Pennsylvania DOH newsroom
+    url: https://www.pa.gov/agencies/health/newsroom
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: html
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: Release pages live under /agencies/health/newsroom/<slug>.
+
+  - source_id: doh_han_index
+    name: Pennsylvania Health Alert Network index
+    url: null
+    url_status: to_find
+    tier: T1
+    cadence: daily
+    access_path: none
+    ext: html
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: URL in docs/sources.md S8.
+
+  - source_id: doh_han_pdf
+    name: Pennsylvania HAN advisories (PDF)
+    url: null
+    url_status: to_find
+    tier: T1
+    cadence: on_link
+    access_path: none
+    ext: pdf
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: Discovered from the HAN index.
+
+  - source_id: doh_school_imm_county
+    name: Pennsylvania school immunization rates by county
+    url: null
+    url_status: to_find
+    tier: T1
+    cadence: daily
+    access_path: none
+    ext: xls
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: URL in docs/sources.md S2.
+
+  - source_id: doh_school_imm_school
+    name: Pennsylvania school immunization rates by school
+    url: null
+    url_status: to_find
+    tier: T1
+    cadence: daily
+    access_path: none
+    ext: html
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: URL in docs/sources.md S2.
+
+  - source_id: census_popest_totals
+    name: Census Vintage 2025 county population totals
+    url: https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: csv
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Unchanged content is logged only (E03). Vintage file name resolves U5.
+
+  - source_id: census_popest_agesex
+    name: Census Vintage 2025 county age and sex, Pennsylvania
+    url: https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/asrh/cc-est2025-agesex-42.csv
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: csv
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Resolves U6.
+
+  - source_id: census_commuting
+    name: Census ACS 2016-2020 county-to-county commuting flows
+    url: https://www2.census.gov/programs-surveys/demo/tables/metro-micro/commuting-flows/2020/table1.xlsx
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: xlsx
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Resolves U7.
+
+  - source_id: census_cartographic
+    name: Census cartographic boundary file, counties 1:500k
+    url: https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_county_500k.zip
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: zip
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: 2024 vintage boundaries; Pennsylvania counties have been stable since 1878.
+
+  - source_id: cdc_measles_national
+    name: CDC measles cases and outbreaks
+    url: https://www.cdc.gov/measles/data-research/index.html
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: html
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: National cross-check (S6).
+
+  - source_id: cdc_nwss_measles
+    name: CDC NWSS measles wastewater
+    url: null
+    url_status: to_find
+    tier: T1
+    cadence: daily
+    access_path: none
+    ext: json
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: Optional (U8).
+
+  - source_id: seed_statewide
+    name: Seed statewide backfill
+    url: null
+    url_status: n/a
+    tier: T1
+    cadence: once
+    access_path: seed
+    ext: csv
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: data/seed/statewide_backfill.csv
+
+  - source_id: seed_t3_county
+    name: Seed county figures from secondary sources
+    url: null
+    url_status: n/a
+    tier: T3-derived
+    cadence: once
+    access_path: seed
+    ext: csv
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: data/sensitivity/seed/county_t3_derived.csv (only after owner decision H6)
+
+  - source_id: seed_events
+    name: Seed events
+    url: null
+    url_status: n/a
+    tier: T1
+    cadence: once
+    access_path: seed
+    ext: csv
+    robots_checked_utc: null
+    terms_note: null
+    last_verified_utc: null
+    notes: data/seed/events.csv

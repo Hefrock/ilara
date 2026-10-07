@@ -1,0 +1,89 @@
+name: release
+
+# Weekly release for the prior ISO week (E07, HANDOFF 8.1).
+on:
+  schedule:
+    - cron: "30 13 * * 1"
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "ISO week to release, e.g. 2026-W41 (default: the week that just closed)"
+        required: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          week="${{ github.event.inputs.week }}"
+          if [ -z "$week" ]; then
+            week=$(TZ=America/New_York date -d "last sunday" +%G-W%V)
+          fi
+          echo "WEEK=${week}" >> "$GITHUB_ENV"
+
+      - name: Verify before release (fails closed, T4.4)
+        run: uv run --frozen measles verify
+
+      - name: Build release
+        run: |
+          uv run --frozen measles release --week "${WEEK}"
+          .github/scripts/commit-data.sh "release ${WEEK}"
+
+      - name: Guards before push
+        run: |
+          uv run --frozen measles guard paths --bot --range "${BASE_SHA}..HEAD"
+          uv run --frozen measles guard append-only --base "${BASE_SHA}" --head HEAD
+          uv run --frozen measles guard size
+          uv run --frozen measles verify
+
+      - name: Push with rebase retry
+        run: .github/scripts/push-with-retry.sh "${GITHUB_REF_NAME}"
+
+      - name: Tag release
+        run: |
+          if [ -f "data/releases/data-${WEEK}.json" ]; then
+            tag="data-${WEEK}"
+            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+              echo "tag ${tag} exists; release is idempotent, not re-tagging"
+            else
+              git tag -a "${tag}" -m "Data release ${WEEK}"
+              git push origin "${tag}"
+            fi
+          else
+            echo "no release manifest for ${WEEK} yet (WP4 not implemented); no tag"
+          fi
+
+      - name: Build dashboard (private mode, artifact only)
+        run: uv run --frozen measles dashboard build
+
+      - name: Upload dashboard artifact
+        if: hashFiles('site/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-${{ env.WEEK }}
+          path: site/
+          retention-days: 90
