@@ -35,6 +35,10 @@ confirm on GitHub with the first `ci` run.
   inputs are unchanged. T1.1 to T1.7 pass on synthetic inputs shaped like the Census files.
   Real-data confirmation (and U5, U6, U7) follows the first `capture-light` run.
 
+- WP3e foundations: table contracts (`ingest/curate/schema.py`, HANDOFF 4.3), append-only
+  Parquet writer (one file per `ingest_run_id`, idempotent), and `ingest/access.py` with
+  `current`, `as_known_at` and `capture_status` over DuckDB. T3.9 and the E20 tie-break pass.
+
 Not yet: T2.10 (network probe) needs B3. WP2c remainder (HAN, school files, local health
 departments) needs `docs/sources.md`. WP3 onward.
 
