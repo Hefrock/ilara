@@ -1,0 +1,22 @@
+{
+  "bytes": 604806,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out5",
+  "compression": "gzip",
+  "content_hash": "b6a399166b7d1d301e5612a756d38b91a85dfe3283bc2577dcdc29f9a3038550",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37679243101-1:18:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out5",
+    "purpose": "statewide update (archived 2026-09-26)"
+  },
+  "fetched_at_et": "2026-10-07T16:05:48-04:00",
+  "fetched_at_utc": "2026-10-07T20:05:48Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T200548Z_2b71da109623.html.gz",
+  "sha256": "2b71da1096236b35994e1ee4787f205b7d76e1e9cd880dbcaaed4d4baff792be",
+  "source_id": "doh_release",
+  "stored_sha256": "0105b0a1a901b1867e5dcff10b1177c28732c054a81a85cd9c9727bca3abc4a2",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-statewide-update-on-measles-out5"
+}

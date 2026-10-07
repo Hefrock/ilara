@@ -1,0 +1,22 @@
+{
+  "bytes": 605748,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-update-on-measles-outbreak-0923",
+  "compression": "gzip",
+  "content_hash": "dd460965aa4b0abb7ed403d66a6f52c79dc3947ccb561fcb0343706d4c10de12",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37679243101-1:17:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-update-on-measles-outbreak-0923",
+    "purpose": "statewide update around 2026-09-21 to 23; sw-007 (792), U16"
+  },
+  "fetched_at_et": "2026-10-07T16:05:43-04:00",
+  "fetched_at_utc": "2026-10-07T20:05:43Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T200543Z_4f1646001515.html.gz",
+  "sha256": "4f1646001515fd1c737566d132cad8ddf8299fb4229750f67d9298a23bd265f9",
+  "source_id": "doh_release",
+  "stored_sha256": "02ee079b5d303f1313a645bb66a0f85c5755ec07cba56abe7daef7b214b0cb07",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-provides-update-on-measles-outbreak-0923"
+}

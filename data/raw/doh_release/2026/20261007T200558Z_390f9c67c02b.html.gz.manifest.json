@@ -1,0 +1,22 @@
+{
+  "bytes": 593956,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/doh-confirms-two-additional-measles-associated-deaths-",
+  "compression": "gzip",
+  "content_hash": "d02298f2d8938703dd07b52648204720c29b7b975c33d95916308164e101bef0",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37679243101-1:20:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/doh-confirms-two-additional-measles-associated-deaths-",
+    "purpose": "deaths 3 and 4 (archived 2026-09-15)"
+  },
+  "fetched_at_et": "2026-10-07T16:05:58-04:00",
+  "fetched_at_utc": "2026-10-07T20:05:58Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T200558Z_390f9c67c02b.html.gz",
+  "sha256": "390f9c67c02b1efc33f573707aad76ba8f8fbf1aac98d904cb3955c0330fc38a",
+  "source_id": "doh_release",
+  "stored_sha256": "ddb9b92b2d1da73ce19322105a94b230464720c065d6f405b19cab924eb4e605",
+  "url": "https://www.pa.gov/agencies/health/newsroom/doh-confirms-two-additional-measles-associated-deaths-"
+}

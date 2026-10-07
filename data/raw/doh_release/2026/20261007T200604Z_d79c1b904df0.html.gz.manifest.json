@@ -1,0 +1,22 @@
+{
+  "bytes": 606924,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-confirms-fifth-measles-associated-death",
+  "compression": "gzip",
+  "content_hash": "20b60dd10b5f7bd3b7897422c98a417807c2f3132138602add46c54e049d9d7d",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37679243101-1:21:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-confirms-fifth-measles-associated-death",
+    "purpose": "death 5 (archived 2026-09-30)"
+  },
+  "fetched_at_et": "2026-10-07T16:06:04-04:00",
+  "fetched_at_utc": "2026-10-07T20:06:04Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T200604Z_d79c1b904df0.html.gz",
+  "sha256": "d79c1b904df0e15621960529534000f0abbca88c094292bfe47e24849206feae",
+  "source_id": "doh_release",
+  "stored_sha256": "1fc842e167d80d0c8cb33863056eb031229fed8dbeab962adb1d0f6090ee80a5",
+  "url": "https://www.pa.gov/agencies/health/newsroom/pa-department-of-health-confirms-fifth-measles-associated-death"
+}

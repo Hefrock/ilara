@@ -1,0 +1,22 @@
+{
+  "bytes": 601860,
+  "capture_key": "https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-on-measles-outbre",
+  "compression": "gzip",
+  "content_hash": "590bca00c58e4ceb962464ce71db1d64526e648cbb24945592b8bec71acba261",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37679243101-1:13:doh_release",
+    "final_url": "https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-on-measles-outbre",
+    "purpose": "statewide update (archived 2026-08-29)"
+  },
+  "fetched_at_et": "2026-10-07T16:05:23-04:00",
+  "fetched_at_utc": "2026-10-07T20:05:23Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_release",
+  "raw_path": "data/raw/doh_release/2026/20261007T200523Z_a5eb00f043e8.html.gz",
+  "sha256": "a5eb00f043e8752ab6c2606e588846e7037adee3aea0fe7107d44c7a581d5efc",
+  "source_id": "doh_release",
+  "stored_sha256": "a8462727a4ad9abf4dbee3dddfea784f385dee0f6a339b3ede878842c8492175",
+  "url": "https://www.pa.gov/agencies/health/newsroom/department-of-health-provides-statewide-update-on-measles-outbre"
+}
