@@ -90,3 +90,37 @@ def capture_status(root: Path | None = None) -> pl.DataFrame:
     )
     latest = df.sort("finished_utc").group_by("source_id").last()
     return latest.join(good, on="source_id", how="left").sort("source_id")
+
+
+# ---------------------------------------------------------------- reference data (WP1)
+
+_REF_SCHEMA = {
+    "county_fips": pl.Utf8,
+    "a_fips": pl.Utf8,
+    "b_fips": pl.Utf8,
+    "origin": pl.Utf8,
+    "dest": pl.Utf8,
+}
+
+
+def reference_table(name: str, root: Path | None = None) -> pl.DataFrame:
+    """A reference CSV such as ``geography_county`` or ``population_county``."""
+    p = paths.reference_dir(root) / f"{name}.csv"
+    if not p.exists():
+        raise FileNotFoundError(f"reference table {name} not built (run measles reference build)")
+    head = p.read_text().splitlines()[0].split(",")
+    return pl.read_csv(p, schema_overrides={k: v for k, v in _REF_SCHEMA.items() if k in head})
+
+
+def reference_geojson(root: Path | None = None) -> dict:
+    """Simplified county boundaries (EPSG:4326) keyed by ``county_fips``."""
+    import json
+
+    p = paths.reference_dir(root) / "county_simplified.geojson"
+    return json.loads(p.read_text())
+
+
+def open_flags(root: Path | None = None) -> pl.DataFrame:
+    """Open data quality flags of the curated store (latest row per flag)."""
+    df = current("data_quality_flag", "curated", root)
+    return df.filter(pl.col("status") == "open") if df.height else df
