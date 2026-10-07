@@ -5,7 +5,7 @@
   "files": {
     "county.gpkg": {
       "bytes": 442368,
-      "sha256": "8d0fbf9f1661ef7f38579fbeef9b578dc8b6119e3d9c4403cf8a1b99ea124b3d"
+      "sha256": "f72d4f7bd29089cea86f235a32ecbb1789a4e80f5be2a047f553acd8a8e33d9a"
     },
     "county_adjacency.csv": {
       "bytes": 6680,
@@ -27,6 +27,10 @@
       "bytes": 2992,
       "sha256": "211e4f6a21226d799919c186f5fe6f11ffbd512f5a51b29e677c1d544342fd84"
     },
+    "mobility_edge.csv": {
+      "bytes": 65001,
+      "sha256": "16d89dd7126ef28c69133745c581b1c90cfd6b6910d9c93b8832c9a3d034391f"
+    },
     "population_county.csv": {
       "bytes": 11824,
       "sha256": "6369f3cc923e5cb4a2d9ffa069577eccc99f8573eb77dccea656ce536e45e581"
@@ -37,6 +41,11 @@
       "fetched_at_utc": "2026-10-07T11:16:45Z",
       "raw_path": "data/raw/census_cartographic/2026/20261007T111645Z_da4051717cae.zip",
       "sha256": "da4051717caec55c75e3748c3608c2a3dbde8d1ff401bbaf4f952e3c3fb63ef1"
+    },
+    "census_commuting": {
+      "fetched_at_utc": "2026-10-07T20:05:01Z",
+      "raw_path": "data/raw/census_commuting/2026/20261007T200501Z_1dbf52bede8a.xlsx",
+      "sha256": "1dbf52bede8af185ec487e193903e19332c9633cbb3da689afcc382fef7317ee"
     },
     "census_popest_agesex": {
       "fetched_at_utc": "2026-10-07T11:16:35Z",
@@ -49,9 +58,7 @@
       "sha256": "4f5a499d851e2cb48fd7a5405e5a9235453a8a66933657aacd10df0e264f35d5"
     }
   },
-  "missing_inputs": [
-    "census_commuting"
-  ],
+  "missing_inputs": [],
   "statewide_population_check": 13059432,
   "vintage": "2025"
 }
