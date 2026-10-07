@@ -1,0 +1,21 @@
+{
+  "bytes": 817530,
+  "capture_key": null,
+  "compression": "gzip",
+  "content_hash": "89870c08ac42d4a85381871a1fd4c91bbdfd2d1d72dc27a5332441adc64ea817",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-37612900766-1:05:doh_school_imm_school",
+    "content_type": "text/html"
+  },
+  "fetched_at_et": "2026-10-07T07:16:25-04:00",
+  "fetched_at_utc": "2026-10-07T11:16:25Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_school_imm_school",
+  "raw_path": "data/raw/doh_school_imm_school/2026/20261007T111625Z_00162b993811.html.gz",
+  "sha256": "00162b993811ac35f60af811a02974f71aa4cfdd728ba171a38c824b648997d0",
+  "source_id": "doh_school_imm_school",
+  "stored_sha256": "9976972694b4551775a71fb6e3e00f7ae9d759fbb0a8f735eb077c730a2630ca",
+  "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/healthstatistics/school-immunizations/current/school-immunization-rates.html"
+}

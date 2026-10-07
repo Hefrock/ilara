@@ -1,0 +1,21 @@
+{
+  "bytes": 241801,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "36e089bbfb5e4856fa4394aa4606bf6f1d00188172cc9a87dbd056269e865403",
+  "ext": "csv",
+  "extra": {
+    "capture_id": "gh-37612900766-1:07:census_popest_agesex",
+    "content_type": "text/csv"
+  },
+  "fetched_at_et": "2026-10-07T07:16:35-04:00",
+  "fetched_at_utc": "2026-10-07T11:16:35Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "census_popest_agesex",
+  "raw_path": "data/raw/census_popest_agesex/2026/20261007T111635Z_b1c6f4c6bd9f.csv",
+  "sha256": "b1c6f4c6bd9fb119ca509782d0b6aee340758ce8182e469b29eaf79b86d79aa9",
+  "source_id": "census_popest_agesex",
+  "stored_sha256": "b1c6f4c6bd9fb119ca509782d0b6aee340758ce8182e469b29eaf79b86d79aa9",
+  "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/asrh/cc-est2025-agesex-42.csv"
+}

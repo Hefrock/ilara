@@ -1,0 +1,21 @@
+{
+  "bytes": 11626066,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "b9ef9bb337ad862f9c6e8d0880c43fb936ed442896e65829403383012e8f4203",
+  "ext": "zip",
+  "extra": {
+    "capture_id": "gh-37612900766-1:09:census_cartographic",
+    "content_type": "application/zip"
+  },
+  "fetched_at_et": "2026-10-07T07:16:45-04:00",
+  "fetched_at_utc": "2026-10-07T11:16:45Z",
+  "http_status": 200,
+  "normaliser": "identity:1",
+  "parser_hint": "census_cartographic",
+  "raw_path": "data/raw/census_cartographic/2026/20261007T111645Z_da4051717cae.zip",
+  "sha256": "da4051717caec55c75e3748c3608c2a3dbde8d1ff401bbaf4f952e3c3fb63ef1",
+  "source_id": "census_cartographic",
+  "stored_sha256": "da4051717caec55c75e3748c3608c2a3dbde8d1ff401bbaf4f952e3c3fb63ef1",
+  "url": "https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_county_500k.zip"
+}

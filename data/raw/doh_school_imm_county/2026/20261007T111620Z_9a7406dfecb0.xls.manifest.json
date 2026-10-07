@@ -1,0 +1,21 @@
+{
+  "bytes": 855552,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "e1e5e4d86824849fb3887dd9a7a90eb3014a96045cdf005ae459535048ea20ba",
+  "ext": "xls",
+  "extra": {
+    "capture_id": "gh-37612900766-1:04:doh_school_imm_county",
+    "content_type": "application/vnd.ms-excel"
+  },
+  "fetched_at_et": "2026-10-07T07:16:20-04:00",
+  "fetched_at_utc": "2026-10-07T11:16:20Z",
+  "http_status": 200,
+  "normaliser": "identity:1",
+  "parser_hint": "doh_school_imm_county",
+  "raw_path": "data/raw/doh_school_imm_county/2026/20261007T111620Z_9a7406dfecb0.xls",
+  "sha256": "9a7406dfecb0cd32d4ca1bbc22785f51099082d8ac83ad92953cd8a6f7eb0cdf",
+  "source_id": "doh_school_imm_county",
+  "stored_sha256": "9a7406dfecb0cd32d4ca1bbc22785f51099082d8ac83ad92953cd8a6f7eb0cdf",
+  "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/health/documents/topics/documents/programs/immunizations/School%20Immunization%20Survey%20Summary%20by%20County%202025-2026.xls"
+}

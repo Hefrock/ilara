@@ -1,0 +1,21 @@
+{
+  "bytes": 2071735,
+  "capture_key": null,
+  "compression": "gzip",
+  "content_hash": "fa249e918508c15d4cc4b0fcc8ea4e2c60d13f7bbc1aaccc8bd873e51ecd2afb",
+  "ext": "csv",
+  "extra": {
+    "capture_id": "gh-37612900766-1:06:census_popest_totals",
+    "content_type": "text/csv"
+  },
+  "fetched_at_et": "2026-10-07T07:16:30-04:00",
+  "fetched_at_utc": "2026-10-07T11:16:30Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "census_popest_totals",
+  "raw_path": "data/raw/census_popest_totals/2026/20261007T111630Z_4f5a499d851e.csv.gz",
+  "sha256": "4f5a499d851e2cb48fd7a5405e5a9235453a8a66933657aacd10df0e264f35d5",
+  "source_id": "census_popest_totals",
+  "stored_sha256": "cbd9d57048ee04fdf906e273d98c4dcb4af1cb23efd01f055d504fcec01952f1",
+  "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
+}
