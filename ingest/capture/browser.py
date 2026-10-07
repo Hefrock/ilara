@@ -89,19 +89,28 @@ def capture_browser(src: Source, log: CaptureLog, root: Path) -> list[CaptureRec
     responses: list[dict[str, Any]] = []
     cid = log.next_capture_id(src.source_id)
 
+    # Diagnostics (probe report, U1): every API response seen, with why its body was or was
+    # not kept. Bodies themselves are kept only for JSON responses.
+    seen: list[dict[str, Any]] = []
+
     def on_response(resp: Any) -> None:
+        entry: dict[str, Any] = {"url": resp.url, "status": resp.status}
         try:
+            req = resp.request
+            entry["method"] = req.method
             ctype = (resp.headers or {}).get("content-type", "")
+            entry["content_type"] = ctype
             if "json" not in ctype:
+                entry["kept"] = "not json"
                 return
             body = resp.body()
             if len(body) > MAX_RESPONSE_BYTES:
+                entry["kept"] = f"too large ({len(body)} bytes)"
                 return
             try:
                 parsed: Any = json.loads(body)
             except ValueError:
                 parsed = body.decode("utf-8", "replace")
-            req = resp.request
             responses.append(
                 {
                     "url": resp.url,
@@ -111,8 +120,12 @@ def capture_browser(src: Source, log: CaptureLog, root: Path) -> list[CaptureRec
                     "body": parsed,
                 }
             )
-        except Exception:  # noqa: BLE001 - a lost response must not abort the capture
-            return
+            entry["kept"] = "yes"
+        except Exception as e:  # noqa: BLE001 - a lost response must not abort the capture
+            entry["kept"] = f"error: {type(e).__name__}: {str(e)[:200]}"
+        finally:
+            if "powerbi" in resp.url or "analysis.usgovcloudapi" in resp.url:
+                seen.append(entry)
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
@@ -159,8 +172,9 @@ def capture_browser(src: Source, log: CaptureLog, root: Path) -> list[CaptureRec
             browser.close()
 
     responses.sort(key=lambda r: (r["url"], r["method"], str(r["post_data"])))
+    seen.sort(key=lambda e: (e["url"], e.get("method", "")))
     bundle = json.dumps(
-        {"final_url": final_url, "responses": responses}, indent=1, sort_keys=True
+        {"final_url": final_url, "responses": responses, "seen": seen}, indent=1, sort_keys=True
     ).encode()
     extra = {"capture_id": cid, "final_url": final_url}
     common = dict(
