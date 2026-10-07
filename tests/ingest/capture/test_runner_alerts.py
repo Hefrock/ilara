@@ -85,7 +85,8 @@ def test_issue_lifecycle() -> None:  # WP2e
         body = json.loads(req.content) if req.content else {}
         calls.append((req.method, req.url.path, body))
         if req.method == "GET":
-            return httpx.Response(200, json=open_issues)
+            label = req.url.params.get("labels")
+            return httpx.Response(200, json=open_issues if label == "capture-failure" else [])
         if req.url.path.endswith("/issues") and req.method == "POST":
             return httpx.Response(201, json={"number": 9})
         return httpx.Response(200, json={})
@@ -119,3 +120,19 @@ def test_capture_record_round_trip(root: Path) -> None:
     recs = runner.run([reg["doh_newsroom"]], log, root, client=_client(_handler))
     stored = json.loads(log.path.read_text().splitlines()[0])
     assert stored == asdict(recs[0])
+
+
+def test_partial_capture_is_an_anomaly() -> None:
+    rec = {
+        "capture_id": "c2",
+        "source_id": "doh_dashboard",
+        "url": "u",
+        "outcome": "changed",
+        "finished_utc": "2026-10-07T18:00:00Z",
+        "http_status": 200,
+        "sha256": "ab",
+        "error": "county: TimeoutError",
+    }
+    al = alerts.build_alerts([rec], [])
+    assert len(al) == 1 and al[0].label == "data-anomaly"
+    assert alerts.recovered_sources([rec]) == set()

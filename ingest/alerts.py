@@ -41,6 +41,9 @@ def _crons_for(source_id: str) -> tuple[str, ...]:
 def build_alerts(records: list[dict[str, Any]], history: list[dict[str, Any]]) -> list[Alert]:
     alerts: list[Alert] = []
     for r in records:
+        if r["outcome"] in ("changed", "unchanged") and r.get("error"):
+            alerts.append(_partial_alert(r))
+            continue
         if r["outcome"] not in ("failed", "blocked"):
             continue
         last_good = max(
@@ -81,8 +84,33 @@ def build_alerts(records: list[dict[str, Any]], history: list[dict[str, Any]]) -
     return alerts
 
 
+def _partial_alert(r: dict[str, Any]) -> Alert:
+    body = "\n".join(
+        [
+            "**Anomaly:** capture saved, but part of it did not complete",
+            f"**Source:** `{r['source_id']}` ({r['url']})",
+            f"**Capture id:** `{r['capture_id']}`",
+            f"**Run:** {run_link()}",
+            f"**Raw hash (text):** {r.get('sha256')}",
+            "",
+            "```",
+            (r.get("error") or "")[:1500],
+            "```",
+            "",
+            "Raw was saved first (I1); the parse step decides what the partial capture supports.",
+        ]
+    )
+    return Alert(
+        LABEL_ANOMALY, f"[{LABEL_ANOMALY}] {r['source_id']}: partial capture", body, r["source_id"]
+    )
+
+
 def recovered_sources(records: list[dict[str, Any]]) -> set[str]:
-    return {r["source_id"] for r in records if r["outcome"] in ("changed", "unchanged")}
+    return {
+        r["source_id"]
+        for r in records
+        if r["outcome"] in ("changed", "unchanged") and not r.get("error")
+    }
 
 
 class GitHubIssues:
@@ -108,7 +136,7 @@ class GitHubIssues:
 
     def apply(self, alerts: list[Alert], recovered: set[str]) -> list[str]:
         actions: list[str] = []
-        open_ = self.open_issues(LABEL_FAILURE)
+        open_ = self.open_issues(LABEL_FAILURE) + self.open_issues(LABEL_ANOMALY)
         by_title = {i["title"]: i for i in open_}
         for a in alerts:
             if a.title in by_title:
