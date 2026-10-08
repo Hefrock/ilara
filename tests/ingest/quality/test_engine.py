@@ -251,3 +251,66 @@ def test_source_conflict_between_documents_not_revisions(seeded: Path) -> None:
     assert [x.code for x in f.flags] == ["SOURCE_CONFLICT"]
     cur = access.current("case_state", root=seeded).filter(pl.col("source_id") == "doh_release")
     assert cur["raw_sha256"].to_list() == ["3" * 64]  # fixed tie-break on equal fetch time
+
+
+def _capture(root: Path, finished: str, outcome: str = "changed") -> None:
+    CaptureLog("r9", root).append(
+        CaptureRecord(
+            capture_id=f"r9:{finished}",
+            source_id="doh_dashboard",
+            url="u",
+            started_utc=finished,
+            finished_utc=finished,
+            http_status=200,
+            outcome=outcome,
+            raw_path=None,
+            sha256=None,
+            content_hash=None,
+            bytes=None,
+            runner="local",
+        )
+    )
+
+
+def _flag_status(root: Path, code: str) -> list[str]:
+    cur = access.current("data_quality_flag", root=root).filter(pl.col("code") == code)
+    return sorted(cur["status"].to_list())
+
+
+def test_flags_resolve_when_the_condition_clears_and_reopen_if_it_returns(seeded: Path) -> None:
+    _capture(seeded, "2026-10-01T18:00:05Z")
+    engine.run(seeded, NOW)  # Oct 7: last good capture six days old
+    assert _flag_status(seeded, "STALE_SNAPSHOT") == ["open"]
+    _capture(seeded, "2026-10-07T03:30:00Z")  # a good capture arrives
+    later = datetime(2026, 10, 7, 4, 30, tzinfo=UTC)  # same day, so no new daily flag
+    n, _ = engine.run(seeded, later)
+    assert n == 1 and _flag_status(seeded, "STALE_SNAPSHOT") == ["resolved"]
+    assert access.open_flags(seeded).filter(pl.col("code") == "STALE_SNAPSHOT").height == 0
+    # History is kept: the open row is still in the store (I2).
+    all_rows = access.all_rows("data_quality_flag", root=seeded)
+    stale = all_rows.filter(pl.col("code") == "STALE_SNAPSHOT")
+    assert sorted(stale["status"].to_list()) == ["open", "resolved"]
+    assert engine.run(seeded, later)[0] == 0  # nothing changed: nothing written
+
+
+def test_resolution_leaves_parser_and_seed_flags_alone(seeded: Path) -> None:
+    before = access.open_flags(seeded).filter(pl.col("code") == "DATE_TO_CONFIRM").height
+    assert before >= 1  # seed rows with dates to confirm
+    engine.run(seeded, NOW)
+    after = access.open_flags(seeded).filter(pl.col("code") == "DATE_TO_CONFIRM").height
+    assert after == before
+
+
+def test_resolved_flag_reopens(seeded: Path) -> None:
+    _dash_state(seeded, date(2026, 10, 5), 1004, "a" * 64, NOW)
+    _dash_state(seeded, date(2026, 10, 7), 1001, "b" * 64, NOW)
+    engine.run(seeded, NOW)
+    assert _flag_status(seeded, "CUM_DECREASE") == ["open"]
+    later = datetime(2026, 10, 7, 6, tzinfo=UTC)
+    _dash_state(seeded, date(2026, 10, 7), 1006, "c" * 64, later)  # corrected snapshot
+    engine.run(seeded, later)
+    assert _flag_status(seeded, "CUM_DECREASE") == ["resolved"]
+    again = datetime(2026, 10, 7, 9, tzinfo=UTC)
+    _dash_state(seeded, date(2026, 10, 7), 1001, "d" * 64, again)  # the same decrease returns
+    engine.run(seeded, again)
+    assert _flag_status(seeded, "CUM_DECREASE") == ["open"]

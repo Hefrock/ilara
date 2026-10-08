@@ -478,11 +478,12 @@ def run_checks(root: Path, now: datetime) -> Findings:
 
 
 def write_flags(f: Findings, root: Path, now: datetime) -> int:
-    existing = set(access.all_rows("data_quality_flag", "curated", root)["flag_id"])
-    new = {fl.flag_id: fl for fl in f.flags if fl.flag_id not in existing}
-    if not new:
-        return 0
-    run_id = hashlib.sha256(("|".join(sorted(new)) + ENGINE_VERSION).encode()).hexdigest()[:12]
+    """Append flag rows: new findings open, findings that came back reopen, and flags this
+    engine raised earlier whose condition no longer holds are resolved. Resolution is a new
+    row (I2); flags raised by parsers or the seed loader are left as they are."""
+    latest = access.current("data_quality_flag", "curated", root)
+    status = dict(zip(latest["flag_id"], latest["status"], strict=True)) if latest.height else {}
+    found = {fl.flag_id: fl for fl in f.flags}
     rows = [
         {
             "flag_id": k,
@@ -492,12 +493,37 @@ def write_flags(f: Findings, root: Path, now: datetime) -> int:
             "ref_raw_sha256": fl.ref,
             "description": fl.description,
             "status": "open",
-            "ingest_run_id": run_id,
+            "ingest_run_id": "",
             "parser_version": f"quality-{ENGINE_VERSION}",
             "fetched_at_utc": now,
         }
-        for k, fl in sorted(new.items())
+        for k, fl in sorted(found.items())
+        if status.get(k) != "open"
     ]
+    if latest.height:
+        mine = latest.filter(
+            (pl.col("status") == "open")
+            & pl.col("parser_version").str.starts_with("quality-")
+            & ~pl.col("flag_id").is_in(list(found))
+        )
+        for r in mine.sort("flag_id").to_dicts():
+            rows.append(
+                {
+                    **{k: r[k] for k in ("flag_id", "raised_utc", "severity", "code")},
+                    "ref_raw_sha256": r["ref_raw_sha256"],
+                    "description": r["description"],
+                    "status": "resolved",
+                    "ingest_run_id": "",
+                    "parser_version": f"quality-{ENGINE_VERSION}",
+                    "fetched_at_utc": now,
+                }
+            )
+    if not rows:
+        return 0
+    key = "|".join(f"{r['flag_id']}:{r['status']}" for r in rows) + ENGINE_VERSION + str(now)
+    run_id = hashlib.sha256(key.encode()).hexdigest()[:12]
+    for r in rows:
+        r["ingest_run_id"] = run_id
     store.write("curated", "data_quality_flag", pl.DataFrame(rows), run_id, now, root)
     return len(rows)
 

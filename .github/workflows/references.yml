@@ -1,0 +1,32 @@
+name: references
+
+# Manual only. Prints citation records and abstracts for docs/references/references.yml to the
+# job log (B17). Commits nothing: abstracts are publisher text and stay out of the repo (I10).
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: references
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Fetch references (polite client, robots.txt respected)
+        run: uv run --frozen measles references

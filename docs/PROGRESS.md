@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-08 (24) | Quality flags raised by the engine now resolve (new row) when their condition clears and reopen if it returns; `measles references` and a manual `references` workflow print citation records and abstracts from PubMed and Europe PMC for B17 (nothing committed but citations, I10) | Merge, run the references workflow, read the figures into `docs/references/` and `project/model/params.yml` |
 | 2026-10-08 (23) | T5.7: every chart is focusable with a text label; arrow keys step through values, show the same tooltip as the mouse and read it through a live region; Enter on the coverage map selects a county; palette lightness ordering tested | Friday: confirm the backup routine; owner: B17 |
 | 2026-10-08 (22) | CDC cross-check: map data parsed from real captures (PA 963 as of Oct 1, dated from the CDC page only when national totals match), kept out of the DOH series and checks, shown beside the nearest DOH totals in the trust section | Friday: confirm the backup routine; owner: B17 |
 | 2026-10-08 (21) | Manual capture-light run (scheduler had not run it): all 14 HTTP sources reached; CDC configurations name two data files (jurisdiction map, national weekly), added to the daily capture | After the next capture: golden-file parser for the CDC Pennsylvania count, into the reconciliation; Friday: confirm the backup routine; owner: B17 |
