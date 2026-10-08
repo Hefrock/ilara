@@ -28,7 +28,7 @@ def _client(handler) -> PoliteClient:  # type: ignore[no-untyped-def]
 def test_reference_list_is_readable() -> None:
     refs = references.load(REPO)
     assert {r["key"] for r in refs} == {"guerra2017", "vink2014", "klinkenberg2011"}
-    assert all(r["pmid"] and r["citation"] and r["for"] for r in refs)
+    assert all((r["pmid"] or r["doi"]) and r["citation"] and r["for"] for r in refs)
 
 
 def test_fetch_parses_both_sources_and_checks_the_doi() -> None:
@@ -48,12 +48,19 @@ def test_fetch_parses_both_sources_and_checks_the_doi() -> None:
 
     ref = {"key": "guerra2017", "pmid": "28757186", "doi": "10.1016/S1473-3099(17)30307-9"}
     [e] = references.fetch_all([ref], _client(handler))
-    pm, ep = e["sources"]["pubmed"], e["sources"]["europepmc"]
-    assert pm["title"] == "A test title" and pm["year"] == "2017"
-    assert pm["abstract"] == "FINDINGS: R0 was 9 to 10." and pm["doi_matches"] is True
+    assert set(e["sources"]) == {"europepmc"}  # PubMed is disallowed by robots.txt
+    ep = e["sources"]["europepmc"]
     assert ep["doi_matches"] is False  # a record for another paper is visibly marked
-    text = references.report([e])
-    assert "matches: True" in text and "matches: False" in text
+    assert "matches: False" in references.report([e])
+    pm = references.parse_pubmed(XML)  # kept for records saved by hand
+    assert pm is not None and pm["title"] == "A test title" and pm["year"] == "2017"
+    assert pm["abstract"] == "FINDINGS: R0 was 9 to 10."
+
+
+def test_lookup_is_by_doi_when_known() -> None:
+    q = references.europepmc_query({"pmid": "1", "doi": "10.1093/aje/kwu209"})
+    assert "DOI" in q and "kwu209" in q and "EXT_ID" not in q
+    assert "EXT_ID" in references.europepmc_query({"pmid": "21704640", "doi": None})
 
 
 def test_robots_disallow_is_reported_not_worked_around() -> None:  # I7

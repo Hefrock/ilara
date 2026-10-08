@@ -148,8 +148,8 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 | U9 | PA EDDIE exposes measles | Human (H9) | owner note in `docs/BLOCKERS.md` |
 | U10 | PaWSS publishes measles | Human (H9) | owner note |
 | U11 | Wayback CDX technique | WP3 backfill | pass or fail recorded in `docs/backfill_report.md` VERIFIED 2026-10-07: CDX query works (docs/backfill_report.md) |
-| U12 | R0 prior 12 to 18 | WP6 | literature citation recorded in model config |
-| U13 | Latent and generation time about 10 to 12 days | WP6 | literature citation recorded |
+| U12 | R0 prior 12 to 18 | WP6 | literature citation recorded in model config PARTIAL 2026-10-08: Guerra et al. 2017 (docs/references) says 12-18 is the often cited range and that rigorous estimates vary more; its medians by setting are in the article body, still to read |
+| U13 | Latent and generation time about 10 to 12 days | WP6 | literature citation recorded PARTIAL 2026-10-08: generation time 11-12 days VERIFIED from Klinkenberg and Nishiura 2011 (docs/references); serial interval (Vink et al. 2014) still to read |
 | U14 | HAN 822 PDF URL | WP3 backfill | `data/seed/events.csv` `url_status` set to `verified` |
 | U15 | Chester County Health Department page | Human (H10) | registry entry |
 | U16 | DOH release dates for 497 and 540; DOH release pages for 792 and 1,004 | WP3 backfill | `to_confirm` rows resolved; T3-derived rows corroborated VERIFIED 2026-10-07: 497 is the 2026-08-31 release, 540 the 2026-09-02 release (docs/backfill_report.md) |

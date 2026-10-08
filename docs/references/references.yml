@@ -8,12 +8,12 @@ references:
     citation: "Guerra FM, Bolotin S, Lim G, et al. The basic reproduction number (R0) of measles: a systematic review. Lancet Infect Dis. 2017."
     for: [U12]
   - key: vink2014
-    pmid: "25262286"
+    pmid: null  # 25262286 was wrong (an unrelated 2015 paper, caught by the DOI check)
     doi: 10.1093/aje/kwu209
     citation: "Vink MA, Bootsma MCJ, Wallinga J. Serial intervals of respiratory infectious diseases: a systematic review and analysis. Am J Epidemiol. 2014;180(9):865-875."
     for: [U13]
   - key: klinkenberg2011
     pmid: "21704640"
-    doi: null
+    doi: 10.1016/j.jtbi.2011.06.015
     citation: "Klinkenberg D, Nishiura H. The correlation between infectivity and incubation period of measles, estimated from households with two cases. J Theor Biol. 2011."
     for: [U13]

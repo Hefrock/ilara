@@ -22,9 +22,16 @@ from ingest.capture.http import PoliteClient
 
 EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id={}"
 EUROPEPMC = (
-    "https://www.ebi.ac.uk/europepmc/webservices/rest/search?resultType=core&format=json"
-    "&query=EXT_ID:{}%20AND%20SRC:MED"
+    "https://www.ebi.ac.uk/europepmc/webservices/rest/search?resultType=core&format=json&query={}"
 )
+
+
+def europepmc_query(ref: dict[str, Any]) -> str:
+    """Look a paper up by DOI when one is known (a wrong PMID cannot then return another
+    paper), else by PMID."""
+    if ref.get("doi"):
+        return quote(f'DOI:"{ref["doi"]}"')
+    return quote(f"EXT_ID:{ref['pmid']} AND SRC:MED")
 
 
 def load(root: Path | None = None) -> list[dict[str, Any]]:
@@ -72,11 +79,11 @@ def parse_europepmc(body: bytes) -> dict[str, Any] | None:
 def fetch_all(refs: list[dict[str, Any]], client: PoliteClient) -> list[dict[str, Any]]:
     out = []
     for ref in refs:
-        pmid = quote(str(ref["pmid"]))
-        entry: dict[str, Any] = {"key": ref["key"], "pmid": ref["pmid"], "sources": {}}
+        entry: dict[str, Any] = {"key": ref["key"], "pmid": ref.get("pmid"), "sources": {}}
+        # PubMed E-utilities is disallowed by NCBI's robots.txt for this client (run
+        # gh-37860465223), so only Europe PMC is asked (I7).
         for name, url, parser in (
-            ("pubmed", EFETCH.format(pmid), parse_pubmed),
-            ("europepmc", EUROPEPMC.format(pmid), parse_europepmc),
+            ("europepmc", EUROPEPMC.format(europepmc_query(ref)), parse_europepmc),
         ):
             res = client.fetch(url)
             if res.outcome != "ok" or res.body is None:
