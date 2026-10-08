@@ -280,3 +280,25 @@ def _add_release_rows(root: Path) -> None:
         for d, n in ((date(2026, 10, 5), 1004), (date(2026, 9, 11), 675))
     ]
     store.write("curated", "case_state", pl.DataFrame(rows), "testrelease1", fetched, root)
+
+
+def test_who_is_affected_suppresses_small_cells(site_root: Path, tmp_path: Path) -> None:  # C
+    page = build.build_page(site_root, NOW)
+    demo = page.data["demographics"]
+    assert demo["as_of_date"] == "2026-10-05" and demo["source_tier"] == "T1" and demo["raw_sha256"]
+    ages = {r["age_group"]: r for r in demo["ages"]}
+    assert ages["25-49"]["cases"] == 380 and ages["25-49"]["shown"] == "380"
+    # 65+ has 1 case in this snapshot: shown as "<5", and no number anywhere on the site.
+    assert ages["65+"] == {"age_group": "65+", "cases": None, "suppressed": True, "shown": "<5"}
+    months = {r["report_month"]: r for r in demo["months"]}
+    assert months["2026-03"]["shown"] == "not reported"  # blank in the report, not zero (I5)
+    assert months["2026-01"]["suppressed"] and months["2026-01"]["cases"] is None  # 3 cases
+    assert months["2026-10"]["partial"] and not months["2026-09"]["partial"]
+    hosp = {r["age_band"]: r for r in demo["hospitalization"]}
+    assert hosp["Under 18"]["shown"] == "59 of 319" and hosp["All ages"]["share_pct"] == 19.7
+    build.write_site(tmp_path / "site", site_root, NOW)
+    csv = pl.read_csv(tmp_path / "site/data/demographics.csv")
+    small = csv.filter(pl.col("suppressed"))
+    assert small.height >= 2 and small["cases"].null_count() == small.height
+    shown_numbers = {r["cases"] for r in csv.to_dicts() if r["cases"] is not None}
+    assert not shown_numbers & {1, 2, 3, 4}

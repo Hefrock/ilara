@@ -47,3 +47,9 @@ responses).
 - `vaccine_doses`: MMR doses administered by DOH staff, statewide, by month of 2026, from the
   "Measles Vaccine Administered" page (ADR 0004). The month containing `as_of_date` has
   `period_complete` false. No dose number is given.
+- `case_demographics` (statewide, calendar year, parser 1.2.0): `age_group` (0-4, 5-9, 10-17,
+  18-24, 25-49, 50-64, 65+, Unk), `report_month` (`YYYY-MM`, month of report date, the only
+  dated case series the dashboard gives), `age_band` (cases under 18, 18 and over, all) and
+  `hospitalized_age_band` (hospitalized cases in the same bands, from cards like "198 of
+  1,004"). A blank cell is stored as null. Each set must add up to the year-to-date total of
+  the same capture, else it is flagged `DEMOGRAPHIC_SUM_MISMATCH` and not stored.

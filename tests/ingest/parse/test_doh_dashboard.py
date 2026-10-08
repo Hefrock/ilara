@@ -94,6 +94,62 @@ def _dose_rows(b: dict[str, Any]) -> list[dict[str, Any]]:
     raise AssertionError("no dose chart in the fixture")
 
 
+def test_golden_demographics() -> None:  # T3.1
+    out = doh_dashboard.parse(bundle())
+    d = {(r["dimension"], r["category"]): r["cases"] for r in out["demographics"]}
+    assert d[("age_group", "0-4")] == 112 and d[("age_group", "25-49")] == 380
+    assert d[("age_group", "Unk")] is None  # blank in the report: not reported, not zero (I5)
+    assert sum(v or 0 for (dim, _), v in d.items() if dim == "age_group") == 1004
+    months = [c for dim, c in d if dim == "report_month"]
+    assert months == [f"2026-{m:02d}" for m in range(1, 11)]  # nothing after the as-of month
+    assert d[("report_month", "2026-03")] is None and d[("report_month", "2026-09")] == 441
+    assert sum(v or 0 for (dim, _), v in d.items() if dim == "report_month") == 1004
+    assert d[("age_band", "all")] == 1004 and d[("hospitalized_age_band", "all")] == 198
+    assert d[("age_band", "under18")] == 112 + 55 + 152  # matches the age groups
+    assert d[("hospitalized_age_band", "under18")] == 59
+    assert d[("hospitalized_age_band", "18plus")] == 139
+    assert {r["count_definition"] for r in out["demographics"]} == {"calendar_year"}
+    assert not [f for f in out["flags"] if f[0] == "DEMOGRAPHIC_SUM_MISMATCH"]
+
+
+def _query_rows(b: dict[str, Any], first_name: str) -> list[list[dict[str, Any]]]:
+    out = []
+    for r in b["responses"]:
+        if "querydata" not in r["url"]:
+            continue
+        data = r["body"]["results"][0]["result"]["data"]
+        if data["descriptor"]["Select"][0]["Name"] == first_name:
+            out.append(data["dsr"]["DS"][0]["PH"][0]["DM0"])
+    assert out, first_name
+    return out
+
+
+def test_breakdown_that_does_not_add_up_is_flagged_not_stored() -> None:
+    b = bundle()
+    for rows in _query_rows(b, doh_dashboard.AGE[0]):
+        rows[0]["C"][1] += 1  # 0-4 group one case too many
+    out = doh_dashboard.parse(b)
+    dims = {r["dimension"] for r in out["demographics"]}
+    assert "age_group" not in dims and "report_month" in dims
+    assert any(c == "DEMOGRAPHIC_SUM_MISMATCH" and "age group" in t for c, t in out["flags"])
+    assert len(out["state"]) == 2 and len(out["county"]) == 67  # case data still parsed
+
+
+def test_unreadable_hospitalization_card_is_flagged() -> None:
+    b = bundle()
+    first = f"Min({doh_dashboard.T}.hosptotal)"
+    for r in b["responses"]:
+        if "querydata" not in r["url"]:
+            continue
+        data = r["body"]["results"][0]["result"]["data"]
+        if data["descriptor"]["Select"][0]["Name"] == first:
+            data["dsr"]["DS"][0]["PH"][0]["DM0"][0]["M0"] = "198 out of about 1,004"
+    out = doh_dashboard.parse(b)
+    dims = {r["dimension"] for r in out["demographics"]}
+    assert "age_band" not in dims and "hospitalized_age_band" not in dims
+    assert any(c == "DEMOGRAPHIC_SUM_MISMATCH" for c, _ in out["flags"])
+
+
 def test_bad_dose_chart_flags_but_keeps_case_rows() -> None:
     b = bundle()
     ph = _dose_rows(b)
@@ -135,7 +191,10 @@ def test_county_definition_unknown_when_totals_differ() -> None:
             data["dsr"]["DS"][0]["PH"][0]["DM0"][0]["M0"] += 1  # YTD total now 1,005
     out = doh_dashboard.parse(b)
     assert {r["count_definition"] for r in out["county"]} == {"unknown"}
-    assert [c for c, _ in out["flags"]] == ["DEFINITION_UNKNOWN"]
+    codes = [c for c, _ in out["flags"]]
+    assert codes[0] == "DEFINITION_UNKNOWN"
+    # The breakdowns no longer add up to the altered total either, so all three are held back.
+    assert codes[1:] == ["DEMOGRAPHIC_SUM_MISMATCH"] * 3 and out["demographics"] == []
 
 
 def test_no_queries_is_an_error() -> None:
@@ -175,7 +234,12 @@ def _later(b: dict[str, Any], drop_last_county: bool) -> dict[str, Any]:
 def test_runner_idempotent_and_county_drop(root: Path) -> None:  # T3.15, E20
     _save(root, bundle(), datetime(2026, 10, 7, 18, tzinfo=UTC))
     rep = runner.run(root)
-    assert rep.rows == {"case_state": 2, "case_county": 67, "vaccine_doses": 10}
+    assert rep.rows == {
+        "case_state": 2,
+        "case_county": 67,
+        "vaccine_doses": 10,
+        "case_demographics": 24,
+    }
     assert not rep.failed
     assert runner.run(root).skipped == 1
 

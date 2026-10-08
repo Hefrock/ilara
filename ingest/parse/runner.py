@@ -89,10 +89,12 @@ def _dashboard(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     state = [{**common, **r} for r in out["state"]]
     county = [{**common, **r} for r in out["county"]]
     doses = [{**common, **r} for r in out["doses"]]
+    demo = [{**common, **r} for r in out["demographics"]]
     return {
         "case_state": state,
         "case_county": county,
         "vaccine_doses": doses,
+        "case_demographics": demo,
         "flags": out["flags"],
     }
 
@@ -127,6 +129,7 @@ OUTPUT_TABLES = (
     "immunization_county",
     "immunization_school",
     "vaccine_doses",
+    "case_demographics",
 )
 
 
