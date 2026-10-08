@@ -76,6 +76,28 @@ def test_golden_county() -> None:  # T3.1, T3.11
     assert flagged == COMMUNITY
 
 
+def test_golden_vaccine_doses() -> None:  # T3.1
+    out = doh_dashboard.parse(bundle())
+    doses = out["doses"]
+    assert [r["period_start"].month for r in doses] == list(range(1, 11))
+    assert doses[0]["doses"] == 117 and doses[7]["doses"] == 3664
+    # The report's own total card on the same page reads 8,843 for this capture.
+    assert sum(r["doses"] for r in doses) == 8843
+    assert [r["period_complete"] for r in doses] == [True] * 9 + [False]  # October is partial
+    assert {(r["administered_by"], r["geography"]) for r in doses} == {("doh_staff", "state")}
+
+
+def test_missing_past_month_dose_is_an_error() -> None:
+    b = bundle()
+    for r in b["responses"]:
+        if r["view"] == "vaccine" and "Hierarchy.Month" in json.dumps(r["body"]):
+            ph = r["body"]["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"]
+            ph[0]["C"] = [0]  # January with its count marked null
+            ph[0]["Ø"] = 2
+    with pytest.raises(doh_dashboard.DashboardParseError):
+        doh_dashboard.parse(b)
+
+
 def test_county_definition_unknown_when_totals_differ() -> None:
     b = bundle()
     for r in b["responses"]:
@@ -127,7 +149,8 @@ def _later(b: dict[str, Any], drop_last_county: bool) -> dict[str, Any]:
 def test_runner_idempotent_and_county_drop(root: Path) -> None:  # T3.15, E20
     _save(root, bundle(), datetime(2026, 10, 7, 18, tzinfo=UTC))
     rep = runner.run(root)
-    assert rep.rows == {"case_state": 2, "case_county": 67} and not rep.failed
+    assert rep.rows == {"case_state": 2, "case_county": 67, "vaccine_doses": 10}
+    assert not rep.failed
     assert runner.run(root).skipped == 1
 
     _save(root, _later(bundle(), drop_last_county=True), datetime(2026, 10, 9, 18, tzinfo=UTC))

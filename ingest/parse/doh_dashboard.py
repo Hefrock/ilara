@@ -1,7 +1,8 @@
 """Parser for the DOH dashboard capture, access path A (G1, docs/probe_report.md).
 
 Input: the ``responses`` artefact of one capture (report data API responses, each tagged
-with the view it was captured under). Output rows for ``case_state`` and ``case_county``.
+with the view it was captured under). Output rows for ``case_state``, ``case_county`` and
+``vaccine_doses``.
 
 - ``as_of_date`` is the report's "Last Updated" measure (``meas_dlm``), not the fetch date.
 - The count definition of each headline figure comes from the query's own TimeFrame filter:
@@ -11,17 +12,22 @@ with the view it was captured under). Output rows for ``case_state`` and ``case_
   county map lists all counties, so a county on the map but not in the table is a reported
   zero. The county table has no TimeFrame filter: it is labelled ``calendar_year`` only when
   its total equals the year-to-date total of the same capture, else ``unknown`` with a flag.
+- Vaccine doses come from the "Measles Vaccine Administered" page: MMR doses given by DOH
+  staff, statewide, by month of the report's year (the page says "Month (2026)"). The month
+  containing ``as_of_date`` is partial (``period_complete`` false). The report gives no dose
+  number, so first, second and early infant doses cannot be told apart.
 """
 
 from __future__ import annotations
 
+import calendar
 from datetime import UTC, date, datetime
 from typing import Any
 
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.0.0"
+PARSER_VERSION = "1.1.0"  # 1.1.0: MMR doses administered by DOH staff
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -41,6 +47,10 @@ LAST_UPDATED = f"Min({T}.meas_dlm)"
 COUNTY = f"{M}.County"
 COUNTY_COUNT = f"Sum({M}.COUNT)"
 COUNTIES_WITH_CASES = f"Min({M}.County)"  # the report's own card: number of counties
+V = "PAmeasles2026_Public_mmr"
+DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
+DOSE_COUNT = f"CountNonNull({V}.vaccination_code)"
+MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
 
 
 class DashboardParseError(ValueError):
@@ -190,4 +200,52 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
             )
     else:
         flags.append(("PARSE_SCHEMA_CHANGE", "county table not found in the capture"))
-    return {"as_of_date": as_of, "state": state, "county": county_rows, "flags": flags}
+    doses, dose_flags = _doses(queries, as_of)
+    flags += dose_flags
+    return {
+        "as_of_date": as_of,
+        "state": state,
+        "county": county_rows,
+        "doses": doses,
+        "flags": flags,
+    }
+
+
+def _doses(
+    queries: list[dict[str, Any]], as_of: date
+) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
+    months: dict[int, int] = {}
+    seen = False
+    for q in queries:
+        if q["names"] == [DOSE_MONTH, DOSE_COUNT]:
+            seen = True
+            for r in q["blocks"].get("DM0", []):
+                name = r.get(DOSE_MONTH)
+                if name not in MONTHS:
+                    raise DashboardParseError(f"unexpected vaccine month row {r}")
+                if r.get(DOSE_COUNT) is None:
+                    # The chart's axis lists all twelve months; later months have no value.
+                    if date(as_of.year, MONTHS[name], 1) <= as_of:
+                        raise DashboardParseError(f"no dose count for {name} before {as_of}")
+                    continue
+                _agree(months, MONTHS[name], int(r[DOSE_COUNT]))
+    if not seen:
+        return [], [("PARSE_SCHEMA_CHANGE", "vaccine doses chart not found in the capture")]
+    rows = []
+    for m in sorted(months):
+        start = date(as_of.year, m, 1)
+        if start > as_of:
+            raise DashboardParseError(f"doses reported for {start}, after as-of date {as_of}")
+        end = date(as_of.year, m, calendar.monthrange(as_of.year, m)[1])
+        rows.append(
+            {
+                "as_of_date": as_of,
+                "period_start": start,
+                "period_end": end,
+                "period_complete": end < as_of,
+                "doses": months[m],
+                "administered_by": "doh_staff",
+                "geography": "state",
+            }
+        )
+    return rows, []

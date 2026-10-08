@@ -71,3 +71,23 @@ def test_rebuild_detects_a_hand_edit(root: Path) -> None:
         root,
     )
     assert any("curated/case_state" in d for d in rebuild.rebuild(root))
+
+
+def test_rebuild_after_parser_upgrade(root: Path, monkeypatch) -> None:  # E20
+    # A raw file that fails to parse is quarantined under each parser version that tried it;
+    # the rebuild runs only the current version, so older quarantine rows are not compared.
+    _repo(root)
+    rawstore.save(
+        source_id="doh_dashboard",
+        url="https://report.test",
+        data=b'{"responses": []}',
+        ext="json",
+        capture_key="responses",
+        fetched_at=datetime(2026, 10, 7, 20, tzinfo=UTC),
+        root=root,
+    )
+    runner.run(root)
+    version, fn = runner.PARSERS[("doh_dashboard", "responses")]
+    monkeypatch.setitem(runner.PARSERS, ("doh_dashboard", "responses"), ("9.0.0", fn))
+    runner.run(root)
+    assert rebuild.rebuild(root) == []

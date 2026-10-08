@@ -3,7 +3,8 @@
 Rebuild the curated and sensitivity tables from ``data/raw`` and the seed folders into a
 temporary directory, then compare the rebuilt ``current`` views (as logical rows) and the
 quarantine contents with the committed ones. Data quality flags raised by the quality engine
-carry their run time and are not compared.
+carry their run time and are not compared. Quarantine is compared for the newest parser
+version of each raw reference only.
 """
 
 from __future__ import annotations
@@ -30,7 +31,12 @@ def _logical(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def _quarantine(st: str, root: Path) -> pl.DataFrame:
+    """Quarantine rows from the newest parser version per raw reference: a parser upgrade
+    re-parses old raw files, and a rebuild only runs the current parsers."""
     q = access.all_rows("quarantine", st, root)
+    if q.height:
+        v = pl.col("parser_version").fill_null("0").str.split(".").cast(pl.List(pl.Int64))
+        q = q.with_columns(v.alias("_v")).filter(pl.col("_v") == pl.col("_v").max().over("ref"))
     return _logical(q.select("table", "row_json", "reason_code", "ref", "ingest_run_id"))
 
 

@@ -76,7 +76,7 @@ def _common(
         "ingest_run_id": run_id,
         "raw_sha256": m["sha256"],
         "parser_version": version,
-        "source_label": doh_dashboard.SOURCE_LABEL,
+        "source_label": label,
         "source_url": m["url"],
         "url_status": "verified",
     }
@@ -88,7 +88,13 @@ def _dashboard(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     common = _common(m, run_id, doh_dashboard.PARSER_VERSION)
     state = [{**common, **r} for r in out["state"]]
     county = [{**common, **r} for r in out["county"]]
-    return {"case_state": state, "case_county": county, "flags": out["flags"]}
+    doses = [{**common, **r} for r in out["doses"]]
+    return {
+        "case_state": state,
+        "case_county": county,
+        "vaccine_doses": doses,
+        "flags": out["flags"],
+    }
 
 
 def _school_county(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
@@ -115,7 +121,13 @@ PARSERS = {
     ("doh_school_imm_school", None): (school_imm.PARSER_VERSION, _school_level),
     ("doh_release", "*"): (doh_release.PARSER_VERSION, _release),  # one document per URL
 }
-OUTPUT_TABLES = ("case_state", "case_county", "immunization_county", "immunization_school")
+OUTPUT_TABLES = (
+    "case_state",
+    "case_county",
+    "immunization_county",
+    "immunization_school",
+    "vaccine_doses",
+)
 
 
 def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:
