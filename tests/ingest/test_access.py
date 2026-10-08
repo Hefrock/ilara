@@ -106,3 +106,38 @@ def test_capture_status(root: Path) -> None:
         )
     st = access.capture_status(root).row(0, named=True)
     assert st["outcome"] == "failed" and st["last_good_utc"] == "2026-10-05T18:00:05Z"
+
+
+def test_capture_days_follow_the_cover_rule(root: Path) -> None:  # HANDOFF 8.1
+    from datetime import UTC, date, datetime
+
+    from ingest.capture_log import CaptureLog, CaptureRecord
+
+    def rec(cid: str, finished: str, outcome: str = "changed") -> CaptureRecord:
+        return CaptureRecord(
+            capture_id=cid,
+            source_id="doh_dashboard",
+            url="u",
+            started_utc=finished,
+            finished_utc=finished,
+            http_status=200,
+            outcome=outcome,
+            raw_path=None,
+            sha256=None,
+            content_hash=None,
+            bytes=None,
+            runner="local",
+        )
+
+    log = CaptureLog("r1", root)
+    log.append(rec("r1:01:doh_dashboard", "2026-10-07T18:00:00Z"))  # Wed window opens: covers
+    log.append(rec("r1:02:doh_dashboard", "2026-10-09T17:59:59Z"))  # Fri, before the window
+    log.append(rec("r1:03:doh_dashboard", "2026-10-09T22:00:00Z", "failed"))  # failed: no cover
+    log.append(rec("r1:04:doh_dashboard", "2026-10-10T13:05:00Z"))  # Sat morning catch-up
+    days = access.capture_days(datetime(2026, 10, 12, 19, tzinfo=UTC), root)
+    got = {r["day"]: (r["status"], r["captures"], r["catch_up"]) for r in days.to_dicts()}
+    assert got == {
+        date(2026, 10, 7): ("covered", 1, 0),
+        date(2026, 10, 9): ("missed", 0, 1),
+        date(2026, 10, 12): ("pending", 0, 0),  # Monday window still open at 19:00 UTC
+    }

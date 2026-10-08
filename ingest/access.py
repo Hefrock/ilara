@@ -11,13 +11,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
 
 import duckdb
 import polars as pl
 
-from ingest import capture_log, paths
+from ingest import capture_log, paths, schedule
 from ingest.curate.schema import NATURAL_KEYS, conform
 from ingest.curate.store import store_dir
 
@@ -90,6 +90,42 @@ def capture_status(root: Path | None = None) -> pl.DataFrame:
     )
     latest = df.sort("finished_utc").group_by("source_id").last()
     return latest.join(good, on="source_id", how="left").sort("source_id")
+
+
+def capture_days(now: datetime, root: Path | None = None) -> pl.DataFrame:
+    """Every scheduled dashboard capture day (HANDOFF 8.1) from the first scheduled window to
+    ``now``. ``status`` is ``covered`` (a changed or unchanged dashboard capture finished
+    between 18:00 and 23:59 UTC that day), ``missed``, or ``pending`` while that window is
+    still open. ``catch_up`` counts good captures the next morning before 18:00 UTC; they do
+    not cover the day (the data shown that afternoon may be lost) but are listed."""
+    recs = [
+        r
+        for r in capture_log.read_all(root or paths.repo_root())
+        if r["source_id"] == "doh_dashboard" and r["outcome"] in ("changed", "unchanged")
+    ]
+    done = [datetime.fromisoformat(r["finished_utc"].replace("Z", "+00:00")) for r in recs]
+    rows = []
+    day = schedule.SCHEDULE_START
+    while day <= now.astimezone(UTC).date():
+        if day.weekday() in schedule.CAPTURE_DAYS:
+            start = datetime.combine(day, time(schedule.COVER_START_HOUR_UTC), UTC)
+            end = datetime.combine(day + timedelta(days=1), time(0), UTC)
+            catch_end = end + timedelta(hours=schedule.COVER_START_HOUR_UTC)
+            n = sum(start <= t < end for t in done)
+            status = "covered" if n else ("pending" if now < end else "missed")
+            rows.append(
+                {
+                    "day": day,
+                    "status": status,
+                    "captures": n,
+                    "catch_up": sum(end <= t < catch_end for t in done),
+                }
+            )
+        day += timedelta(days=1)
+    return pl.DataFrame(
+        rows,
+        schema={"day": pl.Date, "status": pl.Utf8, "captures": pl.Int64, "catch_up": pl.Int64},
+    )
 
 
 # ---------------------------------------------------------------- reference data (WP1)
