@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import zlib
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
@@ -529,6 +530,37 @@ def ages_figure(demo: dict[str, Any]) -> go.Figure:
     )
 
 
+# ---------------------------------------------------------------- keyboard access (T5.7)
+
+KEY_HINT = " Use the arrow keys to read each value; the table below lists them all."
+
+
+def _plain(text: str) -> str:
+    t = re.sub(r"<br\s*/?>", ". ", text)
+    return re.sub(r"<[^>]+>", "", t).replace(" · ", ", ")
+
+
+def map_points(fig: go.Figure) -> list[list[Any]]:
+    """[curve, point, spoken text] for every county shape (the last trace is the colorbar)."""
+    return [[c, 0, _plain(t.text)] for c, t in enumerate(fig.data[:-1])]
+
+
+def series_points(series: pl.DataFrame) -> list[list[Any]]:
+    out = []
+    for c, definition in enumerate(("calendar_year", "unknown")):
+        rows = series.filter(pl.col("count_definition") == definition).to_dicts()
+        for i, r in enumerate(rows):
+            note = "" if definition == "calendar_year" else " (definition not stated)"
+            out.append([c, i, f"{r['as_of_date']:%b %-d, %Y}: {r['cum_cases']:,} cases{note}"])
+    return out
+
+
+def bar_points(fig: go.Figure, unit: str) -> list[list[Any]]:
+    t = fig.data[0]
+    spoken = [str(v).replace("<5", "fewer than 5") for v in t.text]
+    return [[0, i, f"{x}: {v} {unit}"] for i, (x, v) in enumerate(zip(t.x, spoken, strict=True))]
+
+
 def _layout(fig: go.Figure, height: int) -> None:
     fig.update_layout(
         height=height,
@@ -975,14 +1007,16 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         cdc_text = "The CDC national figures are captured daily; no dated Pennsylvania count yet."
     info = manifest.git_info()
 
-    s_fig = statewide_figure(series).to_html(
+    s_obj = statewide_figure(series)
+    s_fig = s_obj.to_html(
         include_plotlyjs=False,
         full_html=False,
         div_id="chart-statewide",
         config={"displayModeBar": False, "responsive": True},
     )
     geo = access.reference_geojson(root)
-    c_fig = county_figure(cty, geo).to_html(
+    c_obj = county_figure(cty, geo)
+    c_fig = c_obj.to_html(
         include_plotlyjs=False,
         full_html=False,
         div_id="chart-county",
@@ -992,7 +1026,8 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
     schools = coverage_schools(root)
     cov = coverage_county(root, schools)
     cov_ok = cov["mmr_pct"].drop_nulls().len() > 0
-    v_fig = coverage_figure(cov, geo).to_html(
+    v_obj = coverage_figure(cov, geo)
+    v_fig = v_obj.to_html(
         include_plotlyjs=False,
         full_html=False,
         div_id="chart-coverage",
@@ -1024,13 +1059,15 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
 
     demo = demographics(root)
     if demo is not None:
-        m_fig = months_figure(demo).to_html(
+        m_obj = months_figure(demo)
+        m_fig = m_obj.to_html(
             include_plotlyjs=False,
             full_html=False,
             div_id="chart-months",
             config={"displayModeBar": False, "responsive": True},
         )
-        a_fig = ages_figure(demo).to_html(
+        a_obj = ages_figure(demo)
+        a_fig = a_obj.to_html(
             include_plotlyjs=False,
             full_html=False,
             div_id="chart-ages",
@@ -1091,6 +1128,39 @@ dashboard (not stated as zero).</p>
         who_html = "<p class='muted'>No dashboard snapshot captured yet.</p>"
         demo_rows = pl.DataFrame()
 
+    charts: dict[str, dict[str, Any]] = {
+        "chart-statewide": {
+            "label": "Step chart of cumulative confirmed measles cases in Pennsylvania by report "
+            "date." + KEY_HINT,
+            "points": series_points(series),
+        },
+        "chart-county": {
+            "label": "Map of Pennsylvania's 67 counties shaded by confirmed cases per 100,000 "
+            "residents." + KEY_HINT,
+            "points": map_points(c_obj),
+        },
+        "chart-coverage": {
+            "label": "Map of Pennsylvania's 67 counties shaded by how far kindergarten MMR "
+            "coverage falls below 95 percent. Press Enter on a county to show its schools."
+            + KEY_HINT,
+            "points": map_points(v_obj),
+        },
+        "chart-strip": {
+            "label": "Dot plot of kindergarten MMR coverage by school in the selected county."
+            + KEY_HINT,
+            "points": None,  # built in the page from the county shown
+        },
+    }
+    if demo is not None:
+        charts["chart-months"] = {
+            "label": "Bar chart of cases by month of report." + KEY_HINT,
+            "points": bar_points(m_obj, "cases"),
+        }
+        charts["chart-ages"] = {
+            "label": "Bar chart of cases by age group." + KEY_HINT,
+            "points": bar_points(a_obj, "cases"),
+        }
+
     data = {
         "generated_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "build": "public" if public else "private",
@@ -1108,6 +1178,7 @@ dashboard (not stated as zero).</p>
         "cdc_comparison": json.loads(json.dumps(cdc.to_dicts(), default=str)),
         "flags": groups,
         "build_info": info,
+        "charts": charts,
         "gated_panels": [],  # forecast and watchlist: absent until G4 (I11)
     }
     csv = {
@@ -1310,6 +1381,9 @@ section {{ background: var(--surface); border: 1px solid var(--border); border-r
   font-size: .85rem; display: flex; gap: 8px; }}
 .day-missed {{ background: var(--warn-bg); }}
 .flags > li {{ margin-bottom: 6px; }}
+.kbd-chart:focus {{ outline: 2px solid var(--accent); outline-offset: 2px; }}
+.sr-only {{ position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }}
 section, .map-wrap > div {{ min-width: 0; }}
 .tableview table {{ border-collapse: collapse; width: 100%; }}
 .tableview th, .tableview td {{ text-align: left; padding: 4px 8px;
@@ -1416,6 +1490,7 @@ stay withheld until they pass validation. Code commit {git_sha}; data release {d
 </main>
 <footer>Generated {generated}. Source: Pennsylvania Department of Health dashboard and
 releases; population and boundaries: US Census Bureau.</footer>
+<p id="chart-live" class="sr-only" aria-live="polite"></p>
 <script type="application/json" id="dashboard-data">{data_json}</script>
 <script>
 (function () {{
@@ -1471,7 +1546,50 @@ releases; population and boundaries: US Census Bureau.</footer>
       }}
     }});
   }}
-  window.addEventListener('load', function () {{ apply(); wire(); }});
+  function stripPoints(el) {{
+    var c = el.data.findIndex(function (t) {{ return t.visible === true; }});
+    if (c < 0) return [];
+    var t = el.data[c], out = [];
+    for (var i = 0; i < t.x.length; i++) {{
+      out.push([c, i, t.customdata[i][0] + ': ' + t.x[i] + '% kindergarten MMR, ' +
+        t.customdata[i][1] + ' enrolled']);
+    }}
+    out.sort(function (a, b) {{ return t.x[a[1]] - t.x[b[1]]; }});
+    return out;
+  }}
+  function keyboard() {{
+    var live = document.getElementById('chart-live');
+    Object.keys(D.charts || {{}}).forEach(function (id) {{
+      var el = document.getElementById(id), meta = D.charts[id];
+      if (!el) return;
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'chart');
+      el.setAttribute('aria-label', meta.label);
+      el.classList.add('kbd-chart');
+      var i = -1;
+      el.addEventListener('focus', function () {{ i = -1; }});
+      el.addEventListener('keydown', function (ev) {{
+        var pts = meta.points || stripPoints(el);
+        if (!pts.length) return;
+        var k = ev.key;
+        if (k === 'ArrowRight' || k === 'ArrowDown') i = Math.min(i + 1, pts.length - 1);
+        else if (k === 'ArrowLeft' || k === 'ArrowUp') i = Math.max(i - 1, 0);
+        else if (k === 'Home') i = 0;
+        else if (k === 'End') i = pts.length - 1;
+        else if (k === 'Escape') {{ Plotly.Fx.unhover(el); live.textContent = ''; return; }}
+        else if (k === 'Enter' && id === 'chart-coverage' && i >= 0) {{
+          var tr = el.data[pts[i][0]];
+          if (tr && tr.customdata) showCounty(tr.customdata[0]);
+          return;
+        }} else return;
+        ev.preventDefault();
+        Plotly.Fx.hover(el, [{{ curveNumber: pts[i][0], pointNumber: pts[i][1] }}]);
+        live.textContent = pts[i][2] + ' (' + (i + 1) + ' of ' + pts.length + ')';
+      }});
+    }});
+  }}
+  window.addEventListener('load', function () {{ apply(); wire(); keyboard(); }});
   if (window.matchMedia) {{
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
   }}

@@ -345,3 +345,66 @@ def test_cdc_cross_check(site_root: Path) -> None:  # S6
     assert c["doh_before"] is not None and c["doh_before"] <= 963
     assert c["consistent"] is True
     assert "CDC counts 963 Pennsylvania cases as of 2026-10-01" in page.html
+
+
+def _luminance(hex_colour: str) -> float:
+    r, g, b = (int(hex_colour[i : i + 2], 16) / 255 for i in (1, 3, 5))
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (r, g, b)]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def test_colour_blind_safe_palettes() -> None:  # T5.7
+    # One hue, ordered by lightness alone, so the ramp reads the same without colour vision.
+    lum = [_luminance(c) for c in build.BLUE_SEQ]
+    assert all(a > b for a, b in zip(lum, lum[1:], strict=False))
+    # No data is told apart from zero by more than hue: it is grey and not on the ramp.
+    assert build.NO_DATA not in build.BLUE_SEQ
+    # Strip plot: below-target schools (accent) differ from the rest (muted) in lightness too,
+    # and position on the axis carries the value anyway.
+    assert abs(_luminance(build.SERIES_LIGHT) - _luminance(build.MUTED)) > 0.03
+
+
+def test_charts_have_text_and_keyboard_access(site_root: Path, tmp_path: Path) -> None:  # T5.7
+    page = build.build_page(site_root, NOW)
+    charts = page.data["charts"]
+    assert set(charts) >= {"chart-statewide", "chart-county", "chart-coverage", "chart-strip"}
+    for cid, meta in charts.items():
+        assert meta["label"] and "arrow keys" in meta["label"]
+        assert f'id="{cid}"' in page.html
+    assert len(charts["chart-county"]["points"]) == 67
+    assert not any("<5" in p[2] for p in charts.get("chart-ages", {}).get("points", []))
+    if not CHROMIUM.exists():
+        pytest.skip("no local Chromium")
+    from playwright.sync_api import sync_playwright
+
+    out = build.write_site(tmp_path / "site", site_root, NOW)
+    with sync_playwright() as pw:
+        b = pw.chromium.launch(executable_path=str(CHROMIUM))
+        pg = b.new_page(viewport={"width": 1280, "height": 900})
+        pg.goto(out.as_uri())
+        pg.wait_for_timeout(1500)
+        for cid in charts:
+            el = pg.locator(f"#{cid}")
+            assert el.get_attribute("tabindex") == "0" and el.get_attribute("aria-label")
+        # Keyboard reaches a county tooltip and the live region reads it.
+        pg.focus("#chart-county")
+        pg.keyboard.press("ArrowRight")
+        pg.wait_for_timeout(200)
+        live = pg.inner_text("#chart-live")
+        assert live.startswith("Adams") and "(1 of 67)" in live
+        hover = "document.querySelector('#chart-county .hoverlayer').textContent"
+        assert "Adams" in pg.evaluate(hover)  # the visible tooltip, as with a mouse
+        pg.keyboard.press("End")
+        assert "(67 of 67)" in pg.inner_text("#chart-live")
+        # Enter on a coverage-map county shows its schools, as a click does.
+        pg.focus("#chart-coverage")
+        for _ in range(3):
+            pg.keyboard.press("ArrowRight")
+        pg.keyboard.press("Enter")
+        pg.wait_for_timeout(200)
+        assert pg.input_value("#strip-county") == "42005"  # third county: Armstrong
+        # The strip plot reads the schools of the county shown, lowest coverage first.
+        pg.focus("#chart-strip")
+        pg.keyboard.press("ArrowRight")
+        assert "% kindergarten MMR" in pg.inner_text("#chart-live")
+        b.close()
