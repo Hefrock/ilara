@@ -93,6 +93,7 @@ def headline(root: Path | None) -> dict[str, Any] | None:
 def statewide_series(root: Path | None) -> pl.DataFrame:
     df = access.current("case_state", "curated", root).filter(
         (pl.col("source_tier") == "T1")
+        & ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
         & (pl.col("date_precision") == "exact")
         & pl.col("count_definition").is_in(["calendar_year", "unknown"])
         & pl.col("cum_cases").is_not_null()
@@ -238,6 +239,7 @@ def reconciliation(root: Path | None) -> pl.DataFrame:
     them (docs/dashboard.md section 4). Values are shown side by side, never merged."""
     cs = access.current("case_state", "curated", root).filter(
         (pl.col("source_tier") == "T1")
+        & ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
         & pl.col("count_definition").is_in(["calendar_year", "unknown"])
         & pl.col("cum_cases").is_not_null()
     )
@@ -275,6 +277,53 @@ def reconciliation(root: Path | None) -> pl.DataFrame:
         .drop("n")
     )
     return out.sort("as_of_date")
+
+
+def cdc_comparison(root: Path | None) -> pl.DataFrame:
+    """Each CDC Pennsylvania count beside the nearest DOH calendar-year totals before and after
+    its date. CDC counts cases reported to CDC, which lag DOH; a CDC value between the two DOH
+    values is consistent. Nothing is merged or adjusted (S6)."""
+    cs = access.current("case_state", "curated", root).filter(
+        (pl.col("source_tier") == "T1")
+        & (pl.col("count_definition") == "calendar_year")
+        & (pl.col("date_precision") == "exact")
+        & pl.col("cum_cases").is_not_null()
+    )
+    cross = pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+    cdc = cs.filter(cross).sort("as_of_date")
+    doh = cs.filter(~cross).sort("as_of_date")
+    rows = []
+    for r in cdc.to_dicts():
+        d = r["as_of_date"]
+        before = doh.filter(pl.col("as_of_date") <= d).tail(1).to_dicts()
+        after = doh.filter(pl.col("as_of_date") >= d).head(1).to_dicts()
+        b = before[0] if before else None
+        a = after[0] if after else None
+        rows.append(
+            {
+                "cdc_as_of": d,
+                "cdc_cases": r["cum_cases"],
+                "doh_before_date": b["as_of_date"] if b else None,
+                "doh_before": b["cum_cases"] if b else None,
+                "doh_after_date": a["as_of_date"] if a else None,
+                "doh_after": a["cum_cases"] if a else None,
+                "consistent": None
+                if b is None or a is None
+                else b["cum_cases"] <= r["cum_cases"] <= a["cum_cases"],
+            }
+        )
+    return pl.DataFrame(
+        rows,
+        schema={
+            "cdc_as_of": pl.Date,
+            "cdc_cases": pl.Int64,
+            "doh_before_date": pl.Date,
+            "doh_before": pl.Int64,
+            "doh_after_date": pl.Date,
+            "doh_after": pl.Int64,
+            "consistent": pl.Boolean,
+        },
+    )
 
 
 # Plain-language meaning of each open flag code (docs/dashboard.md section 4).
@@ -904,6 +953,26 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
     missed = days.filter(pl.col("status") == "missed").height
     recon = reconciliation(root)
     differ = recon.filter(~pl.col("agree")).height
+    cdc = cdc_comparison(root)
+    if cdc.height:
+        last = cdc.row(-1, named=True)
+        cdc_text = (
+            f"CDC counts {last['cdc_cases']:,} Pennsylvania cases as of {_d(last['cdc_as_of'])}. "
+            + (
+                f"DOH reported {last['doh_before']:,} on {_d(last['doh_before_date'])} and "
+                f"{last['doh_after']:,} on {_d(last['doh_after_date'])}; "
+                + (
+                    "the CDC figure falls between them, as expected for cases reported to "
+                    "CDC with a lag."
+                    if last["consistent"]
+                    else "the CDC figure falls outside them (see the table)."
+                )
+                if last["consistent"] is not None
+                else "No DOH total on both sides of that date yet."
+            )
+        )
+    else:
+        cdc_text = "The CDC national figures are captured daily; no dated Pennsylvania count yet."
     info = manifest.git_info()
 
     s_fig = statewide_figure(series).to_html(
@@ -1036,6 +1105,7 @@ dashboard (not stated as zero).</p>
         "status": st,
         "capture_days": days.with_columns(pl.col("day").cast(pl.Utf8)).to_dicts(),
         "reconciliation": recon.with_columns(pl.col("as_of_date").cast(pl.Utf8)).to_dicts(),
+        "cdc_comparison": json.loads(json.dumps(cdc.to_dicts(), default=str)),
         "flags": groups,
         "build_info": info,
         "gated_panels": [],  # forecast and watchlist: absent until G4 (I11)
@@ -1049,6 +1119,7 @@ dashboard (not stated as zero).</p>
         "capture_days": days,
         "demographics": demo_rows,
         "reconciliation": recon,
+        "cdc_comparison": cdc,
     }
 
     county_as_of = cty["as_of_date"].drop_nulls().max() if cty.height else None
@@ -1144,6 +1215,20 @@ dashboard (not stated as zero).</p>
                 "spread": "Spread",
             },
             "Statewide totals reported by more than one official document",
+        ),
+        cdc_text=html.escape(cdc_text),
+        cdc_table=_table(
+            cdc,
+            {
+                "cdc_as_of": "CDC as of",
+                "cdc_cases": "CDC",
+                "doh_before_date": "DOH before",
+                "doh_before": "DOH",
+                "doh_after_date": "DOH after",
+                "doh_after": "DOH",
+                "consistent": "Between",
+            },
+            "CDC Pennsylvania counts beside the nearest DOH totals",
         ),
         git_sha=html.escape((info["git_sha"] or "unknown")[:12]),
         data_release=html.escape(info["data_release"] or "none yet"),
@@ -1314,10 +1399,13 @@ update must be captured that afternoon. {timeline_summary}</p>
 <ul class="timeline">{timeline}</ul>
 <a class="dl" href="data/capture_days.csv">Download CSV</a>
 <h3 style="font-size:1rem">Where official figures overlap</h3>
-<p class="muted">{recon_summary} Each figure is kept as published; none is overwritten. The CDC
-national table is captured daily but not yet compared.</p>
+<p class="muted">{recon_summary} Each figure is kept as published; none is overwritten.</p>
 <a class="dl" href="data/reconciliation.csv">Download CSV</a>
 {recon_table}
+<h3 style="font-size:1rem">CDC cross-check</h3>
+<p class="muted">{cdc_text}</p>
+<a class="dl" href="data/cdc_comparison.csv">Download CSV</a>
+{cdc_table}
 <h3 style="font-size:1rem">Open data quality flags</h3>
 <ul class="flags">{flags}</ul>
 <h3 style="font-size:1rem">Methods</h3>

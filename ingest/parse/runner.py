@@ -19,7 +19,7 @@ import polars as pl
 
 from ingest import access, paths, rawstore
 from ingest.curate import store
-from ingest.parse import doh_dashboard, doh_release, school_imm
+from ingest.parse import cdc, doh_dashboard, doh_release, school_imm
 from ingest.timeutil import ET, parse_utc
 
 
@@ -117,11 +117,31 @@ def _release(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     return {"case_state": [{**common, **r} for r in out["state"]], "flags": []}
 
 
+def _cdc_page_for(m: dict[str, Any], root: Path) -> dict[str, Any] | None:
+    """The CDC cases page captured at or before this map file (the page is saved only when
+    it changes, so the latest earlier copy is the one that was live)."""
+    pages = [
+        rawstore.load_manifest(p) for p in rawstore.iter_manifests("cdc_measles_national", root)
+    ]
+    pages = [p for p in pages if p["fetched_at_utc"] <= m["fetched_at_utc"]]
+    if not pages:
+        return None
+    latest = max(pages, key=lambda p: p["fetched_at_utc"])
+    return cdc.page_snapshot(rawstore.read_payload(latest, root))
+
+
+def _cdc_map(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
+    out = cdc.parse(rawstore.read_payload(m, root), _cdc_page_for(m, root))
+    common = _common(m, run_id, cdc.PARSER_VERSION, label=cdc.SOURCE_LABEL)
+    return {"case_state": [{**common, **r} for r in out["state"]], "flags": out["flags"]}
+
+
 PARSERS = {
     ("doh_dashboard", "responses"): (doh_dashboard.PARSER_VERSION, _dashboard),
     ("doh_school_imm_county", None): (school_imm.PARSER_VERSION, _school_county),
     ("doh_school_imm_school", None): (school_imm.PARSER_VERSION, _school_level),
     ("doh_release", "*"): (doh_release.PARSER_VERSION, _release),  # one document per URL
+    ("cdc_measles_cases_map", None): (cdc.PARSER_VERSION, _cdc_map),
 }
 OUTPUT_TABLES = (
     "case_state",

@@ -60,7 +60,9 @@ def _label(r: dict[str, Any]) -> str:
 
 def state_rows(store_name: str, root: Path) -> tuple[pl.DataFrame, list[dict[str, Any]]]:
     """Current statewide rows of a store, plus statewide rows held in its quarantine."""
-    main = access.current("case_state", store_name, root)
+    main = access.current("case_state", store_name, root).filter(
+        ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+    )
     q = access.all_rows("quarantine", store_name, root)
     held = [json.loads(r) for r in q.filter(pl.col("table") == "case_state")["row_json"]]
     return main, held
@@ -191,8 +193,12 @@ def _check_series(df: pl.DataFrame, keys: list[str], label: str, st: str, f: Fin
 
 def monotonic(root: Path, f: Findings) -> None:
     for st in STORES:
+        cs = access.current("case_state", st, root)
+        cross = pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+        _check_series(cs.filter(~cross), ["count_definition"], "statewide", st, f)
+        # Each cross-check source is a series of its own (CDC lags DOH by design).
         _check_series(
-            access.current("case_state", st, root), ["count_definition"], "statewide", st, f
+            cs.filter(cross), ["source_id", "count_definition"], "statewide cross-check", st, f
         )
         _check_series(
             access.current("case_county", st, root),
@@ -209,7 +215,12 @@ def monotonic(root: Path, f: Findings) -> None:
 
 
 def county_sums(root: Path, f: Findings) -> None:
-    states = {st: access.current("case_state", st, root) for st in STORES}
+    states = {
+        st: access.current("case_state", st, root).filter(
+            ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+        )
+        for st in STORES
+    }
     for st in STORES:
         cty = access.current("case_county", st, root)
         if cty.height == 0:

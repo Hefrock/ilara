@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-08 (22) | CDC cross-check: map data parsed from real captures (PA 963 as of Oct 1, dated from the CDC page only when national totals match), kept out of the DOH series and checks, shown beside the nearest DOH totals in the trust section | Friday: confirm the backup routine; owner: B17 |
 | 2026-10-08 (21) | Manual capture-light run (scheduler had not run it): all 14 HTTP sources reached; CDC configurations name two data files (jurisdiction map, national weekly), added to the daily capture | After the next capture: golden-file parser for the CDC Pennsylvania count, into the reconciliation; Friday: confirm the backup routine; owner: B17 |
 | 2026-10-08 (20) | GitHub schedule unreliable (runs hours late or missing); owner approved a backup routine that dispatches capture-dashboard at 18:40 and 22:40 UTC Mon/Wed/Fri when the day is not covered (ADR 0006) | Friday: confirm coverage; after the first capture-light run, read the two CDC configs; owner: B17 |
 | 2026-10-08 (19) | CDC cross-check groundwork: the CDC cases page gives no state count in its text; its jurisdiction map and weekly chart configurations added to the daily capture so their data files can be found (S6) | After the next capture-light run: read the two configs, add the data files they name, parse the Pennsylvania count into the reconciliation; owner: B17 |

@@ -128,6 +128,11 @@ def capture_days(now: datetime, root: Path | None = None) -> pl.DataFrame:
     )
 
 
+# Sources whose statewide counts are cross-checks of the DOH figures (S6), not part of the DOH
+# series: they are compared with it but never joined to it.
+CROSSCHECK_SOURCES = frozenset({"cdc_measles_cases_map"})
+
+
 # ---------------------------------------------------------------- reference data (WP1)
 
 _REF_SCHEMA = {
