@@ -11,7 +11,7 @@ import polars as pl
 
 from ingest import rawstore
 from ingest.curate import rebuild, seed, store
-from ingest.parse import runner
+from ingest.parse import doh_dashboard, runner
 
 from conftest import REPO
 
@@ -88,6 +88,43 @@ def test_rebuild_after_parser_upgrade(root: Path, monkeypatch) -> None:  # E20
     )
     runner.run(root)
     version, fn = runner.PARSERS[("doh_dashboard", "responses")]
+    monkeypatch.setattr(doh_dashboard, "PARSER_VERSION", "9.0.0")  # rows carry the version
     monkeypatch.setitem(runner.PARSERS, ("doh_dashboard", "responses"), ("9.0.0", fn))
     runner.run(root)
     assert rebuild.rebuild(root) == []
+
+    # A later version that parses the file cleanly leaves only stale quarantine rows behind.
+    def lenient(m, run_id, r):  # type: ignore[no-untyped-def]
+        try:
+            return fn(m, run_id, r)
+        except Exception:  # noqa: BLE001
+            return {"flags": []}
+
+    monkeypatch.setattr(doh_dashboard, "PARSER_VERSION", "9.1.0")
+    monkeypatch.setitem(runner.PARSERS, ("doh_dashboard", "responses"), ("9.1.0", lenient))
+    runner.run(root)
+    assert rebuild.rebuild(root) == []
+
+    # A quarantine row no current parser would write is still reported.
+    fetched = datetime(2026, 10, 8, tzinfo=UTC)
+    store.write(
+        "curated",
+        "quarantine",
+        pl.DataFrame(
+            [
+                {
+                    "table": "case_state",
+                    "row_json": "{}",
+                    "reason_code": "DATE_TO_CONFIRM",
+                    "ref": "hand-added",
+                    "ingest_run_id": "deadbeef0001",
+                    "parser_version": "1.0.0",
+                    "fetched_at_utc": fetched,
+                }
+            ]
+        ),
+        "deadbeef0001",
+        fetched,
+        root,
+    )
+    assert any("quarantine" in d for d in rebuild.rebuild(root))

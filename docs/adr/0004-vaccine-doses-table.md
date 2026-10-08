@@ -17,12 +17,18 @@ WP6a needs post-outbreak vaccination as a dated adjustment (HANDOFF WP6, S8). Th
   `administered_by`, `geography`, `period_start`. Each snapshot adds a full set of months, so
   late entries show up as revisions (September was 2,866 on Oct 5 and 2,877 on Oct 7).
 - The month containing `as_of_date` is partial and marked so. Months after it are empty in the
-  report and are not stored (not zeros, I5).
+  report and are not stored (not zeros, I5). The year (2026) comes from the report itself
+  ("Month (2026)", table `PAmeasles2026_Public_mmr`), not from `as_of_date`, so a January 2027
+  snapshot of the 2026 chart is not relabelled.
+- Anything unexpected in the dose chart raises a `PARSE_SCHEMA_CHANGE` flag and stores no dose
+  rows, but never stops the case tables of the same capture from being parsed.
 - The dashboard parser becomes 1.1.0 and re-parses every dashboard capture (E20).
 - The school and release parsers become 1.0.1: their rows were labelled "DOH measles
   dashboard" by a runner bug, now fixed.
-- `measles rebuild` compares quarantine rows for the newest parser version of each raw file,
-  since a rebuild runs only the current parsers.
+- `measles rebuild` leaves out quarantine rows that an older version of a raw file's parser
+  wrote, since a rebuild runs only the current parsers. This holds both when the newer parser
+  fails again and when it parses the file cleanly. Seed quarantine rows and any row no current
+  parser accounts for are still compared.
 
 ## Consequences
 

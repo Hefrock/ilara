@@ -13,9 +13,11 @@ with the view it was captured under). Output rows for ``case_state``, ``case_cou
   zero. The county table has no TimeFrame filter: it is labelled ``calendar_year`` only when
   its total equals the year-to-date total of the same capture, else ``unknown`` with a flag.
 - Vaccine doses come from the "Measles Vaccine Administered" page: MMR doses given by DOH
-  staff, statewide, by month of the report's year (the page says "Month (2026)"). The month
-  containing ``as_of_date`` is partial (``period_complete`` false). The report gives no dose
-  number, so first, second and early infant doses cannot be told apart.
+  staff, statewide, by month of 2026 (the page says "Month (2026)"; the year is taken from
+  the report's own table name, not from ``as_of_date``). The month containing ``as_of_date``
+  is partial (``period_complete`` false). The report gives no dose number, so first, second
+  and early infant doses cannot be told apart. Anything unexpected in the dose chart raises a
+  flag and stores no dose rows; it never stops the case tables from being parsed.
 """
 
 from __future__ import annotations
@@ -48,6 +50,7 @@ COUNTY = f"{M}.County"
 COUNTY_COUNT = f"Sum({M}.COUNT)"
 COUNTIES_WITH_CASES = f"Min({M}.County)"  # the report's own card: number of counties
 V = "PAmeasles2026_Public_mmr"
+DOSE_YEAR = 2026  # the year in the report's table names and chart axis, "Month (2026)"
 DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
 DOSE_COUNT = f"CountNonNull({V}.vaccination_code)"
 MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
@@ -216,31 +219,36 @@ def _doses(
 ) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     months: dict[int, int] = {}
     seen = False
+    problem: str | None = None
     for q in queries:
-        if q["names"] == [DOSE_MONTH, DOSE_COUNT]:
-            seen = True
-            for r in q["blocks"].get("DM0", []):
-                name = r.get(DOSE_MONTH)
-                if name not in MONTHS:
-                    raise DashboardParseError(f"unexpected vaccine month row {r}")
-                if r.get(DOSE_COUNT) is None:
-                    # The chart's axis lists all twelve months; later months have no value.
-                    if date(as_of.year, MONTHS[name], 1) <= as_of:
-                        raise DashboardParseError(f"no dose count for {name} before {as_of}")
-                    continue
-                _agree(months, MONTHS[name], int(r[DOSE_COUNT]))
+        if q["names"] != [DOSE_MONTH, DOSE_COUNT]:
+            continue
+        seen = True
+        for r in q["blocks"].get("DM0", []):
+            name, n = r.get(DOSE_MONTH), r.get(DOSE_COUNT)
+            if name not in MONTHS:
+                problem = f"unexpected month {name!r} in the vaccine doses chart"
+            elif n is None:
+                # The chart's axis lists all twelve months; later months have no value.
+                if date(DOSE_YEAR, MONTHS[name], 1) <= as_of:
+                    problem = f"no dose count for {name} {DOSE_YEAR} (as of {as_of})"
+            elif date(DOSE_YEAR, MONTHS[name], 1) > as_of:
+                problem = f"doses reported for {name} {DOSE_YEAR}, after as-of date {as_of}"
+            elif months.get(MONTHS[name], int(n)) != int(n):
+                problem = f"conflicting dose counts for {name}"
+            else:
+                months[MONTHS[name]] = int(n)
     if not seen:
         return [], [("PARSE_SCHEMA_CHANGE", "vaccine doses chart not found in the capture")]
+    if problem:
+        return [], [("PARSE_SCHEMA_CHANGE", f"vaccine doses not stored: {problem}")]
     rows = []
     for m in sorted(months):
-        start = date(as_of.year, m, 1)
-        if start > as_of:
-            raise DashboardParseError(f"doses reported for {start}, after as-of date {as_of}")
-        end = date(as_of.year, m, calendar.monthrange(as_of.year, m)[1])
+        end = date(DOSE_YEAR, m, calendar.monthrange(DOSE_YEAR, m)[1])
         rows.append(
             {
                 "as_of_date": as_of,
-                "period_start": start,
+                "period_start": date(DOSE_YEAR, m, 1),
                 "period_end": end,
                 "period_complete": end < as_of,
                 "doses": months[m],

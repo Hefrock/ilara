@@ -112,3 +112,12 @@ def test_run_writes_outputs_and_manifest(inp: estimate.Inputs, tmp_path: Path) -
     assert m["git_sha"] and m["inputs"]["immunization_county"]["digest"]
     again = estimate.run(out_dir=tmp_path / "again", seed=11, n_draws=100)
     assert (again / "county.csv").read_bytes() == (out / "county.csv").read_bytes()
+
+
+def test_scenarios_share_draws_in_a_run(inp: estimate.Inputs, tmp_path: Path) -> None:
+    out = estimate.run(out_dir=tmp_path / "crn", seed=5, n_draws=200)
+    c = pl.read_csv(out / "county.csv", schema_overrides={"county_fips": pl.Utf8})
+    wide = c.pivot(on="scenario", index="county_fips", values="susceptible_fraction_mean")
+    # With common random numbers the ordering holds county by county, not only on average.
+    assert (wide["none"] <= wide["low"]).all() and (wide["low"] <= wide["mid"]).all()
+    assert (wide["mid"] <= wide["high"]).all()

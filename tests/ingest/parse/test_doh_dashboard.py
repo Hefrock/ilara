@@ -87,15 +87,41 @@ def test_golden_vaccine_doses() -> None:  # T3.1
     assert {(r["administered_by"], r["geography"]) for r in doses} == {("doh_staff", "state")}
 
 
-def test_missing_past_month_dose_is_an_error() -> None:
-    b = bundle()
+def _dose_rows(b: dict[str, Any]) -> list[dict[str, Any]]:
     for r in b["responses"]:
         if r["view"] == "vaccine" and "Hierarchy.Month" in json.dumps(r["body"]):
-            ph = r["body"]["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"]
-            ph[0]["C"] = [0]  # January with its count marked null
-            ph[0]["Ø"] = 2
-    with pytest.raises(doh_dashboard.DashboardParseError):
-        doh_dashboard.parse(b)
+            return r["body"]["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"]
+    raise AssertionError("no dose chart in the fixture")
+
+
+def test_bad_dose_chart_flags_but_keeps_case_rows() -> None:
+    b = bundle()
+    ph = _dose_rows(b)
+    ph[0]["C"] = [0]  # January with its count marked null
+    ph[0]["Ø"] = 2
+    out = doh_dashboard.parse(b)
+    assert out["doses"] == []
+    assert any(c == "PARSE_SCHEMA_CHANGE" and "January" in t for c, t in out["flags"])
+    assert len(out["state"]) == 2 and len(out["county"]) == 67  # case data still parsed
+
+
+def test_dose_year_comes_from_the_report_not_the_as_of_date() -> None:
+    # In January 2027 the 2026 chart would still show December 2026: never relabel it 2027.
+    b = _later(bundle(), drop_last_county=False)
+    for r in b["responses"]:
+        data = r["body"]["results"][0]["result"]["data"] if "querydata" in r["url"] else None
+        if data and [s["Name"] for s in data["descriptor"]["Select"]] == [
+            doh_dashboard.LAST_UPDATED
+        ]:
+            jan_2027 = int(datetime(2027, 1, 6, 19, tzinfo=UTC).timestamp() * 1000)
+            data["dsr"]["DS"][0]["PH"][0]["DM0"][0]["M0"] = jan_2027
+    ph = _dose_rows(b)
+    ph[10] = {"C": [10, 40]}  # by then November and December 2026 have counts
+    ph[11] = {"C": [11, 30]}
+    out = doh_dashboard.parse(b)
+    assert len(out["doses"]) == 12 and out["doses"][-1]["doses"] == 30
+    assert {r["period_start"].year for r in out["doses"]} == {2026}
+    assert all(r["period_complete"] for r in out["doses"])
 
 
 def test_county_definition_unknown_when_totals_differ() -> None:

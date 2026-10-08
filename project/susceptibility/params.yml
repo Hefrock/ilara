@@ -11,7 +11,7 @@ vaccine_effectiveness:
 # county summary already includes schools whose own values are suppressed (ND): county
 # enrolment equals the sum over all schools, suppressed or not (checked 2026-10-08).
 school:
-  grades: [kindergarten, grade_7, grade_12]
+  grades: [kindergarten, grade_7, grade_12]  # kindergarten is required (ages 1-4 proxy)
   # Effective sample size cap for the coverage draw: reporting error, not only sampling.
   max_effective_n: 200
   status: ASSUMPTION

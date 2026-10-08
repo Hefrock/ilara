@@ -112,7 +112,7 @@ def draws(
         weight[g] = np.where(ok, c[f"enrolled_{g}"].cast(pl.Float64).to_numpy(), np.nan)
     wsum = sum(weight.values())
     cov_child = sum(cov[g] * weight[g] for g in inp.grades) / wsum
-    cov_k = cov[inp.grades[0]]
+    cov_k = cov["kindergarten"]  # stands in for ages 1 to 4 below
 
     u5 = params["under5"]
     ratio = rng.uniform(u5["coverage_ratio"]["low"], u5["coverage_ratio"]["high"], (n_draws, 1))
@@ -217,8 +217,9 @@ def run(
     params = load_params()
     inp = county_inputs(root, known_at, params)
     tables = []
-    for i, scenario in enumerate(params["under_covered"]["scenarios"]):
-        tables.append(summarize(inp, draws(inp, params, scenario, n_draws, seed + i), scenario))
+    # Same seed for every scenario (common random numbers): differences come from the scenario.
+    for scenario in params["under_covered"]["scenarios"]:
+        tables.append(summarize(inp, draws(inp, params, scenario, n_draws, seed), scenario))
     county = pl.concat(tables)
 
     doses = latest_doses(root, known_at)

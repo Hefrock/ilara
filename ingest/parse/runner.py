@@ -130,6 +130,14 @@ OUTPUT_TABLES = (
 )
 
 
+def parser_for(m: dict[str, Any]) -> tuple[str, Any] | None:
+    """(version, function) of the current parser for a raw manifest, or None."""
+    for key in ((m["source_id"], m.get("capture_key")), (m["source_id"], "*")):
+        if key in PARSERS:
+            return PARSERS[key]
+    return None
+
+
 def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:
     month = f"{when:%Y-%m}"
     base = paths.curated_dir(root)
@@ -165,12 +173,11 @@ def run(root: Path | None = None, source: str | None = None) -> ParseReport:
     manifests = [rawstore.load_manifest(p) for p in rawstore.iter_manifests(source, root)]
     manifests.sort(key=lambda m: m["fetched_at_utc"])  # oldest first, for T3.15
     for m in manifests:
+        found = parser_for(m)
+        if found is None:
+            continue
+        version, fn = found
         key = (m["source_id"], m.get("capture_key"))
-        if key not in PARSERS:
-            key = (m["source_id"], "*")
-            if key not in PARSERS:
-                continue
-        version, fn = PARSERS[key]
         run_id = store.ingest_run_id(m["sha256"], version)
         when = parse_utc(m["fetched_at_utc"])
         if _outputs_exist(run_id, when, root):
