@@ -204,6 +204,32 @@ sources:
     last_verified_utc: null
     notes: National cross-check; confirmed cases as of noon Thursday (sources S6).
 
+  - source_id: cdc_measles_states_config
+    name: CDC measles cases by jurisdiction (map configuration)
+    url: https://www.cdc.gov/measles/states-cases-2024.json
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: json
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Configuration the CDC cases page loads for its jurisdiction map (data-config-url on cdc_measles_national). Captured to find the per-jurisdiction data file it points to; that file is added once seen (sources S6).
+
+  - source_id: cdc_measles_weekly_config
+    name: CDC measles weekly cases chart (configuration)
+    url: https://www.cdc.gov/measles/weekly-cases-chart.json
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: json
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Configuration of the national weekly cases chart on the CDC cases page (data-config-url). Captured to find its data file (sources S6).
+
   - source_id: cdc_nwss_measles
     name: CDC NWSS measles wastewater
     url: https://data.cdc.gov/resource/akvg-8vrb.json

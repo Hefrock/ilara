@@ -65,6 +65,7 @@ Source tiers: T1 official primary; T2 peer-reviewed or MMWR; T3 news or Wikipedi
 ## S6. CDC cross-check (T1)
 
 - https://www.cdc.gov/measles/data-research/index.html . Reflects confirmed cases reported as of noon Thursday (VERIFIED). National total as of Oct 1, 2026 was 3,887 cases (VERIFIED). Use PA state counts from DOH as primary; use CDC only to cross-check and note divergence.
+- The page text names Pennsylvania among the jurisdictions with cases but gives no state count (VERIFIED 2026-10-08 from capture `20261007T111650Z_e22bfc046224`, page updated October 2, 2026, data as of October 1). Its charts load configuration files (`data-config-url`): `/measles/states-cases-2024.json` (jurisdiction map) and `/measles/weekly-cases-chart.json` (weekly national chart). Both are captured daily (`cdc_measles_states_config`, `cdc_measles_weekly_config`) so the data files they point to can be added; the Pennsylvania count for the reconciliation table comes from there.
 
 ## S7. Parameter sources
 
