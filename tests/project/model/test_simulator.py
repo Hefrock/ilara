@@ -172,3 +172,57 @@ def test_u19_sensitivity_output(tmp_path: Path) -> None:  # T6.2
     assert county.height == 4 * 67
     m = json.loads((out / "manifest.json").read_text())
     assert m["calibrated"] is False and m["seed"] == 3 and m["n_runs"] == 20
+
+
+def _final_size_theory(r: float) -> float:
+    z = 0.9
+    for _ in range(2000):
+        z = 1 - np.exp(-r * z)
+    return z
+
+
+@pytest.mark.parametrize("r0,s_frac", [(15.0, 0.10), (12.0, 0.10)])
+def test_matches_final_size_relation(r0: float, s_frac: float) -> None:
+    # One well-mixed county: the share of susceptibles infected in a major outbreak must solve
+    # z = 1 - exp(-R z) with R = R0 x susceptible share. Catches any bias in R from the daily
+    # step (stays of 1 - exp(-1/D) per day inflated R by about 6 percent).
+    n = 2_000_000
+    s0 = int(n * s_frac)
+    z = []
+    for seed in range(40):
+        res = simulator.simulate(
+            np.array([n]),
+            np.array([s0 - 50]),
+            np.array([0]),
+            np.array([50]),
+            r0=r0,
+            coupling=np.eye(1),
+            days=2000,
+            seed=seed,
+            **DISEASE,
+        )
+        z.append(res.final_size.sum() / s0)
+    assert abs(np.mean(z) - _final_size_theory(r0 * s_frac)) < 0.005
+
+
+def test_matches_early_growth_rate() -> None:
+    # Early exponential growth must equal the dominant eigenvalue of the linear daily map.
+    n, s_frac, r0 = 10**9, 0.10, 15.0
+    pe, pi = 1 / DISEASE["latent_days"], 1 / DISEASE["infectious_days"]
+    a = np.array([[1 - pe, r0 * pi * s_frac], [pe, 1 - pi]])
+    theory = np.log(max(abs(np.linalg.eigvals(a))))
+    s0 = int(n * s_frac)
+    res = simulator.simulate(
+        np.array([n]),
+        np.array([s0 - 2000]),
+        np.array([0]),
+        np.array([2000]),
+        r0=r0,
+        coupling=np.eye(1),
+        days=120,
+        seed=1,
+        **DISEASE,
+    )
+    t = np.arange(20, 100)
+    rate = np.polyfit(t, np.log(res.incidence[t, 0].astype(float)), 1)[0]
+    assert abs(rate - theory) < 0.05 * theory

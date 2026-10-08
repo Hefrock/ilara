@@ -9,8 +9,8 @@ S, E, I, R and population N. On day ``t``, from the start-of-day state:
 - commuting coupling is directed: residents of ``i`` meet the infectious of the counties they
   commute to;
 - vaccination moves ``Binomial(S_left, vacc[t, i] / S_left)`` susceptibles to R;
-- ``Binomial(E_i, 1 - exp(-1/latent))`` become infectious and
-  ``Binomial(I_i, 1 - exp(-1/infectious))`` recover.
+- ``Binomial(E_i, 1/latent)`` become infectious and ``Binomial(I_i, 1/infectious)``
+  recover, so mean stays equal the stated periods in days.
 
 ``K`` is the contact coupling between counties (``coupling_matrix``): the identity plus, for
 each link type, its strength times a row-normalised link matrix, with the same share taken
@@ -153,6 +153,11 @@ def simulate(
     for name, arr in (("mult", m), ("imports", imp), ("vaccination", vac)):
         if arr.shape != (days, c) or (arr < 0).any():
             raise ValueError(f"{name} must be a non-negative (days, counties) array")
+    if latent_days < 1 or infectious_days < 1:
+        raise ValueError("latent and infectious periods must be at least one day (daily steps)")
+    # Daily leaving probabilities 1/D give a geometric stay with mean exactly D days, so an
+    # infectious person contributes R0 / D x D = R0 expected infections (validated against the
+    # final-size relation in tests). 1 - exp(-1/D) would lengthen stays and inflate R.
     gamma = 1.0 / infectious_days
     inc, vacd, state = _run(
         n,
@@ -161,8 +166,8 @@ def simulate(
         i,
         n - s - e - i,
         r0 * gamma,
-        1.0 - np.exp(-1.0 / latent_days),
-        1.0 - np.exp(-gamma),
+        1.0 / latent_days,
+        gamma,
         k,
         m,
         imp,

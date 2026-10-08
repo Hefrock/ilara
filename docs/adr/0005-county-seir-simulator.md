@@ -12,6 +12,11 @@ calendar covariate and external introductions.
 
 - Daily chain-binomial steps over 67 counties, compiled with numba (`project/model/simulator.py`).
   One seed drives every random draw.
+- Daily leaving probabilities are `1 / period` (latent 1/8, infectious 1/8), so a stay is
+  geometric with mean exactly the stated period and an infectious person causes R0 expected
+  infections in a fully susceptible population. Tests check the final-size relation
+  `z = 1 - exp(-R z)` and the early growth rate of the linear daily map; `1 - exp(-1/period)`
+  failed both, inflating R by about 6 percent.
 - Frequency-dependent transmission, `beta = R0 / infectious period`. Contacts between counties
   go through a coupling matrix: the identity plus `strength x (link matrix - own contacts)` for
   each link type. Commuting (directed, ACS flows; out-of-state flows ignored), adjacency (shared
