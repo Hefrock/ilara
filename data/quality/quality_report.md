@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-08T17:20:40Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-07. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-08T17:32:44Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-07. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -20,24 +20,26 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_national: last outcome unchanged, last good 2026-10-08T17:20:23Z (0 h ago)
-- cdc_measles_states_config: last outcome changed, last good 2026-10-08T17:20:28Z (0 h ago)
-- cdc_measles_weekly_config: last outcome changed, last good 2026-10-08T17:20:33Z (0 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-10-08T17:20:18Z (0 h ago)
-- census_commuting: last outcome unchanged, last good 2026-10-08T17:20:11Z (0 h ago)
-- census_commuting_index: last outcome changed, last good 2026-10-08T17:20:18Z (0 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-10-08T17:20:06Z (0 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-10-08T17:20:01Z (0 h ago)
+- cdc_measles_cases_map: last outcome changed, last good 2026-10-08T17:32:32Z (0 h ago)
+- cdc_measles_cases_weekly: last outcome changed, last good 2026-10-08T17:32:37Z (0 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-10-08T17:32:17Z (0 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-10-08T17:32:22Z (0 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-10-08T17:32:27Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-10-08T17:32:12Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-10-08T17:32:06Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-10-08T17:32:12Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-10-08T17:32:01Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-10-08T17:31:56Z (0 h ago)
 - doh_dashboard: last outcome changed, last good 2026-10-07T22:27:21Z (19 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-10-08T17:19:47Z (0 h ago)
-- doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (29 h ago)
-- doh_measles_page: last outcome unchanged, last good 2026-10-08T17:19:36Z (0 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-10-08T17:19:41Z (0 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-10-08T17:31:41Z (0 h ago)
+- doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (30 h ago)
+- doh_measles_page: last outcome unchanged, last good 2026-10-08T17:31:31Z (0 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-10-08T17:31:36Z (0 h ago)
 - doh_release: last outcome changed, last good 2026-10-07T20:06:08Z (21 h ago)
-- doh_school_imm_county: last outcome unchanged, last good 2026-10-08T17:19:51Z (0 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-10-08T17:19:56Z (0 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-10-08T17:20:38Z (0 h ago)
-- wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (29 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-10-08T17:31:46Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-10-08T17:31:51Z (0 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-10-08T17:32:42Z (0 h ago)
+- wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (30 h ago)
 
 ## Implied counts
 
