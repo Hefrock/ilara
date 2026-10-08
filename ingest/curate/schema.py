@@ -72,6 +72,14 @@ SPECIFIC: dict[str, dict[str, pl.DataType | type[pl.DataType]]] = {
         "exempt_pcts": pl.Utf8,
         "suppressed_flag": pl.Boolean,
     },
+    "vaccine_doses": {
+        "period_start": pl.Date,
+        "period_end": pl.Date,
+        "period_complete": pl.Boolean,
+        "doses": pl.Int64,
+        "administered_by": pl.Utf8,
+        "geography": pl.Utf8,
+    },
     "event": {
         "event_id": pl.Utf8,
         "event_type": pl.Utf8,
@@ -119,6 +127,7 @@ NATURAL_KEYS: dict[str, tuple[str, ...]] = {
     "case_county": ("as_of_date", "source_id", "count_definition", "county_fips"),
     "immunization_county": ("school_year", "county_fips", "grade"),
     "immunization_school": ("school_year", "school_name", "county_fips", "grade"),
+    "vaccine_doses": ("as_of_date", "source_id", "administered_by", "geography", "period_start"),
     "event": ("event_id",),
     "wastewater_sample": ("sample_id",),
     "case_demographics": ("as_of_date", "dimension", "category", "county_fips"),

@@ -1,7 +1,8 @@
 """Parser for the DOH dashboard capture, access path A (G1, docs/probe_report.md).
 
 Input: the ``responses`` artefact of one capture (report data API responses, each tagged
-with the view it was captured under). Output rows for ``case_state`` and ``case_county``.
+with the view it was captured under). Output rows for ``case_state``, ``case_county`` and
+``vaccine_doses``.
 
 - ``as_of_date`` is the report's "Last Updated" measure (``meas_dlm``), not the fetch date.
 - The count definition of each headline figure comes from the query's own TimeFrame filter:
@@ -11,17 +12,24 @@ with the view it was captured under). Output rows for ``case_state`` and ``case_
   county map lists all counties, so a county on the map but not in the table is a reported
   zero. The county table has no TimeFrame filter: it is labelled ``calendar_year`` only when
   its total equals the year-to-date total of the same capture, else ``unknown`` with a flag.
+- Vaccine doses come from the "Measles Vaccine Administered" page: MMR doses given by DOH
+  staff, statewide, by month of 2026 (the page says "Month (2026)"; the year is taken from
+  the report's own table name, not from ``as_of_date``). The month containing ``as_of_date``
+  is partial (``period_complete`` false). The report gives no dose number, so first, second
+  and early infant doses cannot be told apart. Anything unexpected in the dose chart raises a
+  flag and stores no dose rows; it never stops the case tables from being parsed.
 """
 
 from __future__ import annotations
 
+import calendar
 from datetime import UTC, date, datetime
 from typing import Any
 
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.0.0"
+PARSER_VERSION = "1.1.0"  # 1.1.0: MMR doses administered by DOH staff
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -41,6 +49,11 @@ LAST_UPDATED = f"Min({T}.meas_dlm)"
 COUNTY = f"{M}.County"
 COUNTY_COUNT = f"Sum({M}.COUNT)"
 COUNTIES_WITH_CASES = f"Min({M}.County)"  # the report's own card: number of counties
+V = "PAmeasles2026_Public_mmr"
+DOSE_YEAR = 2026  # the year in the report's table names and chart axis, "Month (2026)"
+DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
+DOSE_COUNT = f"CountNonNull({V}.vaccination_code)"
+MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
 
 
 class DashboardParseError(ValueError):
@@ -190,4 +203,57 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
             )
     else:
         flags.append(("PARSE_SCHEMA_CHANGE", "county table not found in the capture"))
-    return {"as_of_date": as_of, "state": state, "county": county_rows, "flags": flags}
+    doses, dose_flags = _doses(queries, as_of)
+    flags += dose_flags
+    return {
+        "as_of_date": as_of,
+        "state": state,
+        "county": county_rows,
+        "doses": doses,
+        "flags": flags,
+    }
+
+
+def _doses(
+    queries: list[dict[str, Any]], as_of: date
+) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
+    months: dict[int, int] = {}
+    seen = False
+    problem: str | None = None
+    for q in queries:
+        if q["names"] != [DOSE_MONTH, DOSE_COUNT]:
+            continue
+        seen = True
+        for r in q["blocks"].get("DM0", []):
+            name, n = r.get(DOSE_MONTH), r.get(DOSE_COUNT)
+            if name not in MONTHS:
+                problem = f"unexpected month {name!r} in the vaccine doses chart"
+            elif n is None:
+                # The chart's axis lists all twelve months; later months have no value.
+                if date(DOSE_YEAR, MONTHS[name], 1) <= as_of:
+                    problem = f"no dose count for {name} {DOSE_YEAR} (as of {as_of})"
+            elif date(DOSE_YEAR, MONTHS[name], 1) > as_of:
+                problem = f"doses reported for {name} {DOSE_YEAR}, after as-of date {as_of}"
+            elif months.get(MONTHS[name], int(n)) != int(n):
+                problem = f"conflicting dose counts for {name}"
+            else:
+                months[MONTHS[name]] = int(n)
+    if not seen:
+        return [], [("PARSE_SCHEMA_CHANGE", "vaccine doses chart not found in the capture")]
+    if problem:
+        return [], [("PARSE_SCHEMA_CHANGE", f"vaccine doses not stored: {problem}")]
+    rows = []
+    for m in sorted(months):
+        end = date(DOSE_YEAR, m, calendar.monthrange(DOSE_YEAR, m)[1])
+        rows.append(
+            {
+                "as_of_date": as_of,
+                "period_start": date(DOSE_YEAR, m, 1),
+                "period_end": end,
+                "period_complete": end < as_of,
+                "doses": months[m],
+                "administered_by": "doh_staff",
+                "geography": "state",
+            }
+        )
+    return rows, []

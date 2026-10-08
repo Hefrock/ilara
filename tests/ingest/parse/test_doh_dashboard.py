@@ -76,6 +76,54 @@ def test_golden_county() -> None:  # T3.1, T3.11
     assert flagged == COMMUNITY
 
 
+def test_golden_vaccine_doses() -> None:  # T3.1
+    out = doh_dashboard.parse(bundle())
+    doses = out["doses"]
+    assert [r["period_start"].month for r in doses] == list(range(1, 11))
+    assert doses[0]["doses"] == 117 and doses[7]["doses"] == 3664
+    # The report's own total card on the same page reads 8,843 for this capture.
+    assert sum(r["doses"] for r in doses) == 8843
+    assert [r["period_complete"] for r in doses] == [True] * 9 + [False]  # October is partial
+    assert {(r["administered_by"], r["geography"]) for r in doses} == {("doh_staff", "state")}
+
+
+def _dose_rows(b: dict[str, Any]) -> list[dict[str, Any]]:
+    for r in b["responses"]:
+        if r["view"] == "vaccine" and "Hierarchy.Month" in json.dumps(r["body"]):
+            return r["body"]["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"]
+    raise AssertionError("no dose chart in the fixture")
+
+
+def test_bad_dose_chart_flags_but_keeps_case_rows() -> None:
+    b = bundle()
+    ph = _dose_rows(b)
+    ph[0]["C"] = [0]  # January with its count marked null
+    ph[0]["Ø"] = 2
+    out = doh_dashboard.parse(b)
+    assert out["doses"] == []
+    assert any(c == "PARSE_SCHEMA_CHANGE" and "January" in t for c, t in out["flags"])
+    assert len(out["state"]) == 2 and len(out["county"]) == 67  # case data still parsed
+
+
+def test_dose_year_comes_from_the_report_not_the_as_of_date() -> None:
+    # In January 2027 the 2026 chart would still show December 2026: never relabel it 2027.
+    b = _later(bundle(), drop_last_county=False)
+    for r in b["responses"]:
+        data = r["body"]["results"][0]["result"]["data"] if "querydata" in r["url"] else None
+        if data and [s["Name"] for s in data["descriptor"]["Select"]] == [
+            doh_dashboard.LAST_UPDATED
+        ]:
+            jan_2027 = int(datetime(2027, 1, 6, 19, tzinfo=UTC).timestamp() * 1000)
+            data["dsr"]["DS"][0]["PH"][0]["DM0"][0]["M0"] = jan_2027
+    ph = _dose_rows(b)
+    ph[10] = {"C": [10, 40]}  # by then November and December 2026 have counts
+    ph[11] = {"C": [11, 30]}
+    out = doh_dashboard.parse(b)
+    assert len(out["doses"]) == 12 and out["doses"][-1]["doses"] == 30
+    assert {r["period_start"].year for r in out["doses"]} == {2026}
+    assert all(r["period_complete"] for r in out["doses"])
+
+
 def test_county_definition_unknown_when_totals_differ() -> None:
     b = bundle()
     for r in b["responses"]:
@@ -127,7 +175,8 @@ def _later(b: dict[str, Any], drop_last_county: bool) -> dict[str, Any]:
 def test_runner_idempotent_and_county_drop(root: Path) -> None:  # T3.15, E20
     _save(root, bundle(), datetime(2026, 10, 7, 18, tzinfo=UTC))
     rep = runner.run(root)
-    assert rep.rows == {"case_state": 2, "case_county": 67} and not rep.failed
+    assert rep.rows == {"case_state": 2, "case_county": 67, "vaccine_doses": 10}
+    assert not rep.failed
     assert runner.run(root).skipped == 1
 
     _save(root, _later(bundle(), drop_last_county=True), datetime(2026, 10, 9, 18, tzinfo=UTC))

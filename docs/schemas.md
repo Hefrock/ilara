@@ -42,3 +42,8 @@ Observed in `data/raw/doh_school_imm_school/2026/20261007T111625Z_00162b993811.h
 
 See `docs/probe_report.md` and `ingest/parse/doh_dashboard.py` (Power BI `querydata`
 responses).
+
+- `case_state`, `case_county`: headline cards and county counts (see the parser docstring).
+- `vaccine_doses`: MMR doses administered by DOH staff, statewide, by month of 2026, from the
+  "Measles Vaccine Administered" page (ADR 0004). The month containing `as_of_date` has
+  `period_complete` false. No dose number is given.

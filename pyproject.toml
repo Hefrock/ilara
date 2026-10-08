@@ -8,6 +8,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "duckdb",
     "httpx",
+    "numpy>=2.5.3",
     "openpyxl",
     "playwright",
     "plotly>=7.1.0",

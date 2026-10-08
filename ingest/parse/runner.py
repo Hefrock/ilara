@@ -76,7 +76,7 @@ def _common(
         "ingest_run_id": run_id,
         "raw_sha256": m["sha256"],
         "parser_version": version,
-        "source_label": doh_dashboard.SOURCE_LABEL,
+        "source_label": label,
         "source_url": m["url"],
         "url_status": "verified",
     }
@@ -88,7 +88,13 @@ def _dashboard(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     common = _common(m, run_id, doh_dashboard.PARSER_VERSION)
     state = [{**common, **r} for r in out["state"]]
     county = [{**common, **r} for r in out["county"]]
-    return {"case_state": state, "case_county": county, "flags": out["flags"]}
+    doses = [{**common, **r} for r in out["doses"]]
+    return {
+        "case_state": state,
+        "case_county": county,
+        "vaccine_doses": doses,
+        "flags": out["flags"],
+    }
 
 
 def _school_county(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
@@ -115,7 +121,21 @@ PARSERS = {
     ("doh_school_imm_school", None): (school_imm.PARSER_VERSION, _school_level),
     ("doh_release", "*"): (doh_release.PARSER_VERSION, _release),  # one document per URL
 }
-OUTPUT_TABLES = ("case_state", "case_county", "immunization_county", "immunization_school")
+OUTPUT_TABLES = (
+    "case_state",
+    "case_county",
+    "immunization_county",
+    "immunization_school",
+    "vaccine_doses",
+)
+
+
+def parser_for(m: dict[str, Any]) -> tuple[str, Any] | None:
+    """(version, function) of the current parser for a raw manifest, or None."""
+    for key in ((m["source_id"], m.get("capture_key")), (m["source_id"], "*")):
+        if key in PARSERS:
+            return PARSERS[key]
+    return None
 
 
 def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:
@@ -153,12 +173,11 @@ def run(root: Path | None = None, source: str | None = None) -> ParseReport:
     manifests = [rawstore.load_manifest(p) for p in rawstore.iter_manifests(source, root)]
     manifests.sort(key=lambda m: m["fetched_at_utc"])  # oldest first, for T3.15
     for m in manifests:
+        found = parser_for(m)
+        if found is None:
+            continue
+        version, fn = found
         key = (m["source_id"], m.get("capture_key"))
-        if key not in PARSERS:
-            key = (m["source_id"], "*")
-            if key not in PARSERS:
-                continue
-        version, fn = PARSERS[key]
         run_id = store.ingest_run_id(m["sha256"], version)
         when = parse_utc(m["fetched_at_utc"])
         if _outputs_exist(run_id, when, root):

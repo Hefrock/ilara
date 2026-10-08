@@ -16,7 +16,7 @@ import xlrd
 
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.0.0"
+PARSER_VERSION = "1.0.1"  # 1.0.1: rows carry this source's own label
 SOURCE_LABEL = "DOH school immunization survey summary by county"
 
 GRADES = {"kindergarten": "kindergarten", "7th grade": "grade_7", "12th grade": "grade_12"}

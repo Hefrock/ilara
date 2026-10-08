@@ -3,7 +3,8 @@
 Rebuild the curated and sensitivity tables from ``data/raw`` and the seed folders into a
 temporary directory, then compare the rebuilt ``current`` views (as logical rows) and the
 quarantine contents with the committed ones. Data quality flags raised by the quality engine
-carry their run time and are not compared.
+carry their run time and are not compared. Quarantine rows written by an older version of a
+raw file's parser are left out of the comparison: a rebuild runs only the current parsers.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from pathlib import Path
 
 import polars as pl
 
-from ingest import access, paths
+from ingest import access, paths, rawstore
 from ingest.curate import seed
 from ingest.curate.schema import NATURAL_KEYS
 from ingest.parse import runner
@@ -29,8 +30,24 @@ def _logical(df: pl.DataFrame) -> pl.DataFrame:
     return df.sort(df.columns, nulls_last=True)
 
 
-def _quarantine(st: str, root: Path) -> pl.DataFrame:
+def _current_versions(root: Path) -> dict[str, str]:
+    """Raw sha256 -> version of the parser that would read it today."""
+    out = {}
+    for p in rawstore.iter_manifests(None, root):
+        m = rawstore.load_manifest(p)
+        found = runner.parser_for(m)
+        if found is not None:
+            out[m["sha256"]] = found[0]
+    return out
+
+
+def _quarantine(st: str, root: Path, versions: dict[str, str]) -> pl.DataFrame:
+    """Quarantine rows, without those an older parser version wrote for a raw file (seed rows
+    reference seed files, not raw files, and are always kept)."""
     q = access.all_rows("quarantine", st, root)
+    if q.height:
+        cur = pl.col("ref").replace_strict(versions, default=None, return_dtype=pl.Utf8)
+        q = q.filter(cur.is_null() | (pl.col("parser_version") == cur))
     return _logical(q.select("table", "row_json", "reason_code", "ref", "ingest_run_id"))
 
 
@@ -62,7 +79,8 @@ def compare(a_root: Path, b_root: Path) -> list[str]:
                 diffs.append(
                     f"{st}/{table}: committed {a.height} rows, rebuilt {b.height} rows differ"
                 )
-        qa, qb = _quarantine(st, a_root), _quarantine(st, b_root)
+        versions = _current_versions(a_root)
+        qa, qb = _quarantine(st, a_root, versions), _quarantine(st, b_root, versions)
         if qa.height != qb.height or not qa.equals(qb):
             diffs.append(f"{st}/quarantine: committed {qa.height} rows, rebuilt {qb.height}")
     return diffs

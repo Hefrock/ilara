@@ -16,7 +16,7 @@ import re
 from datetime import date, datetime
 from typing import Any
 
-PARSER_VERSION = "1.0.0"
+PARSER_VERSION = "1.0.1"  # 1.0.1: rows carry this source's own label
 SOURCE_LABEL = "DOH newsroom release"
 
 MONTHS = "January|February|March|April|May|June|July|August|September|October|November|December"
