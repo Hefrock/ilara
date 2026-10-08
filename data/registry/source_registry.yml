@@ -230,6 +230,32 @@ sources:
     last_verified_utc: null
     notes: Configuration of the national weekly cases chart on the CDC cases page (data-config-url). Captured to find its data file (sources S6).
 
+  - source_id: cdc_measles_cases_map
+    name: CDC measles cases by jurisdiction (map data)
+    url: https://www.cdc.gov/wcms/vizdata/measles/MeaslesCasesMap.json
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: json
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Data file named by cdc_measles_states_config (dataUrl); the map reads columns geography and cases_2026 (also cases_calendar_year, cases_2025, cases_2024). Source of the CDC Pennsylvania count for the reconciliation (sources S6).
+
+  - source_id: cdc_measles_cases_weekly
+    name: CDC measles weekly cases, national (chart data)
+    url: https://www.cdc.gov/wcms/vizdata/measles/MeaslesCasesWeekly.json
+    url_status: candidate
+    tier: T1
+    cadence: daily
+    access_path: http
+    ext: json
+    robots_checked_utc: null
+    terms_note: US federal government work, public domain.
+    last_verified_utc: null
+    notes: Data file named by cdc_measles_weekly_config (dataUrl, keys week_start and cases). National context only (sources S6).
+
   - source_id: cdc_nwss_measles
     name: CDC NWSS measles wastewater
     url: https://data.cdc.gov/resource/akvg-8vrb.json
