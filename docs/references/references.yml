@@ -1,0 +1,19 @@
+# Literature for model priors (B17, U12, U13). Only citations and extracted figures are kept in
+# this folder; article and abstract text are never committed (I10). `measles references` prints
+# each abstract to the workflow log so the figures can be read from the source itself.
+references:
+  - key: guerra2017
+    pmid: "28757186"
+    doi: 10.1016/S1473-3099(17)30307-9
+    citation: "Guerra FM, Bolotin S, Lim G, et al. The basic reproduction number (R0) of measles: a systematic review. Lancet Infect Dis. 2017."
+    for: [U12]
+  - key: vink2014
+    pmid: "25262286"
+    doi: 10.1093/aje/kwu209
+    citation: "Vink MA, Bootsma MCJ, Wallinga J. Serial intervals of respiratory infectious diseases: a systematic review and analysis. Am J Epidemiol. 2014;180(9):865-875."
+    for: [U13]
+  - key: klinkenberg2011
+    pmid: "21704640"
+    doi: null
+    citation: "Klinkenberg D, Nishiura H. The correlation between infectivity and incubation period of measles, estimated from households with two cases. J Theor Biol. 2011."
+    for: [U13]

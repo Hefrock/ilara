@@ -91,6 +91,20 @@ def cmd_alerts(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_references(a: argparse.Namespace) -> int:
+    from ingest import references
+    from ingest.capture.http import PoliteClient
+
+    client = PoliteClient()
+    try:
+        results = references.fetch_all(references.load(_root()), client)
+    finally:
+        client.close()
+    print(references.report(results))
+    ok = all(any(s["outcome"] == "ok" for s in e["sources"].values()) for e in results)
+    return 0 if ok else 1
+
+
 def cmd_verify(a: argparse.Namespace) -> int:
     from ingest.verify import verify_all
 
@@ -266,6 +280,9 @@ def build_parser() -> argparse.ArgumentParser:
     rf.add_argument("--force", action="store_true")
     rf.set_defaults(func=cmd_reference)
 
+    sub.add_parser(
+        "references", help="print citation records and abstracts for the model's literature"
+    ).set_defaults(func=cmd_references)
     sub.add_parser("verify").set_defaults(func=cmd_verify)
     sub.add_parser("rebuild").set_defaults(func=cmd_rebuild)
     sub.add_parser("quality").set_defaults(func=cmd_quality)
