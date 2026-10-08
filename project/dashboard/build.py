@@ -295,6 +295,8 @@ FLAG_TEXT = {
     "BLOCKED": "A source refused or challenged the capture; the archive stopped and did not "
     "work around it.",
     "SIZE_BUDGET": "The archive is close to its storage budget.",
+    "DEMOGRAPHIC_SUM_MISMATCH": "Cases by age, month or hospitalization did not add up to the "
+    "statewide total, so that breakdown was not stored.",
     "HASH_MISMATCH": "A saved raw file no longer matches its recorded hash.",
 }
 
@@ -337,6 +339,145 @@ def status(root: Path | None, now: datetime) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------- charts
+
+
+SMALL_CELL = 5  # docs/dashboard.md C: suppress cells under 5 to reduce re-identification risk
+AGE_ORDER = ("0-4", "5-9", "10-17", "18-24", "25-49", "50-64", "65+")
+
+
+def _small(v: int | None) -> bool:
+    return v is not None and 0 < v < SMALL_CELL
+
+
+def _safe(v: int | None) -> int | None:
+    """The count as published on this site: suppressed small cells carry no number at all."""
+    return None if _small(v) else v
+
+
+def _shown(v: int | None) -> str:
+    """Display value for a count: blank in the source stays blank, 1 to 4 become "<5"."""
+    if v is None:
+        return "not reported"
+    return "<5" if 0 < v < SMALL_CELL else f"{v:,}"
+
+
+def demographics(root: Path | None) -> dict[str, Any] | None:
+    """Latest dashboard snapshot of cases by age group, by month of report, and hospitalized
+    cases with denominators by age band. Counts of 1 to 4 are suppressed for display."""
+    d = access.current("case_demographics", "curated", root).filter(
+        (pl.col("source_id") == DASHBOARD)
+        & (pl.col("source_tier") == "T1")
+        & pl.col("county_fips").is_null()
+    )
+    if d.height == 0:
+        return None
+    as_of = d["as_of_date"].max()
+    d = d.filter(pl.col("as_of_date") == as_of)
+    val = {(r["dimension"], r["category"]): r["cases"] for r in d.to_dicts()}
+    ages = [
+        {
+            "age_group": g,
+            "cases": _safe(val.get(("age_group", g))),
+            "suppressed": _small(val.get(("age_group", g))),
+            "shown": _shown(val.get(("age_group", g))),
+        }
+        for g in AGE_ORDER
+        if ("age_group", g) in val
+    ]
+    months = sorted(c for dim, c in val if dim == "report_month")
+    month_rows = [
+        {
+            "report_month": m,
+            "cases": _safe(val[("report_month", m)]),
+            "suppressed": _small(val[("report_month", m)]),
+            "shown": _shown(val[("report_month", m)]),
+            "partial": m == str(as_of)[:7],
+        }
+        for m in months
+    ]
+    hosp = []
+    for band, label in (("under18", "Under 18"), ("18plus", "18 and over"), ("all", "All ages")):
+        h, n = val.get(("hospitalized_age_band", band)), val.get(("age_band", band))
+        if h is None or not n:
+            continue
+        hosp.append(
+            {
+                "age_band": label,
+                "hospitalized": _safe(h),
+                "cases": _safe(n),
+                "share_pct": None if _small(h) or _small(n) else round(100 * h / n, 1),
+                "shown": f"{_shown(h)} of {_shown(n)}",
+            }
+        )
+    return {
+        "as_of_date": as_of,
+        "source_tier": "T1",
+        "raw_sha256": sorted(set(d["raw_sha256"].drop_nulls())),
+        "unknown_age": _safe(val.get(("age_group", "Unk"))),
+        "ages": ages,
+        "months": month_rows,
+        "hospitalization": hosp,
+    }
+
+
+def _bar(x: list[Any], y: list[Any], text: list[str], colors: list[str], hover: str) -> go.Figure:
+    fig = go.Figure(
+        go.Bar(
+            x=x,
+            y=y,
+            text=text,
+            textposition="outside",
+            cliponaxis=False,
+            marker={"color": colors},
+            hovertemplate=hover,
+        )
+    )
+    _layout(fig, 300)
+    fig.update_layout(margin={"l": 48, "r": 16, "t": 24, "b": 40}, showlegend=False)
+    # A bar with no number still says why: "<5" (suppressed) or "n/r" (blank in the report).
+    for xi, yi, ti in zip(x, y, text, strict=True):
+        if yi is None:
+            fig.add_annotation(
+                x=xi,
+                y=0,
+                yanchor="bottom",
+                text="n/r" if ti.startswith("not reported") else ti,
+                showarrow=False,
+                font={"color": MUTED, "size": 12},
+            )
+    fig.update_xaxes(showgrid=False, type="category", fixedrange=True)
+    fig.update_yaxes(
+        gridcolor=NO_DATA, zeroline=False, tickformat=",", fixedrange=True, rangemode="tozero"
+    )
+    return fig
+
+
+def months_figure(demo: dict[str, Any]) -> go.Figure:
+    """Cases by month of report date. Suppressed and blank months have no bar; the current
+    month is partial and drawn lighter."""
+    rows = demo["months"]
+    y = [r["cases"] for r in rows]
+    colors = [BLUE_SEQ[4] if r["partial"] else SERIES_LIGHT for r in rows]
+    labels = [r["shown"] for r in rows]
+    return _bar(
+        [r["report_month"] for r in rows],
+        y,
+        labels,
+        colors,
+        "%{x}<br><b>%{text}</b> cases by report date<extra></extra>",
+    )
+
+
+def ages_figure(demo: dict[str, Any]) -> go.Figure:
+    rows = demo["ages"]
+    y = [r["cases"] for r in rows]
+    return _bar(
+        [r["age_group"] for r in rows],
+        y,
+        [r["shown"] for r in rows],
+        [SERIES_LIGHT] * len(rows),
+        "Age %{x}<br><b>%{text}</b> cases<extra></extra>",
+    )
 
 
 def _layout(fig: go.Figure, height: int) -> None:
@@ -812,12 +953,82 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
     school_year = cov["school_year"].drop_nulls()
     year = school_year[0] if school_year.len() else "not yet captured"
 
+    demo = demographics(root)
+    if demo is not None:
+        m_fig = months_figure(demo).to_html(
+            include_plotlyjs=False,
+            full_html=False,
+            div_id="chart-months",
+            config={"displayModeBar": False, "responsive": True},
+        )
+        a_fig = ages_figure(demo).to_html(
+            include_plotlyjs=False,
+            full_html=False,
+            div_id="chart-ages",
+            config={"displayModeBar": False, "responsive": True},
+        )
+        months_df = pl.DataFrame(demo["months"])
+        ages_df = pl.DataFrame(demo["ages"])
+        hosp_df = pl.DataFrame(demo["hospitalization"])
+        demo_as_of = _d(demo["as_of_date"])
+        unk = demo["unknown_age"]
+        who_html = f"""<p class="muted">As of {
+            demo_as_of
+        }, calendar year. Counts of 1 to 4 are shown as
+"&lt;5" and carry no number in the downloads, to protect privacy.</p>
+<h3 style="font-size:1rem;margin:8px 0 4px">Cases by month of report</h3>
+<p class="muted">Month the case was reported, not when the illness began; the dashboard gives no
+onset dates. The lighter bar is the current month, still partial. "n/r": blank on the
+dashboard (not stated as zero).</p>
+{m_fig}
+{
+            _table(
+                months_df,
+                {"report_month": "Month reported", "shown": "Cases"},
+                "Cases by month of report",
+            )
+        }
+<h3 style="font-size:1rem;margin:16px 0 4px">Cases by age</h3>
+{a_fig}
+<p class="muted">Unknown age: {
+            html.escape(
+                _shown(unk) if unk is not None else "blank on the dashboard (not stated as zero)"
+            )
+        }.</p>
+{_table(ages_df, {"age_group": "Age group", "shown": "Cases"}, "Cases by age group")}
+<h3 style="font-size:1rem;margin:16px 0 4px">Hospitalized</h3>
+{
+            _table(
+                hosp_df,
+                {"age_band": "Ages", "shown": "Hospitalized of cases", "share_pct": "Percent"},
+                "Hospitalized cases by age band",
+            ).replace("<details class='tableview'>", "<details class='tableview' open>")
+        }
+<a class="dl" href="data/demographics.csv">Download CSV</a>"""
+        demo_rows = months_df.select(
+            pl.lit("report_month").alias("dimension"),
+            pl.col("report_month").alias("category"),
+            "cases",
+            "suppressed",
+        ).vstack(
+            ages_df.select(
+                pl.lit("age_group").alias("dimension"),
+                pl.col("age_group").alias("category"),
+                "cases",
+                "suppressed",
+            )
+        )
+    else:
+        who_html = "<p class='muted'>No dashboard snapshot captured yet.</p>"
+        demo_rows = pl.DataFrame()
+
     data = {
         "generated_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "build": "public" if public else "private",
         "tiles": tiles,
         "statewide": series.with_columns(pl.col("as_of_date").cast(pl.Utf8)).to_dicts(),
         "county": county_rows,
+        "demographics": json.loads(json.dumps(demo, default=str)) if demo else None,
         "coverage": cov.to_dicts(),
         "coverage_schools": schools.to_dicts(),
         "strip_order": cov.sort("county_fips")["county_fips"].to_list(),
@@ -836,6 +1047,7 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         "coverage": cov,
         "schools": schools,
         "capture_days": days,
+        "demographics": demo_rows,
         "reconciliation": recon,
     }
 
@@ -870,6 +1082,7 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
             },
             "Cases by county",
         ),
+        who=who_html,
         coverage_title=html.escape(
             f"Kindergarten MMR coverage is below 95 percent in {n_below} of "
             f"{cov['mmr_pct'].drop_nulls().len()} counties"
@@ -1030,7 +1243,8 @@ footer {{ color: var(--muted); font-size: .8rem; padding-bottom: 24px; }}
 <p class="notice">Unofficial independent project, not public health guidance. Counts are a floor:
 reported cases are those known to and published by the Pennsylvania Department of Health.</p>
 <nav><a href="#summary">Summary</a><a href="#trend">Statewide trend</a>
-<a href="#counties">Counties</a><a href="#coverage">Vaccination coverage</a>
+<a href="#counties">Counties</a><a href="#who">Who is affected</a>
+<a href="#coverage">Vaccination coverage</a>
 <a href="#trust">Data and trust</a></nav>
 </header>
 <main>
@@ -1057,6 +1271,10 @@ not interpolated; values whose count definition was not stated are shown separat
 </div>
 <a class="dl" href="data/county.csv">Download CSV</a>
 {county_table}
+</section>
+<section id="who">
+<h2>Who is affected</h2>
+{who}
 </section>
 <section id="coverage">
 <h2>{coverage_title}</h2>
@@ -1122,12 +1340,15 @@ releases; population and boundaries: US Census Bureau.</footer>
   function apply() {{
     if (!window.Plotly) return;
     var c = ink();
-    ['chart-statewide', 'chart-county', 'chart-coverage', 'chart-strip'].forEach(function (id) {{
+    ['chart-statewide', 'chart-county', 'chart-coverage', 'chart-strip', 'chart-months',
+     'chart-ages'].forEach(function (id) {{
       var el = document.getElementById(id);
       if (!el || !el.data) return;
       Plotly.relayout(el, {{ 'font.color': c.ink, 'yaxis.gridcolor': c.grid }});
       if (id === 'chart-statewide') {{
         Plotly.restyle(el, {{ 'line.color': c.accent, 'marker.color': c.accent }}, [0]);
+      }} else if (id === 'chart-months' || id === 'chart-ages') {{
+        Plotly.relayout(el, {{ 'yaxis.gridcolor': c.grid }});
       }} else if (id === 'chart-strip') {{
         Plotly.relayout(el, {{ 'xaxis.gridcolor': c.grid }});
       }} else {{

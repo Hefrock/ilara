@@ -158,6 +158,7 @@ FLAG_CODES = (
     "SIZE_BUDGET",
     "HASH_MISMATCH",
     "SOURCE_CONFLICT",
+    "DEMOGRAPHIC_SUM_MISMATCH",
 )
 STORES = ("curated", "sensitivity")
 

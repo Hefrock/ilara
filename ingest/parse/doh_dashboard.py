@@ -1,8 +1,8 @@
 """Parser for the DOH dashboard capture, access path A (G1, docs/probe_report.md).
 
 Input: the ``responses`` artefact of one capture (report data API responses, each tagged
-with the view it was captured under). Output rows for ``case_state``, ``case_county`` and
-``vaccine_doses``.
+with the view it was captured under). Output rows for ``case_state``, ``case_county``,
+``vaccine_doses`` and ``case_demographics``.
 
 - ``as_of_date`` is the report's "Last Updated" measure (``meas_dlm``), not the fetch date.
 - The count definition of each headline figure comes from the query's own TimeFrame filter:
@@ -18,18 +18,25 @@ with the view it was captured under). Output rows for ``case_state``, ``case_cou
   is partial (``period_complete`` false). The report gives no dose number, so first, second
   and early infant doses cannot be told apart. Anything unexpected in the dose chart raises a
   flag and stores no dose rows; it never stops the case tables from being parsed.
+- ``case_demographics`` (statewide, "Year to date" so ``calendar_year``): cases by age group
+  and by month of report date ("Cases by Age and Time"), and hospitalized cases with their
+  denominators by age band ("Hospitalizations", cards such as "198 of 1,004"). A blank cell
+  in the report is stored as null, not zero (I5). Each set must add up to the year-to-date
+  total of the same capture; if a set does not, or looks different, it is flagged and not
+  stored.
 """
 
 from __future__ import annotations
 
 import calendar
+import re
 from datetime import UTC, date, datetime
 from typing import Any
 
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.1.0"  # 1.1.0: MMR doses administered by DOH staff
+PARSER_VERSION = "1.2.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -50,10 +57,19 @@ COUNTY = f"{M}.County"
 COUNTY_COUNT = f"Sum({M}.COUNT)"
 COUNTIES_WITH_CASES = f"Min({M}.County)"  # the report's own card: number of counties
 V = "PAmeasles2026_Public_mmr"
-DOSE_YEAR = 2026  # the year in the report's table names and chart axis, "Month (2026)"
+REPORT_YEAR = 2026  # the year in the report's table names and chart axes, "Month (2026)"
 DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
 DOSE_COUNT = f"CountNonNull({V}.vaccination_code)"
 MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
+AGE = ("AgeDimTable.agegrp", f"CountNonNull({T}.agegrp)")
+REPORT_MONTH = (f"{T}.reportdate.Variation.Date Hierarchy.Month", f"Sum({T}.count)")
+AGE_GROUPS = ("0-4", "5-9", "10-17", "18-24", "25-49", "50-64", "65+", "Unk")
+HOSP_CARDS = {
+    f"Min({T}.hosptotal)": "all",
+    f"Min({T}.hospunder18)": "under18",
+    f"Min({T}.hosp18plus)": "18plus",
+}
+X_OF_Y = re.compile(r"^\s*([\d,]+)\s+of\s+([\d,]+)\s*$")
 
 
 class DashboardParseError(ValueError):
@@ -205,13 +221,121 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
         flags.append(("PARSE_SCHEMA_CHANGE", "county table not found in the capture"))
     doses, dose_flags = _doses(queries, as_of)
     flags += dose_flags
+    demo, demo_flags = _demographics(queries, as_of, ytd_total)
+    flags += demo_flags
     return {
         "as_of_date": as_of,
         "state": state,
         "county": county_rows,
         "doses": doses,
+        "demographics": demo,
         "flags": flags,
     }
+
+
+def _demo_row(as_of: date, dimension: str, category: str, cases: int | None) -> dict[str, Any]:
+    return {
+        "as_of_date": as_of,
+        "dimension": dimension,
+        "category": category,
+        "cases": cases,
+        "county_fips": None,
+        "count_definition": "calendar_year",
+    }
+
+
+def _demographics(
+    queries: list[dict[str, Any]], as_of: date, ytd: Any
+) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
+    rows: list[dict[str, Any]] = []
+    flags: list[tuple[str, str]] = []
+    total = int(ytd) if ytd is not None else None
+
+    def bad(what: str) -> None:
+        flags.append(("DEMOGRAPHIC_SUM_MISMATCH", f"{what} not stored"))
+
+    def series(names: tuple[str, str]) -> list[dict[str, Any]] | None:
+        found = [
+            q
+            for q in queries
+            if tuple(q["names"]) == names and q["timeframe"] in ([], ["Year to date"])
+        ]
+        if not found:
+            return None
+        first = found[0]["blocks"].get("DM0", [])
+        if any(q["blocks"].get("DM0", []) != first for q in found[1:]):
+            return []  # two views disagree: treated as a problem below
+        return first
+
+    age = series(AGE)
+    if age is None:
+        flags.append(("PARSE_SCHEMA_CHANGE", "cases by age group not found in the capture"))
+    else:
+        got: dict[Any, Any] = {r.get(AGE[0]): r.get(AGE[1]) for r in age}
+        n = sum(int(v) for v in got.values() if v is not None)
+        if set(got) != set(AGE_GROUPS) or total is None or n != total:
+            bad(f"cases by age group (groups {sorted(map(str, got))}, sum {n}, total {total})")
+        else:
+            rows += [
+                _demo_row(as_of, "age_group", g, None if got[g] is None else int(got[g]))
+                for g in AGE_GROUPS
+            ]
+
+    months = series(REPORT_MONTH)
+    if months is None:
+        flags.append(("PARSE_SCHEMA_CHANGE", "cases by report month not found in the capture"))
+    else:
+        got = {r.get(REPORT_MONTH[0]): r.get(REPORT_MONTH[1]) for r in months}
+        if not all(isinstance(m, str) for m in got):
+            got = {"?": None}  # an unexpected key fails the month check below
+        n = sum(int(v) for v in got.values() if v is not None)
+        late = [
+            m
+            for m, v in got.items()
+            if m in MONTHS and v is not None and date(REPORT_YEAR, MONTHS[m], 1) > as_of
+        ]
+        if not set(got) <= set(MONTHS) or late or total is None or n != total:
+            bad(f"cases by report month (sum {n}, total {total}, after as-of {late})")
+        else:
+            rows += [
+                _demo_row(
+                    as_of,
+                    "report_month",
+                    f"{REPORT_YEAR}-{MONTHS[m]:02d}",
+                    None if got[m] is None else int(got[m]),
+                )
+                for m in sorted(got, key=lambda m: MONTHS[m])
+                if date(REPORT_YEAR, MONTHS[m], 1) <= as_of
+            ]
+
+    cards: dict[str, tuple[int, int]] = {}
+    for q in queries:
+        if q["names"] and q["names"][0] in HOSP_CARDS and q["timeframe"] == ["Year to date"]:
+            m = X_OF_Y.match(str(_single(q)))
+            band = HOSP_CARDS[q["names"][0]]
+            if m is None:
+                cards[band] = (-1, -1)
+                continue
+            val = (int(m.group(1).replace(",", "")), int(m.group(2).replace(",", "")))
+            if cards.get(band, val) != val:
+                cards[band] = (-1, -1)
+            else:
+                cards[band] = val
+    if not cards:
+        flags.append(("PARSE_SCHEMA_CHANGE", "hospitalization cards not found in the capture"))
+    elif (
+        set(cards) != set(HOSP_CARDS.values())
+        or any(h < 0 or h > c for h, c in cards.values())
+        or cards["all"][1] != total
+        or cards["under18"][0] + cards["18plus"][0] > cards["all"][0]
+        or cards["under18"][1] + cards["18plus"][1] > cards["all"][1]
+    ):
+        bad(f"hospitalizations by age band ({cards}, total {total})")
+    else:
+        for band in ("under18", "18plus", "all"):
+            rows.append(_demo_row(as_of, "age_band", band, cards[band][1]))
+            rows.append(_demo_row(as_of, "hospitalized_age_band", band, cards[band][0]))
+    return rows, flags
 
 
 def _doses(
@@ -230,10 +354,10 @@ def _doses(
                 problem = f"unexpected month {name!r} in the vaccine doses chart"
             elif n is None:
                 # The chart's axis lists all twelve months; later months have no value.
-                if date(DOSE_YEAR, MONTHS[name], 1) <= as_of:
-                    problem = f"no dose count for {name} {DOSE_YEAR} (as of {as_of})"
-            elif date(DOSE_YEAR, MONTHS[name], 1) > as_of:
-                problem = f"doses reported for {name} {DOSE_YEAR}, after as-of date {as_of}"
+                if date(REPORT_YEAR, MONTHS[name], 1) <= as_of:
+                    problem = f"no dose count for {name} {REPORT_YEAR} (as of {as_of})"
+            elif date(REPORT_YEAR, MONTHS[name], 1) > as_of:
+                problem = f"doses reported for {name} {REPORT_YEAR}, after as-of date {as_of}"
             elif months.get(MONTHS[name], int(n)) != int(n):
                 problem = f"conflicting dose counts for {name}"
             else:
@@ -244,11 +368,11 @@ def _doses(
         return [], [("PARSE_SCHEMA_CHANGE", f"vaccine doses not stored: {problem}")]
     rows = []
     for m in sorted(months):
-        end = date(DOSE_YEAR, m, calendar.monthrange(DOSE_YEAR, m)[1])
+        end = date(REPORT_YEAR, m, calendar.monthrange(REPORT_YEAR, m)[1])
         rows.append(
             {
                 "as_of_date": as_of,
-                "period_start": date(DOSE_YEAR, m, 1),
+                "period_start": date(REPORT_YEAR, m, 1),
                 "period_end": end,
                 "period_complete": end < as_of,
                 "doses": months[m],
