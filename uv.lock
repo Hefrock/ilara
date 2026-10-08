@@ -289,6 +289,7 @@ source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
     { name = "httpx" },
+    { name = "numpy" },
     { name = "openpyxl" },
     { name = "playwright" },
     { name = "plotly" },
@@ -320,6 +321,7 @@ requires-dist = [
     { name = "duckdb" },
     { name = "geopandas", marker = "extra == 'geo'" },
     { name = "httpx" },
+    { name = "numpy", specifier = ">=2.5.3" },
     { name = "openpyxl" },
     { name = "playwright" },
     { name = "plotly", specifier = ">=7.1.0" },

@@ -1,0 +1,51 @@
+# WP6a susceptibility parameters. Every value names its status and source (docs/sources.md).
+# ASSUMPTION marks a modelling choice not taken from a source; each is varied in the draws or
+# in the scenarios below rather than fixed silently.
+
+vaccine_effectiveness:
+  one_dose: {mean: 0.93, sd: 0.01, status: VERIFIED, source: "S7, CDC via ABC News"}
+  two_dose: {mean: 0.97, sd: 0.005, status: VERIFIED, source: "S7, CDC via ABC News"}
+
+# School coverage: PA "MMR up to date" means two doses for school entry (S2). Kindergarten,
+# 7th and 12th grade county rates are averaged by enrolment to stand for ages 5 to 17. The DOH
+# county summary already includes schools whose own values are suppressed (ND): county
+# enrolment equals the sum over all schools, suppressed or not (checked 2026-10-08).
+school:
+  grades: [kindergarten, grade_7, grade_12]
+  # Effective sample size cap for the coverage draw: reporting error, not only sampling.
+  max_effective_n: 200
+  status: ASSUMPTION
+  note: "Children not up to date are treated as unvaccinated (conservative)."
+
+under5:
+  infant_share: {value: 0.2, status: ASSUMPTION, note: "under-1s as one fifth of ages 0-4, all susceptible"}
+  # Ages 1-4 take kindergarten coverage times this ratio, one dose.
+  coverage_ratio: {low: 0.85, high: 1.0, status: ASSUMPTION}
+
+adults:
+  # Share of people 18 and over who are immune (vaccination or past infection).
+  immune: {low: 0.92, high: 0.98, status: ASSUMPTION, note: "U19 and S7 literature to confirm"}
+
+# U19: a share of each county's population outside the school survey (small private and
+# one-room schools, adults in the same communities) with much lower coverage. Applied the same
+# way in every county: the archive has no T1 source for where these communities live.
+under_covered:
+  status: ASSUMPTION
+  scenarios:
+    none: {share: 0.0, coverage: 0.0}
+    low: {share: 0.02, coverage: 0.5}
+    mid: {share: 0.05, coverage: 0.3}
+    high: {share: 0.10, coverage: 0.2}
+  default: none
+
+# Post-outbreak vaccination (S8). Doses are those the DOH dashboard reports as given by DOH
+# staff, statewide, with no dose number. The accounting rule (HAN 838): an early infant dose
+# does not count toward the routine series and adds no immunity here; an accelerated second
+# dose counts. Scenario names describe the effect on immunity (low = most doses add nothing).
+post_outbreak:
+  status: ASSUMPTION
+  scenarios:
+    low: {infant_share: 0.30, second_dose_share: 0.50}
+    mid: {infant_share: 0.15, second_dose_share: 0.40}
+    high: {infant_share: 0.05, second_dose_share: 0.30}
+  default: mid
