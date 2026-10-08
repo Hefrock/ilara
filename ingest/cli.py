@@ -140,7 +140,7 @@ def cmd_dashboard(a: argparse.Namespace) -> int:
     except FileNotFoundError as e:
         print(f"dashboard: {e}", file=sys.stderr)
         return 1
-    print(f"dashboard: wrote {path.relative_to(_root())} ({'public' if a.public else 'private'})")
+    print(f"dashboard: wrote {path} ({'public' if a.public else 'private'})")
     return 0
 
 

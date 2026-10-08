@@ -1,4 +1,4 @@
-"""Static dashboard (WP5 stages D0 to D2; docs/dashboard.md, E17).
+"""Static dashboard (WP5 stages D0 to D3; docs/dashboard.md, E17).
 
 Reads only through ``ingest.access`` (I8). Builds ``site/index.html`` with Plotly charts, an
 embedded JSON copy of every number on the page (T5.1), a CSV per chart (T5.8) and a table
@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 import json
+import zlib
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -48,6 +49,8 @@ BLUE_SEQ = [
 SERIES_LIGHT, SERIES_DARK = "#2a78d6", "#3987e5"
 MUTED = "#898781"
 NO_DATA = "#e1e0d9"
+TARGET = 95.0  # kindergarten MMR coverage target, percent
+DEFAULT_COUNTY = "42071"  # Lancaster: the outbreak's centre, shown first in the strip plot
 
 
 @dataclass
@@ -145,6 +148,80 @@ def county_latest(root: Path | None) -> pl.DataFrame:
         .then((pl.col("cum_cases") / pl.col("population") * 100_000).round(1))
         .otherwise(None)
         .alias("rate_per_100k")
+    ).sort("county_fips")
+
+
+def coverage_schools(root: Path | None) -> pl.DataFrame:
+    """Kindergarten rows from the school survey, suppressed ("ND") schools included and
+    flagged; they are counted on the page but never plotted (no value to plot)."""
+    sch = access.current("immunization_school", "curated", root).filter(
+        (pl.col("grade") == "kindergarten") & (pl.col("source_tier") == "T1")
+    )
+    names = access.reference_table("geography_county", root).select(
+        "county_fips", pl.col("name").alias("county")
+    )
+    return (
+        sch.join(names, on="county_fips", how="left")
+        .select(
+            "county_fips",
+            "county",
+            "school_name",
+            "enrolled",
+            "mmr_pct",
+            "suppressed_flag",
+            "school_year",
+            "source_id",
+            "source_tier",
+            "raw_sha256",
+        )
+        .sort("county_fips", "school_name")
+    )
+
+
+def coverage_county(root: Path | None, schools: pl.DataFrame) -> pl.DataFrame:
+    """County kindergarten MMR coverage (DOH county summary) for all 67 counties, with the gap
+    to the 95 percent target and the share of reporting schools below it."""
+    imm = access.current("immunization_county", "curated", root).filter(
+        (pl.col("grade") == "kindergarten") & (pl.col("source_tier") == "T1")
+    )
+    base = access.reference_table("geography_county", root).select("county_fips", "name")
+    cty = imm.select(
+        "county_fips",
+        "school_year",
+        "enrolled",
+        pl.col("mmr_up_to_date_pct").round(1).alias("mmr_pct"),
+        "source_id",
+        "source_tier",
+        "raw_sha256",
+    )
+    shown = schools.filter(~pl.col("suppressed_flag") & pl.col("mmr_pct").is_not_null())
+    counts = (
+        schools.group_by("county_fips")
+        .agg(
+            (~pl.col("suppressed_flag") & pl.col("mmr_pct").is_not_null())
+            .sum()
+            .cast(pl.Int64)
+            .alias("schools_reporting"),
+            pl.col("suppressed_flag").sum().cast(pl.Int64).alias("schools_suppressed"),
+        )
+        .join(
+            shown.group_by("county_fips").agg(
+                (pl.col("mmr_pct") < TARGET).sum().cast(pl.Int64).alias("schools_below_95")
+            ),
+            on="county_fips",
+            how="left",
+        )
+    )
+    out = base.join(cty, on="county_fips", how="left").join(counts, on="county_fips", how="left")
+    return out.with_columns(
+        pl.when(pl.col("mmr_pct").is_not_null())
+        .then((TARGET - pl.col("mmr_pct")).clip(lower_bound=0).round(1))
+        .otherwise(None)
+        .alias("gap_pts"),
+        pl.when(pl.col("schools_reporting") > 0)
+        .then((pl.col("schools_below_95") / pl.col("schools_reporting") * 100).round(1))
+        .otherwise(None)
+        .alias("share_schools_below_95"),
     ).sort("county_fips")
 
 
@@ -262,60 +339,45 @@ def _mode(fills: list[str], vmax: float, title: str) -> dict[str, list[Any]]:
     }
 
 
-def county_figure(cty: pl.DataFrame, geo: dict) -> go.Figure:
+def _choropleth(
+    geo: dict,
+    fips: list[str],
+    tips: list[str],
+    modes: list[tuple[str, list[float | None], str]],
+    height: int = 420,
+) -> go.Figure:
     """Counties drawn as filled shapes on plain axes: no basemap download, works offline
     (E17). Fill is the sequential blue ramp; no data is a neutral fill, distinct from zero
-    (T5.3). Buttons switch between rate per 100,000 and case count."""
+    (T5.3). Each mode is (button label, value per county, colorbar title); buttons appear
+    when there is more than one. Each shape carries its FIPS code in ``customdata``."""
     by_fips = {f["properties"]["county_fips"]: f for f in geo["features"]}
-    rows = {r["county_fips"]: r for r in cty.to_dicts()}
-    rate_max = max((r["rate_per_100k"] or 0) for r in rows.values()) or 1.0
-    count_max = max((r["cum_cases"] or 0) for r in rows.values()) or 1.0
+    maxes = [max((v or 0) for v in vals) or 1.0 for _, vals, _ in modes]
+    fills = [[ramp_color(v, m) for v in vals] for (_, vals, _), m in zip(modes, maxes, strict=True)]
     fig = go.Figure()
-    rate_fill, count_fill = [], []
-    for fips in sorted(rows):
-        r, feat = rows[fips], by_fips.get(fips)
+    kept: list[int] = []
+    for i, code in enumerate(fips):
+        feat = by_fips.get(code)
         if feat is None:
             continue
+        kept.append(i)
         xs, ys = _rings(feat["geometry"])
-        n = r["cum_cases"]
-        if n is None:
-            tip = f"<b>{r['name']}</b><br>no data"
-        else:
-            unstable = "<br>rate unstable (fewer than 5 cases)" if n < 5 else ""
-            tip = (
-                f"<b>{r['name']}</b><br>{n:,} cases · {r['rate_per_100k']} per 100k"
-                f"{unstable}<br>as of {_d(r['as_of_date'])}"
-            )
-        rate_fill.append(ramp_color(r["rate_per_100k"], rate_max))
-        count_fill.append(ramp_color(None if n is None else float(n), count_max))
         fig.add_trace(
             go.Scatter(
                 x=xs,
                 y=ys,
                 mode="lines",
                 fill="toself",
-                fillcolor=rate_fill[-1],
+                fillcolor=fills[0][i],
                 line={"width": 0.8, "color": "#fcfcfb"},
                 hoveron="fills",
-                text=tip,
+                text=tips[i],
                 hoverinfo="text",
-                name=r["name"],
+                customdata=[code] * len(xs),
+                name=feat["properties"].get("name", code),
                 showlegend=False,
             )
         )
     scale = [[i / (len(BLUE_SEQ) - 1), c] for i, c in enumerate(BLUE_SEQ)]
-
-    def colorbar(vmax: float, title: str) -> dict:
-        return {
-            "color": [0, vmax],
-            "colorscale": scale,
-            "cmin": 0,
-            "cmax": vmax,
-            "showscale": True,
-            "size": 0.1,
-            "colorbar": {"title": {"text": title}, "thickness": 12, "len": 0.8},
-        }
-
     fig.add_trace(
         go.Scatter(
             x=[None],
@@ -323,44 +385,182 @@ def county_figure(cty: pl.DataFrame, geo: dict) -> go.Figure:
             mode="markers",
             hoverinfo="skip",
             showlegend=False,
-            marker=colorbar(rate_max, "per 100k"),
+            marker={
+                "color": [0, maxes[0]],
+                "colorscale": scale,
+                "cmin": 0,
+                "cmax": maxes[0],
+                "showscale": True,
+                "size": 0.1,
+                "colorbar": {"title": {"text": modes[0][2]}, "thickness": 12, "len": 0.8},
+            },
         )
     )
     n_shapes = len(fig.data) - 1
-    _layout(fig, 420)
+    _layout(fig, height)
     fig.update_xaxes(visible=False, fixedrange=True)
     # Equal-area look at Pennsylvania's latitude: one degree of latitude ~ 1.32 of longitude.
     fig.update_yaxes(visible=False, fixedrange=True, scaleanchor="x", scaleratio=1.32)
-    fig.update_layout(
-        margin={"l": 0, "r": 0, "t": 40, "b": 0},
-        hovermode="closest",
-        updatemenus=[
+    fig.update_layout(margin={"l": 0, "r": 0, "t": 40 if len(modes) > 1 else 8, "b": 0})
+    fig.update_layout(hovermode="closest")
+    if len(modes) > 1:
+        buttons = [
             {
-                "type": "buttons",
-                "direction": "right",
-                "x": 0,
-                "y": 1.1,
-                "xanchor": "left",
-                "showactive": True,
-                # Fixed light chips in both modes so the active state stays legible.
-                "bgcolor": "#f0efec",
-                "bordercolor": "#c3c2b7",
-                "font": {"color": "#0b0b0b"},
-                "buttons": [
-                    {
-                        "label": "Per 100,000",
-                        "method": "restyle",
-                        "args": [_mode(rate_fill, rate_max, "per 100k"), list(range(n_shapes + 1))],
-                    },
-                    {
-                        "label": "Case count",
-                        "method": "restyle",
-                        "args": [_mode(count_fill, count_max, "cases"), list(range(n_shapes + 1))],
-                    },
-                ],
+                "label": label,
+                "method": "restyle",
+                "args": [_mode([f[i] for i in kept], m, title), list(range(n_shapes + 1))],
+            }
+            for (label, _, title), f, m in zip(modes, fills, maxes, strict=True)
+        ]
+        fig.update_layout(
+            updatemenus=[
+                {
+                    "type": "buttons",
+                    "direction": "right",
+                    "x": 0,
+                    "y": 1.1,
+                    "xanchor": "left",
+                    "showactive": True,
+                    # Fixed light chips in both modes so the active state stays legible.
+                    "bgcolor": "#f0efec",
+                    "bordercolor": "#c3c2b7",
+                    "font": {"color": "#0b0b0b"},
+                    "buttons": buttons,
+                }
+            ]
+        )
+    return fig
+
+
+def county_figure(cty: pl.DataFrame, geo: dict) -> go.Figure:
+    """Case map: rate per 100,000 or case count."""
+    rows = cty.sort("county_fips").to_dicts()
+    tips = []
+    for r in rows:
+        n = r["cum_cases"]
+        if n is None:
+            tips.append(f"<b>{r['name']}</b><br>no data")
+            continue
+        unstable = "<br>rate unstable (fewer than 5 cases)" if n < 5 else ""
+        tips.append(
+            f"<b>{r['name']}</b><br>{n:,} cases · {r['rate_per_100k']} per 100k"
+            f"{unstable}<br>as of {_d(r['as_of_date'])}"
+        )
+    return _choropleth(
+        geo,
+        [r["county_fips"] for r in rows],
+        tips,
+        [
+            ("Per 100,000", [r["rate_per_100k"] for r in rows], "per 100k"),
+            (
+                "Case count",
+                [None if r["cum_cases"] is None else float(r["cum_cases"]) for r in rows],
+                "cases",
+            ),
+        ],
+    )
+
+
+def coverage_figure(cov: pl.DataFrame, geo: dict) -> go.Figure:
+    """Susceptibility map: how far county kindergarten MMR coverage falls below 95 percent,
+    or the share of reporting schools below 95 percent. Darker means more susceptible."""
+    rows = cov.sort("county_fips").to_dicts()
+    tips = []
+    for r in rows:
+        if r["mmr_pct"] is None:
+            tips.append(f"<b>{r['name']}</b><br>no data")
+            continue
+        below = (
+            f"{r['schools_below_95']} of {r['schools_reporting']} reporting schools below 95%"
+            if r["schools_reporting"]
+            else "no school-level values"
+        )
+        tips.append(
+            f"<b>{r['name']}</b><br>kindergarten MMR {r['mmr_pct']}%"
+            f" · {r['gap_pts']} points below 95%<br>{below}"
+            f"<br>{r['schools_suppressed'] or 0} schools suppressed (ND)"
+            f"<br>{_num(r['enrolled'])} kindergartners · click for schools"
+        )
+    return _choropleth(
+        geo,
+        [r["county_fips"] for r in rows],
+        tips,
+        [
+            ("Points below 95%", [r["gap_pts"] for r in rows], "points"),
+            ("Schools below 95%", [r["share_schools_below_95"] for r in rows], "% schools"),
+        ],
+    )
+
+
+def _jitter(name: str) -> float:
+    """Deterministic vertical spread in [-0.35, 0.35] so a rebuild draws the same plot."""
+    return (zlib.crc32(name.encode()) % 1000) / 1000 * 0.7 - 0.35
+
+
+def strip_figure(schools: pl.DataFrame, cov: pl.DataFrame, default: str) -> go.Figure:
+    """One strip of schools per county (one trace each, only ``default`` visible). Position is
+    school coverage on the x axis, never location. Schools below 95 percent use the accent
+    colour; the rest are muted."""
+    shown = schools.filter(~pl.col("suppressed_flag") & pl.col("mmr_pct").is_not_null())
+    lo = min(50.0, (shown["mmr_pct"].min() or 50.0) // 10 * 10)  # type: ignore[operator]
+    fig = go.Figure()
+    for r in cov.sort("county_fips").to_dicts():
+        s = shown.filter(pl.col("county_fips") == r["county_fips"])
+        pct = s["mmr_pct"].to_list()
+        fig.add_trace(
+            go.Scatter(
+                x=pct,
+                y=[_jitter(n) for n in s["school_name"]],
+                mode="markers",
+                name=r["name"],
+                visible=r["county_fips"] == default,
+                marker={
+                    "size": 9,
+                    "opacity": 0.85,
+                    "color": [SERIES_LIGHT if p < TARGET else MUTED for p in pct],
+                    "line": {"width": 0},
+                },
+                customdata=list(zip(s["school_name"], s["enrolled"], strict=True)),
+                hovertemplate="<b>%{customdata[0]}</b><br>kindergarten MMR %{x}%"
+                "<br>%{customdata[1]:,} enrolled<extra></extra>",
+                showlegend=False,
+            )
+        )
+    _layout(fig, 220)
+    fig.update_layout(
+        margin={"l": 16, "r": 16, "t": 24, "b": 40},
+        hovermode="closest",
+        shapes=[
+            {
+                "type": "line",
+                "x0": TARGET,
+                "x1": TARGET,
+                "y0": 0,
+                "y1": 1,
+                "yref": "paper",
+                "line": {"color": MUTED, "width": 1.5, "dash": "dash"},
+            }
+        ],
+        annotations=[
+            {
+                "x": TARGET,
+                "y": 1,
+                "yref": "paper",
+                "yanchor": "bottom",
+                "text": "95% target",
+                "showarrow": False,
+                "font": {"size": 12, "color": MUTED},
             }
         ],
     )
+    fig.update_xaxes(
+        range=[lo, 101],
+        ticksuffix="%",
+        title={"text": "Kindergarten MMR coverage by school"},
+        gridcolor=NO_DATA,
+        fixedrange=True,
+    )
+    fig.update_yaxes(visible=False, range=[-0.5, 0.5], fixedrange=True)
     return fig
 
 
@@ -472,12 +672,49 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         config={"displayModeBar": False, "responsive": True},
     )
 
+    schools = coverage_schools(root)
+    cov = coverage_county(root, schools)
+    cov_ok = cov["mmr_pct"].drop_nulls().len() > 0
+    v_fig = coverage_figure(cov, geo).to_html(
+        include_plotlyjs=False,
+        full_html=False,
+        div_id="chart-coverage",
+        config={"displayModeBar": False, "responsive": True},
+    )
+    k_fig = strip_figure(schools, cov, DEFAULT_COUNTY).to_html(
+        include_plotlyjs=False,
+        full_html=False,
+        div_id="chart-strip",
+        config={"displayModeBar": False, "responsive": True},
+    )
+    strip_notes = {
+        r["county_fips"]: (
+            f"{r['name']}: {r['schools_reporting'] or 0} schools shown, "
+            f"{r['schools_below_95'] or 0} below 95 percent; "
+            f"{r['schools_suppressed'] or 0} suppressed (ND, fewer than 20 students) not shown."
+        )
+        for r in cov.to_dicts()
+    }
+    options = "".join(
+        f"<option value='{r['county_fips']}'"
+        f"{' selected' if r['county_fips'] == DEFAULT_COUNTY else ''}>"
+        f"{html.escape(r['name'])}</option>"
+        for r in cov.sort("name").to_dicts()
+    )
+    n_below = cov.filter(pl.col("mmr_pct") < TARGET).height
+    school_year = cov["school_year"].drop_nulls()
+    year = school_year[0] if school_year.len() else "not yet captured"
+
     data = {
         "generated_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "build": "public" if public else "private",
         "tiles": tiles,
         "statewide": series.with_columns(pl.col("as_of_date").cast(pl.Utf8)).to_dicts(),
         "county": county_rows,
+        "coverage": cov.to_dicts(),
+        "coverage_schools": schools.to_dicts(),
+        "strip_order": cov.sort("county_fips")["county_fips"].to_list(),
+        "strip_notes": strip_notes,
         "status": st,
         "gated_panels": [],  # forecast and watchlist: absent until G4 (I11)
     }
@@ -485,6 +722,8 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         "tiles": pl.DataFrame(tiles) if tiles else pl.DataFrame(),
         "statewide": series,
         "county": cty,
+        "coverage": cov,
+        "schools": schools,
     }
 
     county_as_of = cty["as_of_date"].drop_nulls().max() if cty.height else None
@@ -518,8 +757,43 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
             },
             "Cases by county",
         ),
+        coverage_title=html.escape(
+            f"Kindergarten MMR coverage is below 95 percent in {n_below} of "
+            f"{cov['mmr_pct'].drop_nulls().len()} counties"
+            if cov_ok
+            else "Kindergarten MMR coverage"
+        ),
+        coverage_year=html.escape(year),
+        coverage_chart=v_fig if cov_ok else "<p class='muted'>School survey not yet parsed.</p>",
+        strip_chart=k_fig,
+        strip_options=options,
+        strip_note=html.escape(strip_notes.get(DEFAULT_COUNTY, "")),
+        coverage_table=_table(
+            cov,
+            {
+                "name": "County",
+                "mmr_pct": "Kindergarten MMR %",
+                "gap_pts": "Points below 95%",
+                "schools_below_95": "Schools below 95%",
+                "schools_reporting": "Schools reporting",
+                "schools_suppressed": "Schools suppressed (ND)",
+                "enrolled": "Kindergartners",
+            },
+            "Kindergarten MMR coverage by county, " + year,
+        ),
+        school_table=_table(
+            schools.filter(~pl.col("suppressed_flag")),
+            {
+                "county": "County",
+                "school_name": "School",
+                "mmr_pct": "Kindergarten MMR %",
+                "enrolled": "Kindergartners",
+            },
+            "Kindergarten MMR coverage by school (suppressed schools omitted), " + year,
+        ),
         flags=flag_items,
-        data_json=html.escape(json.dumps(data, default=str, sort_keys=True), quote=False),
+        # Raw JSON in a script element: only "</" needs escaping; entities would not be decoded.
+        data_json=json.dumps(data, default=str, sort_keys=True).replace("</", "<\\/"),
         generated=data["generated_utc"],
     )
     return Page(body, data, csv)
@@ -597,6 +871,8 @@ section, .map-wrap > div {{ min-width: 0; }}
   border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }}
 .tableview caption {{ text-align: left; color: var(--ink2); padding: 4px 0; }}
 .dl {{ font-size: .85rem; }}
+.notes {{ color: var(--ink2); font-size: .85rem; padding-left: 18px; }}
+#strip-county {{ font: inherit; max-width: 100%; }}
 footer {{ color: var(--muted); font-size: .8rem; padding-bottom: 24px; }}
 .js-plotly-plot, .plot-container {{ max-width: 100%; }}
 </style>
@@ -607,7 +883,8 @@ footer {{ color: var(--muted); font-size: .8rem; padding-bottom: 24px; }}
 <p class="notice">Unofficial independent project, not public health guidance. Counts are a floor:
 reported cases are those known to and published by the Pennsylvania Department of Health.</p>
 <nav><a href="#summary">Summary</a><a href="#trend">Statewide trend</a>
-<a href="#counties">Counties</a><a href="#trust">Data and trust</a></nav>
+<a href="#counties">Counties</a><a href="#coverage">Vaccination coverage</a>
+<a href="#trust">Data and trust</a></nav>
 </header>
 <main>
 <section id="summary" aria-label="Summary">
@@ -634,6 +911,32 @@ not interpolated; values whose count definition was not stated are shown separat
 <a class="dl" href="data/county.csv">Download CSV</a>
 {county_table}
 </section>
+<section id="coverage">
+<h2>{coverage_title}</h2>
+<p class="muted">How far each county's kindergarten MMR coverage falls below 95 percent,
+{coverage_year} school survey. Darker means a larger gap. Select a county on the map or in the
+list to see its schools.</p>
+{coverage_chart}
+<a class="dl" href="data/coverage.csv">Download CSV</a>
+{coverage_table}
+<h3 style="font-size:1rem;margin:16px 0 6px">Schools by coverage</h3>
+<label for="strip-county">County </label><select id="strip-county">{strip_options}</select>
+<p class="muted" id="strip-note">{strip_note}</p>
+{strip_chart}
+<p class="muted">Each dot is one school's kindergarten class, placed by its coverage, not by its
+location.</p>
+<a class="dl" href="data/schools.csv">Download CSV</a>
+{school_table}
+<ul class="notes">
+<li>Schools self-report each December, so these figures predate the outbreak by about four
+months and do not reflect the vaccination that followed.</li>
+<li>Values for schools with fewer than 20 students are suppressed ("ND") by the Department of
+Health; they count toward county totals but cannot be shown.</li>
+<li>Small private and one-room schools, common in Amish and Mennonite communities where the
+outbreak is concentrated, may be suppressed or not report at all, so these rates likely
+overstate immunity in the communities most at risk.</li>
+</ul>
+</section>
 <section id="trust">
 <h2>Data and trust</h2>
 <p>Every number on this page comes from a saved, hashed capture of a public source and is
@@ -658,19 +961,47 @@ releases; population and boundaries: US Census Bureau.</footer>
   function apply() {{
     if (!window.Plotly) return;
     var c = ink();
-    ['chart-statewide', 'chart-county'].forEach(function (id) {{
+    ['chart-statewide', 'chart-county', 'chart-coverage', 'chart-strip'].forEach(function (id) {{
       var el = document.getElementById(id);
       if (!el || !el.data) return;
       Plotly.relayout(el, {{ 'font.color': c.ink, 'yaxis.gridcolor': c.grid }});
       if (id === 'chart-statewide') {{
         Plotly.restyle(el, {{ 'line.color': c.accent, 'marker.color': c.accent }}, [0]);
+      }} else if (id === 'chart-strip') {{
+        Plotly.relayout(el, {{ 'xaxis.gridcolor': c.grid }});
       }} else {{
         var shapes = el.data.map(function (_, i) {{ return i; }}).slice(0, -1);
         Plotly.restyle(el, {{ 'line.color': c.surface }}, shapes);
       }}
     }});
   }}
-  window.addEventListener('load', apply);
+  var dataEl = document.getElementById('dashboard-data');
+  var D = dataEl ? JSON.parse(dataEl.textContent) : {{}};
+  function showCounty(fips) {{
+    var el = document.getElementById('chart-strip');
+    var sel = document.getElementById('strip-county');
+    var order = D.strip_order || [];
+    if (!el || !el.data || order.indexOf(fips) < 0) return;
+    Plotly.restyle(el, {{ visible: order.map(function (f) {{ return f === fips; }}) }});
+    if (sel) sel.value = fips;
+    var note = document.getElementById('strip-note');
+    if (note) note.textContent = (D.strip_notes || {{}})[fips] || '';
+  }}
+  function wire() {{
+    var sel = document.getElementById('strip-county');
+    if (sel) sel.addEventListener('change', function () {{ showCounty(sel.value); }});
+    var map = document.getElementById('chart-coverage');
+    if (map && map.on) map.on('plotly_click', function (ev) {{
+      var p = ev && ev.points && ev.points[0];
+      var fips = p && p.data && p.data.customdata && p.data.customdata[0];
+      if (fips) {{
+        showCounty(fips);
+        var st = document.getElementById('chart-strip');
+        if (st) st.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+      }}
+    }});
+  }}
+  window.addEventListener('load', function () {{ apply(); wire(); }});
   if (window.matchMedia) {{
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
   }}
