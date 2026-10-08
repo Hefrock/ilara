@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-07T22:27:24Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-07. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-08T17:20:40Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-07. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -20,22 +20,24 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_national: last outcome unchanged, last good 2026-10-07T20:05:17Z (2 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-10-07T20:05:12Z (2 h ago)
-- census_commuting: last outcome changed, last good 2026-10-07T20:05:06Z (2 h ago)
-- census_commuting_index: last outcome changed, last good 2026-10-07T20:05:12Z (2 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-10-07T20:05:01Z (2 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-10-07T20:04:56Z (2 h ago)
-- doh_dashboard: last outcome changed, last good 2026-10-07T22:27:21Z (0 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-10-07T20:04:41Z (2 h ago)
-- doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (11 h ago)
-- doh_measles_page: last outcome changed, last good 2026-10-07T20:04:31Z (2 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-10-07T20:04:36Z (2 h ago)
-- doh_release: last outcome changed, last good 2026-10-07T20:06:08Z (2 h ago)
-- doh_school_imm_county: last outcome unchanged, last good 2026-10-07T20:04:46Z (2 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-10-07T20:04:51Z (2 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-10-07T20:05:22Z (2 h ago)
-- wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (11 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-10-08T17:20:23Z (0 h ago)
+- cdc_measles_states_config: last outcome changed, last good 2026-10-08T17:20:28Z (0 h ago)
+- cdc_measles_weekly_config: last outcome changed, last good 2026-10-08T17:20:33Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-10-08T17:20:18Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-10-08T17:20:11Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-10-08T17:20:18Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-10-08T17:20:06Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-10-08T17:20:01Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-10-07T22:27:21Z (19 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-10-08T17:19:47Z (0 h ago)
+- doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (29 h ago)
+- doh_measles_page: last outcome unchanged, last good 2026-10-08T17:19:36Z (0 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-10-08T17:19:41Z (0 h ago)
+- doh_release: last outcome changed, last good 2026-10-07T20:06:08Z (21 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-10-08T17:19:51Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-10-08T17:19:56Z (0 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-10-08T17:20:38Z (0 h ago)
+- wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (29 h ago)
 
 ## Implied counts
 
@@ -83,7 +85,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Source conflicts
 
-- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
+- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 28 (ab7b6de37998); cum_cases 393, counties_with_cases 29 (ccf7dcb81392)
 
 ## Non-monotonic series
 
@@ -124,8 +126,8 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Quarantine
 
+- curated doh_dashboard: 3 row(s), PARSE_SCHEMA_CHANGE
 - curated case_state: 2 row(s), DATE_TO_CONFIRM
-- curated doh_dashboard: 1 row(s), PARSE_SCHEMA_CHANGE
 - sensitivity case_state: 2 row(s), DATE_TO_CONFIRM
 
 _Reference: 67 Pennsylvania counties._
