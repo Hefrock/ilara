@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-08 (19) | CDC cross-check groundwork: the CDC cases page gives no state count in its text; its jurisdiction map and weekly chart configurations added to the daily capture so their data files can be found (S6) | After the next capture-light run: read the two configs, add the data files they name, parse the Pennsylvania count into the reconciliation; owner: B17 |
 | 2026-10-08 (18) | Dashboard parser 1.2.0: cases by age group, by month of report and hospitalized by age band into `case_demographics`, each checked against the year-to-date total; dashboard section C (who is affected) with cells under 5 suppressed in page, data and CSV | Owner: B17; Friday capture check; first weekly release Monday |
 | 2026-10-08 (17) | Dashboard D5: capture-day timeline (HANDOFF 8.1 rule, `access.capture_days`), reconciliation of overlapping official totals, flags in plain language, methods with code commit and data release; literature check for R0 and generation time blocked by the sandbox network (B17) | Owner: B17; Friday capture check; first weekly release Monday |
 | 2026-10-08 (16) | WP6b: numba chain-binomial county SEIR with commuting, adjacency and long-range coupling, interventions, imports and vaccination (T6.4 to T6.9); U19 final-size sensitivity (T6.2), uncalibrated (ADR 0005) | Literature for R0 and generation time (U12, U13); D5 trust section; Friday capture check; 6c after G3 |
