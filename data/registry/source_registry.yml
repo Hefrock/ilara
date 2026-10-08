@@ -194,7 +194,7 @@ sources:
   - source_id: cdc_measles_national
     name: CDC measles cases and outbreaks
     url: https://www.cdc.gov/measles/data-research/index.html
-    url_status: candidate
+    url_status: verified
     tier: T1
     cadence: daily
     access_path: http
@@ -207,7 +207,7 @@ sources:
   - source_id: cdc_measles_states_config
     name: CDC measles cases by jurisdiction (map configuration)
     url: https://www.cdc.gov/measles/states-cases-2024.json
-    url_status: candidate
+    url_status: verified
     tier: T1
     cadence: daily
     access_path: http
@@ -220,7 +220,7 @@ sources:
   - source_id: cdc_measles_weekly_config
     name: CDC measles weekly cases chart (configuration)
     url: https://www.cdc.gov/measles/weekly-cases-chart.json
-    url_status: candidate
+    url_status: verified
     tier: T1
     cadence: daily
     access_path: http
@@ -233,7 +233,7 @@ sources:
   - source_id: cdc_measles_cases_map
     name: CDC measles cases by jurisdiction (map data)
     url: https://www.cdc.gov/wcms/vizdata/measles/MeaslesCasesMap.json
-    url_status: candidate
+    url_status: verified
     tier: T1
     cadence: daily
     access_path: http
@@ -246,7 +246,7 @@ sources:
   - source_id: cdc_measles_cases_weekly
     name: CDC measles weekly cases, national (chart data)
     url: https://www.cdc.gov/wcms/vizdata/measles/MeaslesCasesWeekly.json
-    url_status: candidate
+    url_status: verified
     tier: T1
     cadence: daily
     access_path: http

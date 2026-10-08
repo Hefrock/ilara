@@ -53,3 +53,13 @@ responses).
   `hospitalized_age_band` (hospitalized cases in the same bands, from cards like "198 of
   1,004"). A blank cell is stored as null. Each set must add up to the year-to-date total of
   the same capture, else it is flagged `DEMOGRAPHIC_SUM_MISMATCH` and not stored.
+
+## CDC jurisdiction map (`cdc_measles_cases_map`, S6)
+
+`case_state` rows for Pennsylvania (`source_id` `cdc_measles_cases_map`, T1, `calendar_year`).
+The map file has no date; the row takes the "As of" date of the CDC cases page captured at or
+before it, and only when the map's 2026 total and number of jurisdictions with cases equal the
+page's. Otherwise nothing is stored and `DATE_TO_CONFIRM` is raised. These rows are listed in
+`ingest.access.CROSSCHECK_SOURCES`: they never join the DOH statewide series, its monotonicity
+check or the same-date reconciliation, and the dashboard compares them with the nearest DOH
+totals instead.

@@ -28,7 +28,13 @@ def seeded(root: Path) -> Path:
 
 
 def _dash_state(
-    root: Path, as_of: date, cum: int, sha: str, fetched: datetime, counties: int | None = None
+    root: Path,
+    as_of: date,
+    cum: int,
+    sha: str,
+    fetched: datetime,
+    counties: int | None = None,
+    source_id: str = "doh_dashboard",
 ) -> None:
     run_id = store.ingest_run_id(sha, "1.0.0")
     store.write(
@@ -39,7 +45,7 @@ def _dash_state(
                 {
                     "jurisdiction": "PA",
                     "disease": "measles",
-                    "source_id": "doh_dashboard",
+                    "source_id": source_id,
                     "source_tier": "T1",
                     "as_of_date": as_of,
                     "fetched_at_utc": fetched,
@@ -120,6 +126,20 @@ def test_cum_decrease_flagged(seeded: Path) -> None:  # T3.6
     f = engine.Findings()
     engine.monotonic(seeded, f)
     assert [x.code for x in f.flags] == ["CUM_DECREASE"]
+
+
+def test_cdc_lag_is_not_a_decrease(seeded: Path) -> None:  # S6
+    # CDC counts lag DOH, so a CDC value below an earlier DOH value is expected, not a break;
+    # a decrease within the CDC series itself is still flagged.
+    _dash_state(seeded, date(2026, 10, 5), 1004, "a" * 64, NOW)
+    _dash_state(seeded, date(2026, 10, 6), 990, "c" * 64, NOW, source_id="cdc_measles_cases_map")
+    f = engine.Findings()
+    engine.monotonic(seeded, f)
+    assert [x.code for x in f.flags] == []
+    _dash_state(seeded, date(2026, 10, 7), 980, "d" * 64, NOW, source_id="cdc_measles_cases_map")
+    f = engine.Findings()
+    engine.monotonic(seeded, f)
+    assert [x.code for x in f.flags] == ["CUM_DECREASE"] and "cross-check" in f.flags[0].description
 
 
 def test_county_sum_complete_and_partial(seeded: Path) -> None:  # T3.7

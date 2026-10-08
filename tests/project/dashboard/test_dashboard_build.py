@@ -302,3 +302,46 @@ def test_who_is_affected_suppresses_small_cells(site_root: Path, tmp_path: Path)
     assert small.height >= 2 and small["cases"].null_count() == small.height
     shown_numbers = {r["cases"] for r in csv.to_dicts() if r["cases"] is not None}
     assert not shown_numbers & {1, 2, 3, 4}
+
+
+def test_cdc_cross_check(site_root: Path) -> None:  # S6
+    from datetime import date
+
+    from ingest.curate import store
+
+    fetched = datetime(2026, 10, 7, 22, tzinfo=UTC)
+    store.write(
+        "curated",
+        "case_state",
+        pl.DataFrame(
+            [
+                {
+                    "jurisdiction": "PA",
+                    "disease": "measles",
+                    "source_id": "cdc_measles_cases_map",
+                    "source_tier": "T1",
+                    "source_label": "CDC measles cases by jurisdiction",
+                    "as_of_date": date(2026, 10, 1),
+                    "fetched_at_utc": fetched,
+                    "ingest_run_id": "testcdc00001",
+                    "raw_sha256": "e" * 64,
+                    "parser_version": "1.0.0",
+                    "cum_cases": 963,
+                    "count_definition": "calendar_year",
+                    "date_precision": "exact",
+                }
+            ]
+        ),
+        "testcdc00001",
+        fetched,
+        site_root,
+    )
+    page = build.build_page(site_root, NOW)
+    # Never part of the DOH series or the same-date reconciliation.
+    assert all(r["source_id"] != "cdc_measles_cases_map" for r in page.data["statewide"])
+    assert all("CDC" not in r["reports"] for r in page.data["reconciliation"])
+    [c] = page.data["cdc_comparison"]
+    assert c["cdc_cases"] == 963 and c["doh_after"] == 1004 and c["doh_after_date"] == "2026-10-05"
+    assert c["doh_before"] is not None and c["doh_before"] <= 963
+    assert c["consistent"] is True
+    assert "CDC counts 963 Pennsylvania cases as of 2026-10-01" in page.html
