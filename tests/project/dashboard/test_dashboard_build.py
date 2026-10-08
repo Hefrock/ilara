@@ -217,3 +217,66 @@ def test_strip_follows_map_click(site_root: Path, tmp_path: Path) -> None:  # D3
         assert order[pg.evaluate(visible)] == "42109"
         assert "Snyder" in pg.inner_text("#strip-note")
         b.close()
+
+
+def test_trust_section(site_root: Path, tmp_path: Path) -> None:  # D5
+    from ingest.curate.schema import FLAG_CODES
+
+    assert set(FLAG_CODES) <= set(build.FLAG_TEXT)  # every flag code has a plain meaning
+    page = build.build_page(site_root, NOW)
+    for g in page.data["flags"]:
+        assert g["meaning"] in html_unescape(page.html) and g["count"] == len(g["details"])
+    assert page.data["reconciliation"] == []  # fixture: no date has two reports yet
+    _add_release_rows(site_root)
+    page = build.build_page(site_root, NOW)
+    recon = {r["as_of_date"]: r for r in page.data["reconciliation"]}
+    assert recon["2026-10-05"]["values"] == "1004; 1004" and recon["2026-10-05"]["agree"]
+    assert recon["2026-09-11"]["spread"] == 1 and not recon["2026-09-11"]["agree"]
+    assert "seed transcription" in recon["2026-09-11"]["reports"]
+    for r in page.data["reconciliation"]:
+        values = [int(v) for v in r["values"].split("; ")]
+        assert len(values) >= 2 and len(values) == len(r["reports"].split("; "))
+        assert r["spread"] == max(values) - min(values) and r["agree"] == (r["spread"] == 0)
+    assert [d["status"] for d in page.data["capture_days"]] == ["pending"]  # Oct 7, 15:00 UTC
+    later = build.build_page(site_root, datetime(2026, 10, 10, tzinfo=UTC))
+    assert [d["status"] for d in later.data["capture_days"]] == ["missed", "missed"]
+    assert "2 missed (data shown on those days cannot be recovered)" in later.html
+    assert "Code commit" in page.html and page.data["build_info"]["git_sha"]
+    build.write_site(tmp_path / "site", site_root, NOW)
+    for name in ("capture_days", "reconciliation"):
+        assert (tmp_path / "site/data" / f"{name}.csv").exists()
+
+
+def html_unescape(s: str) -> str:
+    import html
+
+    return html.unescape(s)
+
+
+def _add_release_rows(root: Path) -> None:
+    """Test-only rows in the temporary store: one agreeing with the dashboard (Oct 5) and one
+    differing by one case from the statewide seed (Sep 11)."""
+    from datetime import date
+
+    from ingest.curate import store
+
+    fetched = datetime(2026, 10, 7, 21, tzinfo=UTC)
+    rows = [
+        {
+            "jurisdiction": "PA",
+            "disease": "measles",
+            "source_id": "doh_release",
+            "source_tier": "T1",
+            "source_label": "DOH newsroom release",
+            "as_of_date": d,
+            "fetched_at_utc": fetched,
+            "ingest_run_id": "testrelease1",
+            "raw_sha256": "f" * 64,
+            "parser_version": "1.0.1",
+            "cum_cases": n,
+            "count_definition": "calendar_year",
+            "date_precision": "exact",
+        }
+        for d, n in ((date(2026, 10, 5), 1004), (date(2026, 9, 11), 675))
+    ]
+    store.write("curated", "case_state", pl.DataFrame(rows), "testrelease1", fetched, root)

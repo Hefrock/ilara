@@ -22,6 +22,14 @@ def _git(*args: str) -> str | None:
     return out.stdout.strip() or None
 
 
+def git_info() -> dict[str, Any]:
+    """Code commit and the latest data release tag reachable from it (None when unknown)."""
+    return {
+        "git_sha": _git("rev-parse", "HEAD"),
+        "data_release": _git("describe", "--tags", "--match", "data-*", "--abbrev=0"),
+    }
+
+
 def inputs_digest(raw_refs: list[str]) -> str:
     """One hash over the sorted raw references a run read, so two runs on the same data agree."""
     return hashlib.sha256("\n".join(sorted(set(raw_refs))).encode()).hexdigest()

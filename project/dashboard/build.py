@@ -22,6 +22,7 @@ import plotly.graph_objects as go
 import polars as pl
 
 from ingest import access
+from project import manifest
 
 ET = ZoneInfo("America/New_York")
 DASHBOARD = "doh_dashboard"
@@ -223,6 +224,94 @@ def coverage_county(root: Path | None, schools: pl.DataFrame) -> pl.DataFrame:
         .otherwise(None)
         .alias("share_schools_below_95"),
     ).sort("county_fips")
+
+
+DEFINITION_TEXT = {
+    "calendar_year": "calendar year",
+    "since_april": "since April",
+    "unknown": "not stated",
+}
+
+
+def reconciliation(root: Path | None) -> pl.DataFrame:
+    """Dates on which more than one T1 report gives a statewide total, with the spread between
+    them (docs/dashboard.md section 4). Values are shown side by side, never merged."""
+    cs = access.current("case_state", "curated", root).filter(
+        (pl.col("source_tier") == "T1")
+        & pl.col("count_definition").is_in(["calendar_year", "unknown"])
+        & pl.col("cum_cases").is_not_null()
+    )
+    if cs.height == 0:
+        return pl.DataFrame(
+            schema={
+                "as_of_date": pl.Date,
+                "reports": pl.Utf8,
+                "values": pl.Utf8,
+                "spread": pl.Int64,
+                "agree": pl.Boolean,
+            }
+        )
+    cs = cs.with_columns(
+        (
+            pl.col("source_label")
+            + pl.when(pl.col("seed_file").is_not_null())
+            .then(pl.lit(", seed transcription"))
+            .otherwise(pl.lit(""))
+            + " ("
+            + pl.col("count_definition").replace_strict(DEFINITION_TEXT, default="not stated")
+            + ")"
+        ).alias("report")
+    ).sort("as_of_date", "source_label", "count_definition")
+    out = (
+        cs.group_by("as_of_date", maintain_order=True)
+        .agg(
+            pl.len().alias("n"),
+            pl.col("report").str.join("; ").alias("reports"),
+            pl.col("cum_cases").cast(pl.Utf8).str.join("; ").alias("values"),
+            (pl.col("cum_cases").max() - pl.col("cum_cases").min()).alias("spread"),
+        )
+        .filter(pl.col("n") > 1)
+        .with_columns((pl.col("spread") == 0).alias("agree"))
+        .drop("n")
+    )
+    return out.sort("as_of_date")
+
+
+# Plain-language meaning of each open flag code (docs/dashboard.md section 4).
+FLAG_TEXT = {
+    "PARSE_SCHEMA_CHANGE": "A saved file could not be read as expected. The raw file is kept; "
+    "no numbers were taken from it.",
+    "STALE_SNAPSHOT": "A source has not been captured successfully within its expected interval.",
+    "SOURCE_CONFLICT": "Two official documents give different figures for the same date. Both "
+    "are kept and neither is used to overwrite the other.",
+    "DATE_TO_CONFIRM": "A figure's date is not yet confirmed from an official source.",
+    "CUM_DECREASE": "A cumulative count went down between two reports.",
+    "IMPLIED_COUNT_BREAK": "Reported new cases do not match the change in the cumulative total.",
+    "COUNTY_SUM_MISMATCH": "County counts do not add up to the statewide total.",
+    "COUNTY_COUNT_DROP": "Fewer counties reported cases than in the previous snapshot; that "
+    "snapshot is held back for review.",
+    "DEFINITION_UNKNOWN": "The source does not say whether a count covers the calendar year or "
+    "only since April.",
+    "BLOCKED": "A source refused or challenged the capture; the archive stopped and did not "
+    "work around it.",
+    "SIZE_BUDGET": "The archive is close to its storage budget.",
+    "HASH_MISMATCH": "A saved raw file no longer matches its recorded hash.",
+}
+
+
+def flag_groups(flags: pl.DataFrame) -> list[dict[str, Any]]:
+    out = []
+    for code in sorted(set(flags["code"])) if flags.height else []:
+        rows = flags.filter(pl.col("code") == code).sort("description")
+        out.append(
+            {
+                "code": code,
+                "meaning": FLAG_TEXT.get(code, "See the details."),
+                "count": rows.height,
+                "details": rows["description"].to_list(),
+            }
+        )
+    return out
 
 
 def status(root: Path | None, now: datetime) -> dict[str, Any]:
@@ -650,13 +739,31 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         if st["stale"]
         else ""
     )
+    groups = flag_groups(flags)
     flag_items = (
         "".join(
-            f"<li><b>{html.escape(r['code'])}</b>: {html.escape(r['description'])}</li>"
-            for r in flags.sort("code").to_dicts()[:25]
+            f"<li><b>{html.escape(g['meaning'])}</b> <span class='muted'>({g['code']}, "
+            f"{g['count']} open)</span><details><summary>Details</summary><ul>"
+            + "".join(f"<li>{html.escape(d)}</li>" for d in g["details"][:25])
+            + "</ul></details></li>"
+            for g in groups
         )
         or "<li>None open.</li>"
     )
+    days = access.capture_days(now, root)
+    mark = {"covered": "✓ covered", "missed": "✗ missed", "pending": "… pending"}
+    timeline = (
+        "".join(
+            f"<li class='day day-{r['status']}'><span>{r['day']:%a %b %-d}</span>"
+            f"<span>{mark[r['status']]}</span></li>"
+            for r in days.to_dicts()
+        )
+        or "<li>No scheduled capture day yet.</li>"
+    )
+    missed = days.filter(pl.col("status") == "missed").height
+    recon = reconciliation(root)
+    differ = recon.filter(~pl.col("agree")).height
+    info = manifest.git_info()
 
     s_fig = statewide_figure(series).to_html(
         include_plotlyjs=False,
@@ -716,6 +823,10 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         "strip_order": cov.sort("county_fips")["county_fips"].to_list(),
         "strip_notes": strip_notes,
         "status": st,
+        "capture_days": days.with_columns(pl.col("day").cast(pl.Utf8)).to_dicts(),
+        "reconciliation": recon.with_columns(pl.col("as_of_date").cast(pl.Utf8)).to_dicts(),
+        "flags": groups,
+        "build_info": info,
         "gated_panels": [],  # forecast and watchlist: absent until G4 (I11)
     }
     csv = {
@@ -724,6 +835,8 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         "county": cty,
         "coverage": cov,
         "schools": schools,
+        "capture_days": days,
+        "reconciliation": recon,
     }
 
     county_as_of = cty["as_of_date"].drop_nulls().max() if cty.height else None
@@ -792,6 +905,35 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
             "Kindergarten MMR coverage by school (suppressed schools omitted), " + year,
         ),
         flags=flag_items,
+        timeline=timeline,
+        timeline_summary=html.escape(
+            f"{days.height - missed - days.filter(pl.col('status') == 'pending').height} of "
+            f"{days.height} scheduled capture days covered"
+            + (
+                f"; {missed} missed (data shown on those days cannot be recovered)"
+                if missed
+                else ""
+            )
+            + "."
+        ),
+        recon_summary=html.escape(
+            "No date has more than one official statewide total yet."
+            if recon.height == 0
+            else f"{recon.height} date{'s have' if recon.height > 1 else ' has'} more than "
+            "one official statewide total; " + (f"{differ} differ." if differ else "all agree.")
+        ),
+        recon_table=_table(
+            recon,
+            {
+                "as_of_date": "As of",
+                "reports": "Reports",
+                "values": "Cases",
+                "spread": "Spread",
+            },
+            "Statewide totals reported by more than one official document",
+        ),
+        git_sha=html.escape((info["git_sha"] or "unknown")[:12]),
+        data_release=html.escape(info["data_release"] or "none yet"),
         # Raw JSON in a script element: only "</" needs escaping; entities would not be decoded.
         data_json=json.dumps(data, default=str, sort_keys=True).replace("</", "<\\/"),
         generated=data["generated_utc"],
@@ -865,6 +1007,11 @@ section {{ background: var(--surface); border: 1px solid var(--border); border-r
 .tableview {{ margin-top: 8px; font-size: .9rem; }}
 .tablewrap {{ max-width: 100%; overflow-x: auto; }}
 #trust li {{ overflow-wrap: anywhere; }}
+.timeline {{ list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }}
+.timeline li {{ border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+  font-size: .85rem; display: flex; gap: 8px; }}
+.day-missed {{ background: var(--warn-bg); }}
+.flags > li {{ margin-bottom: 6px; }}
 section, .map-wrap > div {{ min-width: 0; }}
 .tableview table {{ border-collapse: collapse; width: 100%; }}
 .tableview th, .tableview td {{ text-align: left; padding: 4px 8px;
@@ -943,8 +1090,22 @@ overstate immunity in the communities most at risk.</li>
 traceable to its raw file. Definitions: a case is a confirmed measles case reported by the
 Pennsylvania Department of Health; deaths follow the DOH definition (within 30 days of onset,
 lab-confirmed, no unrelated cause). Calendar-year counts include January to March.</p>
+<h3 style="font-size:1rem">Capture days</h3>
+<p class="muted">The dashboard keeps no public history, so each Monday, Wednesday and Friday
+update must be captured that afternoon. {timeline_summary}</p>
+<ul class="timeline">{timeline}</ul>
+<a class="dl" href="data/capture_days.csv">Download CSV</a>
+<h3 style="font-size:1rem">Where official figures overlap</h3>
+<p class="muted">{recon_summary} Each figure is kept as published; none is overwritten. The CDC
+national table is captured daily but not yet compared.</p>
+<a class="dl" href="data/reconciliation.csv">Download CSV</a>
+{recon_table}
 <h3 style="font-size:1rem">Open data quality flags</h3>
-<ul>{flags}</ul>
+<ul class="flags">{flags}</ul>
+<h3 style="font-size:1rem">Methods</h3>
+<p class="muted">Raw captures are saved before anything else and never edited; tables are
+rebuilt from them with one command and checked in CI. No model output is published: projections
+stay withheld until they pass validation. Code commit {git_sha}; data release {data_release}.</p>
 </section>
 </main>
 <footer>Generated {generated}. Source: Pennsylvania Department of Health dashboard and

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 DASHBOARD_CRONS = ("0 18,20,22 * * 1,3,5", "0 13 * * 2,4,6")
 LIGHT_CRONS = ("30 14 * * *",)
 RELEASE_CRONS = ("30 13 * * 1",)
 CAPTURE_DAYS = (0, 2, 4)  # Monday, Wednesday, Friday (Python weekday numbers)
 COVER_START_HOUR_UTC = 18
+SCHEDULE_START = date(2026, 10, 7)  # first scheduled dashboard window (docs/PROGRESS.md)
 
 
 def _field(spec: str, lo: int, hi: int) -> set[int]:
