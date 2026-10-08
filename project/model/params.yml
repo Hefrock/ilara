@@ -1,0 +1,21 @@
+# WP6b simulator parameters. Status as in docs/sources.md; UNVERIFIED values are priors to be
+# confirmed from the literature (U12, U13) before calibration (6c) and are not fixed.
+
+disease:
+  r0: {low: 12.0, high: 18.0, status: UNVERIFIED, register: U12, source: "S7, general knowledge"}
+  # Latent (exposed, not yet infectious) and infectious periods in days. Infectious window is
+  # 4 days before to 4 days after rash (S7, VERIFIED), so about 8 days. Latent about 8 days
+  # gives a generation time of about 12 days (S7 says 10 to 12, UNVERIFIED, U13).
+  latent_days: {value: 8.0, status: UNVERIFIED, register: U13}
+  infectious_days: {value: 8.0, status: VERIFIED, source: "S7, DOH measles page"}
+
+# Coupling between counties. Each strength is the share of a county's contacts made through
+# that link; zero switches the link off (T6.9). Compared, not assumed (S11).
+coupling:
+  commuting: {strength: 0.05, source: "mobility_edge, ACS 2016-2020 commuting flows"}
+  adjacency: {strength: 0.02, source: "county_adjacency, shared boundary length"}
+  long_range: {strength: 0.0, links: [], status: ASSUMPTION, note: "groups of linked counties; no T1 source, off by default"}
+
+# Expected external exposures per day, statewide, spread by population (S11: other states'
+# outbreaks; no cross-state mobility data).
+external_introductions_per_day: {value: 0.0, status: ASSUMPTION}

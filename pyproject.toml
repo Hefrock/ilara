@@ -8,6 +8,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "duckdb",
     "httpx",
+    "numba>=0.68.0",
     "numpy>=2.5.3",
     "openpyxl",
     "playwright",
