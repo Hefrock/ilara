@@ -9,8 +9,12 @@ S, E, I, R and population N. On day ``t``, from the start-of-day state:
 - commuting coupling is directed: residents of ``i`` meet the infectious of the counties they
   commute to;
 - vaccination moves ``Binomial(S_left, vacc[t, i] / S_left)`` susceptibles to R;
-- ``Binomial(E_i, 1/latent)`` become infectious and ``Binomial(I_i, 1/infectious)``
-  recover, so mean stays equal the stated periods in days.
+- E and I are each split into stages (Erlang stays): from each of ``k`` latent stages
+  ``Binomial(E_ik, k/latent)`` move on, likewise for infectious stages, so mean stays equal
+  the stated periods in days and an infectious person still causes R0 infections on average.
+  With one stage the stay is geometric and the mean generation time is about latent +
+  infectious; with more stages infectiousness is less spread out and the generation time
+  approaches latent + infectious / 2 (``generation_time``, checked against the literature).
 
 ``K`` is the contact coupling between counties (``coupling_matrix``): the identity plus, for
 each link type, its strength times a row-normalised link matrix, with the same share taken
@@ -60,6 +64,8 @@ def _run(
     beta: float,
     p_ei: float,
     p_ir: float,
+    ke: int,
+    ki: int,
     k: np.ndarray,
     mult: np.ndarray,
     imports: np.ndarray,
@@ -72,21 +78,24 @@ def _run(
     inc = np.zeros((days, c), dtype=np.int64)
     vac = np.zeros((days, c), dtype=np.int64)
     s = s0.copy()
-    e = e0.copy()
-    i = i0.copy()
     r = rec0.copy()
+    # Stage counts; initial exposed and infectious start in the first stage.
+    e = np.zeros((ke, c), dtype=np.int64)
+    i = np.zeros((ki, c), dtype=np.int64)
+    e[0] = e0
+    i[0] = i0
     prev = np.zeros(c)
     for j in range(c):
         state[0, j, 0] = s[j]
-        state[0, j, 1] = e[j]
-        state[0, j, 2] = i[j]
+        state[0, j, 1] = e[:, j].sum()
+        state[0, j, 2] = i[:, j].sum()
         state[0, j, 3] = r[j]
+    move_e = np.zeros((ke, c), dtype=np.int64)
+    move_i = np.zeros((ki, c), dtype=np.int64)
     for t in range(days):
         for j in range(c):
-            prev[j] = i[j] / n[j] if n[j] > 0 else 0.0
+            prev[j] = i[:, j].sum() / n[j] if n[j] > 0 else 0.0
         new_e = np.zeros(c, dtype=np.int64)
-        new_i = np.zeros(c, dtype=np.int64)
-        new_r = np.zeros(c, dtype=np.int64)
         new_v = np.zeros(c, dtype=np.int64)
         for a in range(c):
             lam = 0.0
@@ -103,18 +112,28 @@ def _run(
                 v = np.random.binomial(left, min(1.0, vacc[t, a] / left))
             new_e[a] = inf
             new_v[a] = v
-            new_i[a] = np.random.binomial(e[a], p_ei)
-            new_r[a] = np.random.binomial(i[a], p_ir)
+            for q in range(ke):
+                move_e[q, a] = np.random.binomial(e[q, a], p_ei)
+            for q in range(ki):
+                move_i[q, a] = np.random.binomial(i[q, a], p_ir)
         for a in range(c):
             s[a] -= new_e[a] + new_v[a]
-            e[a] += new_e[a] - new_i[a]
-            i[a] += new_i[a] - new_r[a]
-            r[a] += new_r[a] + new_v[a]
+            e[0, a] += new_e[a]
+            for q in range(ke):
+                e[q, a] -= move_e[q, a]
+                if q + 1 < ke:
+                    e[q + 1, a] += move_e[q, a]
+            i[0, a] += move_e[ke - 1, a]
+            for q in range(ki):
+                i[q, a] -= move_i[q, a]
+                if q + 1 < ki:
+                    i[q + 1, a] += move_i[q, a]
+            r[a] += move_i[ki - 1, a] + new_v[a]
             inc[t, a] = new_e[a]
             vac[t, a] = new_v[a]
             state[t + 1, a, 0] = s[a]
-            state[t + 1, a, 1] = e[a]
-            state[t + 1, a, 2] = i[a]
+            state[t + 1, a, 1] = e[:, a].sum()
+            state[t + 1, a, 2] = i[:, a].sum()
             state[t + 1, a, 3] = r[a]
     return inc, vac, state
 
@@ -131,6 +150,8 @@ def simulate(
     coupling: np.ndarray,
     days: int,
     seed: int,
+    latent_stages: int = 1,
+    infectious_stages: int = 1,
     mult: np.ndarray | None = None,
     imports: np.ndarray | None = None,
     vaccination: np.ndarray | None = None,
@@ -153,11 +174,11 @@ def simulate(
     for name, arr in (("mult", m), ("imports", imp), ("vaccination", vac)):
         if arr.shape != (days, c) or (arr < 0).any():
             raise ValueError(f"{name} must be a non-negative (days, counties) array")
-    if latent_days < 1 or infectious_days < 1:
-        raise ValueError("latent and infectious periods must be at least one day (daily steps)")
-    # Daily leaving probabilities 1/D give a geometric stay with mean exactly D days, so an
-    # infectious person contributes R0 / D x D = R0 expected infections (validated against the
-    # final-size relation in tests). 1 - exp(-1/D) would lengthen stays and inflate R.
+    _check_stages(latent_days, infectious_days, latent_stages, infectious_stages)
+    # Daily leaving probabilities k/D per stage give k geometric stays with mean exactly D days
+    # in all, so an infectious person contributes R0 / D x D = R0 expected infections
+    # (validated against the final-size relation in tests). 1 - exp(-k/D) would lengthen stays
+    # and inflate R.
     gamma = 1.0 / infectious_days
     inc, vacd, state = _run(
         n,
@@ -166,8 +187,10 @@ def simulate(
         i,
         n - s - e - i,
         r0 * gamma,
-        1.0 / latent_days,
-        gamma,
+        latent_stages / latent_days,
+        infectious_stages * gamma,
+        latent_stages,
+        infectious_stages,
         k,
         m,
         imp,
@@ -175,6 +198,44 @@ def simulate(
         seed,
     )
     return Result(inc, vacd, state)
+
+
+def _check_stages(
+    latent_days: float, infectious_days: float, latent_stages: int, infectious_stages: int
+) -> None:
+    if latent_stages < 1 or infectious_stages < 1:
+        raise ValueError("each period needs at least one stage")
+    # Daily steps: each stage lasts at least a day, so a stage's leaving probability k/D <= 1.
+    if latent_days < latent_stages or infectious_days < infectious_stages:
+        raise ValueError("a period must be at least one day per stage (daily steps)")
+
+
+def generation_time(
+    latent_days: float,
+    infectious_days: float,
+    latent_stages: int = 1,
+    infectious_stages: int = 1,
+    horizon: int = 1000,
+) -> float:
+    """Mean days from a person's infection to the infections they cause, in the simulator.
+
+    Follows one person exposed on day 0 through the same daily stage transitions as
+    ``simulate``: their infectiousness on day ``t`` is the chance of being infectious at the
+    start of that day, and the generation time is the mean of ``t`` weighted by it."""
+    _check_stages(latent_days, infectious_days, latent_stages, infectious_stages)
+    ke, ki = latent_stages, infectious_stages
+    pe, pi = ke / latent_days, ki / infectious_days
+    x = np.zeros(ke + ki)
+    x[0] = 1.0
+    num = den = 0.0
+    for t in range(1, horizon):
+        w = x[ke:].sum()
+        num += t * w
+        den += w
+        moved = x * np.where(np.arange(ke + ki) < ke, pe, pi)
+        x = x - moved
+        x[1:] += moved[:-1]
+    return num / den
 
 
 def _row_normalise(m: np.ndarray) -> np.ndarray:

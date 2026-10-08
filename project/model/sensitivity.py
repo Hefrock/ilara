@@ -97,6 +97,8 @@ def run(
                 r0=float(r0s[k]),
                 latent_days=d["latent_days"]["value"],
                 infectious_days=d["infectious_days"]["value"],
+                latent_stages=d["latent_days"]["stages"],
+                infectious_stages=d["infectious_days"]["stages"],
                 coupling=model.coupling,
                 days=DAYS,
                 seed=seed + k,
