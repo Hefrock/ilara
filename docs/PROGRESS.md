@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-08 (20) | GitHub schedule unreliable (runs hours late or missing); owner approved a backup routine that dispatches capture-dashboard at 18:40 and 22:40 UTC Mon/Wed/Fri when the day is not covered (ADR 0006) | Friday: confirm coverage; after the first capture-light run, read the two CDC configs; owner: B17 |
 | 2026-10-08 (19) | CDC cross-check groundwork: the CDC cases page gives no state count in its text; its jurisdiction map and weekly chart configurations added to the daily capture so their data files can be found (S6) | After the next capture-light run: read the two configs, add the data files they name, parse the Pennsylvania count into the reconciliation; owner: B17 |
 | 2026-10-08 (18) | Dashboard parser 1.2.0: cases by age group, by month of report and hospitalized by age band into `case_demographics`, each checked against the year-to-date total; dashboard section C (who is affected) with cells under 5 suppressed in page, data and CSV | Owner: B17; Friday capture check; first weekly release Monday |
 | 2026-10-08 (17) | Dashboard D5: capture-day timeline (HANDOFF 8.1 rule, `access.capture_days`), reconciliation of overlapping official totals, flags in plain language, methods with code commit and data release; literature check for R0 and generation time blocked by the sandbox network (B17) | Owner: B17; Friday capture check; first weekly release Monday |
