@@ -307,3 +307,12 @@ def test_rejects_bad_stages() -> None:
                 seed=1,
                 **kw,
             )
+
+
+def test_r0_prior_matches_cited_estimates() -> None:
+    # guerra2017 (doi:10.1016/S1473-3099(17)30307-9), ADR 0007: bounds are the outbreak-data
+    # median (Table 2) and Glasser et al. 2016 structured (Table 1); the range must contain the
+    # developed-country vaccine-era median, Glasser well mixed and the Americas median.
+    r0 = simulator.load_params()["disease"]["r0"]
+    assert (r0["low"], r0["high"]) == (9.9, 18.1)
+    assert all(r0["low"] <= m <= r0["high"] for m in (11.7, 10.7, 15.3))

@@ -1,10 +1,12 @@
-# WP6b simulator parameters. Status as in docs/sources.md; UNVERIFIED values are priors to be
-# confirmed from the literature (U12, U13) before calibration (6c) and are not fixed.
+# WP6b simulator parameters. Status as in docs/sources.md; UNVERIFIED values are priors still to
+# be confirmed. Priors are ranges for calibration (6c), not fixed values.
 
 disease:
-  # guerra2017 (docs/references): 12-18 is "often cited" but rigorous estimates "vary more";
-  # the review's medians by setting are still to read, so this range stays UNVERIFIED.
-  r0: {low: 12.0, high: 18.0, status: UNVERIFIED, register: U12, source: "S7, general knowledge; guerra2017 (doi:10.1016/S1473-3099(17)30307-9) says too narrow"}
+  # guerra2017 (full text, docs/references): 58 estimates, only 10 within the often cited 12-18.
+  # Bounds are cited estimates (ADR 0007): outbreak-data median 9.9 (Table 2) and the structured
+  # estimate for a US school outbreak, Glasser et al. 2016, 18.1 (Table 1). The range contains
+  # the developed-country vaccine-era median 11.7 and the Americas median 15.3.
+  r0: {low: 9.9, high: 18.1, status: VERIFIED, register: U12, source: "guerra2017 (doi:10.1016/S1473-3099(17)30307-9) Tables 1 and 2; choice of bounds ADR 0007"}
   # Latent (exposed, not yet infectious) and infectious periods in days, each split into stages
   # (Erlang stays, simulator.py). Infectious window is 4 days before to 4 days after rash (S7,
   # VERIFIED), so about 8 days. Mean generation time (simulator.generation_time) must match
