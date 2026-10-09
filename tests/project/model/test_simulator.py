@@ -273,8 +273,9 @@ def test_growth_rate_follows_generation_time() -> None:
 
 
 def test_generation_time_matches_literature() -> None:
-    # klinkenberg2011 (VERIFIED): mean generation time 11-12 days; vink2014 (VERIFIED): mean
-    # measles serial interval 11.7 days. docs/references/README.md.
+    # klinkenberg2011 (doi:10.1016/j.jtbi.2011.06.015, VERIFIED): mean generation time 11-12
+    # days; vink2014 (doi:10.1093/aje/kwu209, VERIFIED): mean measles serial interval 11.7
+    # days. docs/references/README.md.
     d = simulator.load_params()["disease"]
     g = simulator.generation_time(
         d["latent_days"]["value"],
@@ -306,3 +307,12 @@ def test_rejects_bad_stages() -> None:
                 seed=1,
                 **kw,
             )
+
+
+def test_r0_prior_matches_cited_estimates() -> None:
+    # guerra2017 (doi:10.1016/S1473-3099(17)30307-9), ADR 0007: bounds are the outbreak-data
+    # median (Table 2) and Glasser et al. 2016 structured (Table 1); the range must contain the
+    # developed-country vaccine-era median, Glasser well mixed and the Americas median.
+    r0 = simulator.load_params()["disease"]["r0"]
+    assert (r0["low"], r0["high"]) == (9.9, 18.1)
+    assert all(r0["low"] <= m <= r0["high"] for m in (11.7, 10.7, 15.3))

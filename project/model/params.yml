@@ -1,10 +1,12 @@
-# WP6b simulator parameters. Status as in docs/sources.md; UNVERIFIED values are priors to be
-# confirmed from the literature (U12, U13) before calibration (6c) and are not fixed.
+# WP6b simulator parameters. Status as in docs/sources.md; UNVERIFIED values are priors still to
+# be confirmed. Priors are ranges for calibration (6c), not fixed values.
 
 disease:
-  # guerra2017 (docs/references): 12-18 is "often cited" but rigorous estimates "vary more";
-  # the review's medians by setting are still to read, so this range stays UNVERIFIED.
-  r0: {low: 12.0, high: 18.0, status: UNVERIFIED, register: U12, source: "S7, general knowledge; guerra2017 says too narrow"}
+  # guerra2017 (full text, docs/references): 58 estimates, only 10 within the often cited 12-18.
+  # Bounds are cited estimates (ADR 0007): outbreak-data median 9.9 (Table 2) and the structured
+  # estimate for a US school outbreak, Glasser et al. 2016, 18.1 (Table 1). The range contains
+  # the developed-country vaccine-era median 11.7 and the Americas median 15.3.
+  r0: {low: 9.9, high: 18.1, status: VERIFIED, register: U12, source: "guerra2017 (doi:10.1016/S1473-3099(17)30307-9) Tables 1 and 2; choice of bounds ADR 0007"}
   # Latent (exposed, not yet infectious) and infectious periods in days, each split into stages
   # (Erlang stays, simulator.py). Infectious window is 4 days before to 4 days after rash (S7,
   # VERIFIED), so about 8 days. Mean generation time (simulator.generation_time) must match
@@ -14,7 +16,7 @@ disease:
   # time, not observed values, so latent stays UNVERIFIED (U13).
   latent_days: {value: 7.0, stages: 4, status: UNVERIFIED, register: U13}
   infectious_days: {value: 8.0, stages: 4, status: VERIFIED, source: "S7, DOH measles page"}
-  generation_time_days: {low: 11.0, high: 12.0, status: VERIFIED, source: "klinkenberg2011; vink2014 serial interval 11.7"}
+  generation_time_days: {low: 11.0, high: 12.0, status: VERIFIED, source: "klinkenberg2011 (doi:10.1016/j.jtbi.2011.06.015); vink2014 (doi:10.1093/aje/kwu209) serial interval 11.7"}
 
 # Coupling between counties. Each strength is the share of a county's contacts made through
 # that link; zero switches the link off (T6.9). Compared, not assumed (S11).
