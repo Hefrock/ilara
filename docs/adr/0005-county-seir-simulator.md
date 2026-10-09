@@ -34,7 +34,8 @@ calendar covariate and external introductions.
 ## Amendment 2026-10-08: staged periods
 
 Geometric single-stage stays gave a mean generation time of 16 days against 11 to 12 in the
-literature (klinkenberg2011, vink2014). Latent and infectious periods are now Erlang: each
+literature (Klinkenberg and Nishiura 2011, https://doi.org/10.1016/j.jtbi.2011.06.015; Vink et
+al. 2014, https://doi.org/10.1093/aje/kwu209; both in `docs/references/`). Latent and infectious periods are now Erlang: each
 split into stages left with probability stages / days per day, which keeps the mean stays and
 R0 unchanged but concentrates infectiousness. 7-day latent and 8-day infectious periods with 4
 stages each give a mean generation time of 12.0 days. `generation_time` computes it from the

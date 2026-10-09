@@ -273,8 +273,9 @@ def test_growth_rate_follows_generation_time() -> None:
 
 
 def test_generation_time_matches_literature() -> None:
-    # klinkenberg2011 (VERIFIED): mean generation time 11-12 days; vink2014 (VERIFIED): mean
-    # measles serial interval 11.7 days. docs/references/README.md.
+    # klinkenberg2011 (doi:10.1016/j.jtbi.2011.06.015, VERIFIED): mean generation time 11-12
+    # days; vink2014 (doi:10.1093/aje/kwu209, VERIFIED): mean measles serial interval 11.7
+    # days. docs/references/README.md.
     d = simulator.load_params()["disease"]
     g = simulator.generation_time(
         d["latent_days"]["value"],

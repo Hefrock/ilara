@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 import httpx
 
@@ -28,7 +29,21 @@ def _client(handler) -> PoliteClient:  # type: ignore[no-untyped-def]
 def test_reference_list_is_readable() -> None:
     refs = references.load(REPO)
     assert {r["key"] for r in refs} == {"guerra2017", "vink2014", "klinkenberg2011"}
-    assert all((r["pmid"] or r["doi"]) and r["citation"] and r["for"] for r in refs)
+    assert all(r["citation"] and r["for"] for r in refs)
+
+
+def test_every_reference_has_a_doi_cited_where_used() -> None:
+    # A DOI identifies each reference (PMIDs proved unreliable: a wrong one was caught), and every
+    # document citing a reference by key gives its DOI so a reader can resolve it.
+    refs = references.load(REPO)
+    readme = (REPO / "docs/references/README.md").read_text()
+    params = (REPO / "project/model/params.yml").read_text()
+    for r in refs:
+        doi = str(r["doi"] or "")
+        assert re.fullmatch(r"10\.\d{4,9}/\S+", doi), r["key"]
+        assert f"(https://doi.org/{doi})" in readme, r["key"]
+        if r["key"] in params:
+            assert f"doi:{doi}" in params, r["key"]
 
 
 def test_fetch_parses_both_sources_and_checks_the_doi() -> None:
