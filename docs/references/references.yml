@@ -1,19 +1,78 @@
-# Literature for model priors (B17, U12, U13). Only citations and extracted figures are kept in
-# this folder; article and abstract text are never committed (I10). `measles references` prints
-# each abstract to the workflow log so the figures can be read from the source itself.
+# Literature for model priors (U12, U13). Only citations, extracted figures and where each was
+# observed are kept here; article and abstract text are never committed (I10). `measles
+# references` prints each record and abstract from Europe PMC to the workflow log, looked up by
+# DOI and checked against the DOI returned.
+#
+# Provenance for every figure the model uses (I3 for literature): `evidence` entries give the
+# quantity, value, where in the source it appears, what was read (abstract or full text), how it
+# was obtained (a references workflow run, or a copy supplied by the owner and not committed)
+# and the date read. A figure without an evidence entry is not VERIFIED.
+#
+# `status`: used (a figure feeds project/model/params.yml), context (read, informs a choice but
+# no figure used), to_read (candidate found by search, not yet read from the source).
 references:
   - key: guerra2017
     pmid: "28757186"
     doi: 10.1016/S1473-3099(17)30307-9
-    citation: "Guerra FM, Bolotin S, Lim G, et al. The basic reproduction number (R0) of measles: a systematic review. Lancet Infect Dis. 2017."
+    citation: "Guerra FM, Bolotin S, Lim G, Heffernan J, Deeks SL, Li Y, Crowcroft NS. The basic reproduction number (R0) of measles: a systematic review. Lancet Infect Dis. 2017;17:e420-e428."
     for: [U12]
+    status: used
+    evidence:
+      - {quantity: r0_median_outbreak_data, value: 9.9, where: "Table 2, p. e426", read: full_text, via: owner-supplied copy, date: 2026-10-09}
+      - {quantity: r0_median_developed_vaccine_era, value: 11.7, where: "Table 2, p. e426", read: full_text, via: owner-supplied copy, date: 2026-10-09}
+      - {quantity: r0_median_americas, value: 15.3, where: "Table 2, p. e426", read: full_text, via: owner-supplied copy, date: 2026-10-09}
+      - {quantity: r0_glasser2016_well_mixed, value: 10.7, where: "Table 1, p. e422", read: full_text, via: owner-supplied copy, date: 2026-10-09}
+      - {quantity: r0_glasser2016_structured, value: 18.1, where: "Table 1, p. e422", read: full_text, via: owner-supplied copy, date: 2026-10-09}
+      - {quantity: estimates_within_12_18, value: "10 of 58", where: "Results, p. e423", read: full_text, via: owner-supplied copy, date: 2026-10-09}
   - key: vink2014
     pmid: null  # 25262286 was wrong (an unrelated 2015 paper, caught by the DOI check)
     doi: 10.1093/aje/kwu209
     citation: "Vink MA, Bootsma MCJ, Wallinga J. Serial intervals of respiratory infectious diseases: a systematic review and analysis. Am J Epidemiol. 2014;180(9):865-875."
     for: [U13]
+    status: used
+    evidence:
+      - {quantity: serial_interval_mean_pooled_days, value: 11.7, where: abstract, read: abstract, via: references run 37861236213, date: 2026-10-08}
+      - {quantity: serial_interval_mean_by_dataset_days, value: "9.9-13.8", where: "Measles, p. 870; Table 3", read: full_text, via: owner-supplied copy, date: 2026-10-09}
+      - {quantity: serial_interval_mean_us_chapin1925_days, value: 11.9, where: "Table 3, p. 870", read: full_text, via: owner-supplied copy, date: 2026-10-09}
   - key: klinkenberg2011
     pmid: "21704640"
     doi: 10.1016/j.jtbi.2011.06.015
     citation: "Klinkenberg D, Nishiura H. The correlation between infectivity and incubation period of measles, estimated from households with two cases. J Theor Biol. 2011."
     for: [U13]
+    status: used
+    evidence:
+      - {quantity: generation_time_mean_days, value: "11-12", where: abstract, read: abstract, via: references run 37860465223, date: 2026-10-08}
+      - {quantity: household_setting_caveat, value: "not directly extrapolated beyond households", where: Introduction, read: abstract_and_introduction, via: owner-supplied text, date: 2026-10-09}
+  # Candidates from a literature search on 2026-10-09 for newer or closer-setting estimates
+  # (US outbreaks in under-vaccinated close-knit communities). DOIs to be confirmed by the
+  # references workflow before anything is read from them.
+  - key: gastanaduy2018
+    pmid: null
+    doi: 10.1093/aje/kwy082
+    citation: "Gastañaduy PA, et al. Impact of public health responses during a measles outbreak in an Amish community in Ohio: modeling the dynamics of transmission. Am J Epidemiol. 2018."
+    for: [U12, U13, U19]
+    status: to_read
+  - key: gastanaduy2016
+    pmid: null
+    doi: 10.1056/NEJMoa1602295
+    citation: "Gastañaduy PA, et al. A measles outbreak in an underimmunized Amish community in Ohio. N Engl J Med. 2016."
+    for: [U19]
+    status: to_read
+  - key: yang2020
+    pmid: null
+    doi: 10.1126/sciadv.aaz4037
+    citation: "Yang W, et al. Transmission dynamics of and insights from the 2018-2019 measles outbreak in New York City: a modeling study. Sci Adv. 2020;6(22):eaaz4037."
+    for: [U12]
+    status: to_read
+  - key: texasnm2025
+    pmid: null
+    doi: 10.3390/epidemiologia6040060
+    citation: "Modeling and characterizing the growth of the Texas-New Mexico measles outbreak of 2025. Epidemiologia. 2025;6(4):60."
+    for: [U12, U13]
+    status: to_read
+  - key: oraby2026
+    pmid: null
+    doi: 10.1186/s12879-026-13663-2
+    citation: "Oraby T, Ndeffo-Mbah ML. The 2025 measles outbreak in Texas. BMC Infect Dis. 2026."
+    for: [U12, U13]
+    status: to_read
