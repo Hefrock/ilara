@@ -31,6 +31,16 @@ calendar covariate and external introductions.
 - `project/model/sensitivity.py` produces T6.2 (final size by U19 scenario). It is
   uncalibrated and seeded illustratively in Lancaster; its outputs stay in `project/outputs/`.
 
+## Amendment 2026-10-08: staged periods
+
+Geometric single-stage stays gave a mean generation time of 16 days against 11 to 12 in the
+literature (klinkenberg2011, vink2014). Latent and infectious periods are now Erlang: each
+split into stages left with probability stages / days per day, which keeps the mean stays and
+R0 unchanged but concentrates infectiousness. 7-day latent and 8-day infectious periods with 4
+stages each give a mean generation time of 12.0 days. `generation_time` computes it from the
+same daily transitions; tests tie it to the simulator's growth rate (Euler-Lotka) and check it
+against the literature band. One stage remains the default of `simulate`.
+
 ## Consequences
 
 - About 0.5 ms per simulated year after compilation, fast enough for calibration (6c).

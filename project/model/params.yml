@@ -5,14 +5,16 @@ disease:
   # guerra2017 (docs/references): 12-18 is "often cited" but rigorous estimates "vary more";
   # the review's medians by setting are still to read, so this range stays UNVERIFIED.
   r0: {low: 12.0, high: 18.0, status: UNVERIFIED, register: U12, source: "S7, general knowledge; guerra2017 says too narrow"}
-  # Latent (exposed, not yet infectious) and infectious periods in days. Infectious window is
-  # 4 days before to 4 days after rash (S7, VERIFIED), so about 8 days. Latent about 8 days
-  # gives a generation time of about 12 days (S7 says 10 to 12, UNVERIFIED, U13).
-  # klinkenberg2011 (VERIFIED): generation time 11-12 days. With geometric stays the simulator's
-  # mean generation time is latent + infectious = 16 days: too long. To fix before calibration
-  # (6c): an Erlang (multi-stage) infectious period gives about latent + infectious / 2 = 12 days.
-  latent_days: {value: 8.0, status: UNVERIFIED, register: U13}
-  infectious_days: {value: 8.0, status: VERIFIED, source: "S7, DOH measles page"}
+  # Latent (exposed, not yet infectious) and infectious periods in days, each split into stages
+  # (Erlang stays, simulator.py). Infectious window is 4 days before to 4 days after rash (S7,
+  # VERIFIED), so about 8 days. Mean generation time (simulator.generation_time) must match
+  # klinkenberg2011 (VERIFIED, 11-12 days) and vink2014 (VERIFIED, mean measles serial interval
+  # 11.7 days); with these values it is 12.0 days (tested). Single geometric stages gave 16 days.
+  # The latent mean of 7 days and the stage counts are a model choice to fit that generation
+  # time, not observed values, so latent stays UNVERIFIED (U13).
+  latent_days: {value: 7.0, stages: 4, status: UNVERIFIED, register: U13}
+  infectious_days: {value: 8.0, stages: 4, status: VERIFIED, source: "S7, DOH measles page"}
+  generation_time_days: {low: 11.0, high: 12.0, status: VERIFIED, source: "klinkenberg2011; vink2014 serial interval 11.7"}
 
 # Coupling between counties. Each strength is the share of a county's contacts made through
 # that link; zero switches the link off (T6.9). Compared, not assumed (S11).

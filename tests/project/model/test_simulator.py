@@ -57,9 +57,16 @@ def _run(
     seed=st.integers(0, 2**31 - 1),
     vacc=st.floats(0, 50),
     imports=st.floats(0, 3),
+    stages=st.tuples(st.integers(1, 8), st.integers(1, 8)),
 )
 def test_population_conserved_and_final_size_bounded(  # T6.4, T6.5
-    pops: list[int], s_frac: float, r0: float, seed: int, vacc: float, imports: float
+    pops: list[int],
+    s_frac: float,
+    r0: float,
+    seed: int,
+    vacc: float,
+    imports: float,
+    stages: tuple[int, int],
 ) -> None:
     n = np.array(pops, dtype=np.int64)
     c = n.size
@@ -77,6 +84,8 @@ def test_population_conserved_and_final_size_bounded(  # T6.4, T6.5
         seed=seed,
         imports=np.full((days, c), imports),
         vaccination=np.full((days, c), vacc),
+        latent_stages=stages[0],
+        infectious_stages=stages[1],
         **DISEASE,
     )
     assert (res.state.sum(axis=2) == n).all()  # every day, every county
@@ -181,11 +190,15 @@ def _final_size_theory(r: float) -> float:
     return z
 
 
+STAGED = {"latent_days": 7.0, "infectious_days": 8.0, "latent_stages": 4, "infectious_stages": 4}
+
+
+@pytest.mark.parametrize("disease", [DISEASE, STAGED], ids=["geometric", "staged"])
 @pytest.mark.parametrize("r0,s_frac", [(15.0, 0.10), (12.0, 0.10)])
-def test_matches_final_size_relation(r0: float, s_frac: float) -> None:
+def test_matches_final_size_relation(r0: float, s_frac: float, disease: dict) -> None:
     # One well-mixed county: the share of susceptibles infected in a major outbreak must solve
     # z = 1 - exp(-R z) with R = R0 x susceptible share. Catches any bias in R from the daily
-    # step (stays of 1 - exp(-1/D) per day inflated R by about 6 percent).
+    # step (stays of 1 - exp(-1/D) per day inflated R by about 6 percent) or from staging.
     n = 2_000_000
     s0 = int(n * s_frac)
     z = []
@@ -199,18 +212,32 @@ def test_matches_final_size_relation(r0: float, s_frac: float) -> None:
             coupling=np.eye(1),
             days=2000,
             seed=seed,
-            **DISEASE,
+            **disease,
         )
         z.append(res.final_size.sum() / s0)
     assert abs(np.mean(z) - _final_size_theory(r0 * s_frac)) < 0.005
 
 
-def test_matches_early_growth_rate() -> None:
+def _linear_map(r0: float, s_frac: float, d: dict) -> np.ndarray:
+    """Expected daily map of the stage counts early on, built independently of the simulator."""
+    ke, ki = d.get("latent_stages", 1), d.get("infectious_stages", 1)
+    pe, pi = ke / d["latent_days"], ki / d["infectious_days"]
+    m = ke + ki
+    a = np.zeros((m, m))
+    for q in range(m):
+        p = pe if q < ke else pi
+        a[q, q] = 1 - p
+        if q + 1 < m:
+            a[q + 1, q] = p
+    a[0, ke:] += r0 / d["infectious_days"] * s_frac  # new exposures from every infectious stage
+    return a
+
+
+@pytest.mark.parametrize("disease", [DISEASE, STAGED], ids=["geometric", "staged"])
+def test_matches_early_growth_rate(disease: dict) -> None:
     # Early exponential growth must equal the dominant eigenvalue of the linear daily map.
     n, s_frac, r0 = 10**9, 0.10, 15.0
-    pe, pi = 1 / DISEASE["latent_days"], 1 / DISEASE["infectious_days"]
-    a = np.array([[1 - pe, r0 * pi * s_frac], [pe, 1 - pi]])
-    theory = np.log(max(abs(np.linalg.eigvals(a))))
+    theory = np.log(max(abs(np.linalg.eigvals(_linear_map(r0, s_frac, disease)))))
     s0 = int(n * s_frac)
     res = simulator.simulate(
         np.array([n]),
@@ -221,8 +248,61 @@ def test_matches_early_growth_rate() -> None:
         coupling=np.eye(1),
         days=120,
         seed=1,
-        **DISEASE,
+        **disease,
     )
     t = np.arange(20, 100)
     rate = np.polyfit(t, np.log(res.incidence[t, 0].astype(float)), 1)[0]
     assert abs(rate - theory) < 0.05 * theory
+
+
+def test_growth_rate_follows_generation_time() -> None:
+    # Euler-Lotka for the simulator's own generation-interval weights: sum_t g(t) e^(-r t) = 1/R.
+    # Ties generation_time to what simulate does, so the literature check below is meaningful.
+    r = np.log(max(abs(np.linalg.eigvals(_linear_map(15.0, 0.10, STAGED)))))
+    ke, ki = STAGED["latent_stages"], STAGED["infectious_stages"]
+    x = np.zeros(ke + ki)
+    x[0] = 1.0
+    a = _linear_map(0.0, 0.0, STAGED)
+    total = 0.0
+    for t in range(1, 1000):
+        total += x[ke:].sum() / STAGED["infectious_days"] * np.exp(-r * t)
+        x = a @ x
+    assert abs(total - 1 / 1.5) < 1e-6
+    # A longer generation time means slower growth at the same R.
+    assert simulator.generation_time(**STAGED) < simulator.generation_time(**DISEASE)
+
+
+def test_generation_time_matches_literature() -> None:
+    # klinkenberg2011 (VERIFIED): mean generation time 11-12 days; vink2014 (VERIFIED): mean
+    # measles serial interval 11.7 days. docs/references/README.md.
+    d = simulator.load_params()["disease"]
+    g = simulator.generation_time(
+        d["latent_days"]["value"],
+        d["infectious_days"]["value"],
+        d["latent_days"]["stages"],
+        d["infectious_days"]["stages"],
+    )
+    lo, hi = d["generation_time_days"]["low"], d["generation_time_days"]["high"]
+    assert lo <= g <= hi
+    assert lo <= 11.7 <= hi  # the serial interval agrees with the band used
+    # Geometric single stages with the same periods are outside it: the bug this fixes.
+    assert simulator.generation_time(d["latent_days"]["value"], 8.0) > hi
+
+
+def test_rejects_bad_stages() -> None:
+    for bad in ({"latent_stages": 0}, {"infectious_stages": 9}, {"latent_stages": 8}):
+        kw = {**STAGED, **bad}
+        with pytest.raises(ValueError):
+            simulator.generation_time(**kw)
+        with pytest.raises(ValueError):
+            simulator.simulate(
+                POP,
+                POP // 10,
+                np.zeros(4, np.int64),
+                np.array([5, 0, 0, 0]),
+                r0=15,
+                coupling=np.eye(4),
+                days=5,
+                seed=1,
+                **kw,
+            )
