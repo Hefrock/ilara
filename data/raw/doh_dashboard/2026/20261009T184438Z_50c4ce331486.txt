@@ -1,0 +1,559 @@
+=== view: overview_ytd | tab: Overview | slicer: Year to date | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+2026 Overview: Pennsylvania Measles Cases​
+
+October 9, 2026
+
+Last Updated:
+
+Updated at 2 p.m. on Monday, Wednesday, and Friday
+
+NOTE: Due to the Monday Oct. 12th holiday, regular dashboard updates will resume on Wednesday Oct. 14th.
+
+Year to date
+January - March
+April - Present
+
+1,136
+
+Total cases
+
+157
+
+New cases (Last 7 days)
+
+<1%
+
+Fully Vaccinated
+
+219
+
+Hospitalized
+
+33%
+
+Under 18 Years Old
+
+5
+
+Measles-associated Deaths
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+1of6
+Report Zoomed To 125%
+=== view: overview_april | tab: Overview | slicer: April - Present | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+2026 Overview: Pennsylvania Measles Cases​
+
+October 9, 2026
+
+Last Updated:
+
+Updated at 2 p.m. on Monday, Wednesday, and Friday
+
+NOTE: Due to the Monday Oct. 12th holiday, regular dashboard updates will resume on Wednesday Oct. 14th.
+
+Year to date
+January - March
+April - Present
+
+1,124
+
+Total cases
+
+157
+
+New cases (Last 7 days)
+
+<1%
+
+Fully Vaccinated
+
+218
+
+Hospitalized
+
+32%
+
+Under 18 Years Old
+
+5
+
+Measles-associated Deaths
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+1of6
+Report Zoomed To 125%
+=== view: overview_janmar | tab: Overview | slicer: January - March | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+2026 Overview: Pennsylvania Measles Cases​
+
+October 9, 2026
+
+Last Updated:
+
+Updated at 2 p.m. on Monday, Wednesday, and Friday
+
+NOTE: Due to the Monday Oct. 12th holiday, regular dashboard updates will resume on Wednesday Oct. 14th.
+
+Year to date
+January - March
+April - Present
+
+12
+
+Total cases
+
+0
+
+New cases (Last 7 days)
+
+0%
+
+Fully Vaccinated
+
+1
+
+Hospitalized
+
+83%
+
+Under 18 Years Old
+
+0
+
+Measles-associated Deaths
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+1of6
+Report Zoomed To 125%
+=== view: overview_reset | tab: Overview | slicer: Year to date | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+2026 Overview: Pennsylvania Measles Cases​
+
+October 9, 2026
+
+Last Updated:
+
+Updated at 2 p.m. on Monday, Wednesday, and Friday
+
+NOTE: Due to the Monday Oct. 12th holiday, regular dashboard updates will resume on Wednesday Oct. 14th.
+
+Year to date
+January - March
+April - Present
+
+1,136
+
+Total cases
+
+157
+
+New cases (Last 7 days)
+
+<1%
+
+Fully Vaccinated
+
+219
+
+Hospitalized
+
+33%
+
+Under 18 Years Old
+
+5
+
+Measles-associated Deaths
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+1of6
+Report Zoomed To 125%
+=== view: age_time | tab: Cases by Age and Time | slicer: Year to date | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+Measles Cases​ by Age and Month
+
+October 9, 2026
+
+Last Updated:
+
+0
+200
+400
+Case Report Month
+Case Count
+January
+February
+March
+April
+May
+June
+July
+August
+September
+October
+November
+December
+Year to date
+January - March
+April - Present
+0
+200
+400
+Age Group (in years)
+Case Count
+0-4
+5-9
+10-17
+18-24
+25-49
+50-64
+65+
+Unk
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+2of6
+Report Zoomed To 125%
+=== view: hospitalizations | tab: Hospitalizations | slicer: Year to date | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+Measles Hospitalizations
+
+October 9, 2026
+
+Last Updated:
+
+Year to date
+January - March
+April - Present
+
+Among Cases Under 18 Years
+
+Among Cases 18  Years and Older
+
+Total
+
+0%
+100%
+19%
+0%
+100%
+19%
+0%
+100%
+20%
+
+219 of 1,136
+
+70 of 374
+
+149 of 762
+
+Hospitalization percentage is the number of hospitalizations within each age group divided by the total number of measles cases in that age group. 
+
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+3of6
+Report Zoomed To 125%
+=== view: county | tab: Cases by County | slicer: None | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+Measles Cases​ by County
+
+October 9, 2026
+
+Last Updated:
+
+Year to date
+January - March
+April - Present
+Cases
+0
+1-9
+10-24
+25+
+Scroll up
+Scroll down
+Scroll left
+Scroll right
+Row Selection
+County
+Case Count
+Select Row
+Adams
+1
+Select Row
+Allegheny
+2
+Select Row
+Armstrong
+2
+Select Row
+Bedford
+2
+Select Row
+Berks
+6
+Select Row
+Bradford
+1
+Select Row
+Cambria
+1
+Select Row
+Centre
+28
+Select Row
+Chester
+87
+Select Row
+Clarion
+10
+Select Row
+Clearfield
+46
+Select Row
+Clinton
+32
+Select Row
+Columbia
+5
+Select Row
+Cumberland
+1
+Select Row
+Dauphin
+7
+Select Row
+Elk
+6
+Select Row
+Franklin
+7
+Select Row
+Huntingdon
+7
+Select Row
+Indiana
+24
+Select Row
+Jefferson
+63
+Total
+1,136
+
+41
+
+Counties:
+
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+4of6
+Report Zoomed To 125%
+=== view: community_transmission | tab: Community Transmission | slicer: None | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+Counties with Community Transmission
+
+October 5, 2026
+
+Last Updated:
+
+Updated weekly at 2 p.m. each Monday
+
+NOTE: Due to the Monday Oct. 12th holiday, regular dashboard updates will resume on Wednesday Oct. 14th.
+
+No Community Transmission
+Community Transmission
+
+The Pennsylvania Department of Health reviews community transmission in a county on a weekly basis. This is defined by ongoing transmission over multiple generations outside of the index household which cannot be explained by an outside measles introduction. Additional actions such as catch-up or early MMR vaccinations may be warranted in these counties.
+
+The Pennsylvania Department of Health has determined that the following counties in PA have evidence of community transmission of measles:
+
+Scroll up
+Scroll down
+Scroll left
+Scroll right
+Row Selection
+County
+Select Row
+Centre
+Select Row
+Chester
+Select Row
+Clarion
+Select Row
+Clearfield
+Select Row
+Indiana
+Select Row
+Jefferson
+Select Row
+Lancaster
+Select Row
+Mifflin
+Select Row
+Snyder
+Select Row
+Somerset
+Select Row
+Union
+Select Row
+York
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+5of6
+Report Zoomed To 125%
+=== view: vaccine | tab: Measles Vaccine Administered | slicer: None | ok: True
+--- frame 0
+Show keyboard shortcuts
+Show screen reader tips
+Skip to main content
+Power BI Report
+
+Measles Vaccine​ Administered by DOH
+
+October 9, 2026
+
+Last Updated:
+
+0
+500
+1,000
+1,500
+2,000
+2,500
+3,000
+3,500
+Month (2026)
+Doses Administered
+January
+February
+March
+April
+May
+June
+July
+August
+September
+October
+November
+December
+Total MMR Vaccine Doses Administered by DOH Staff in 2026
+
+9,285
+
+Overview
+Cases by Age and Time
+Hospitalizations
+Cases by County
+Community Transmission
+Measles Vaccine Administered
+-
++
+125%
+Microsoft Power BI
+6of6
+Report Zoomed To 125%
