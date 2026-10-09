@@ -25,6 +25,37 @@ coupling:
   adjacency: {strength: 0.02, source: "county_adjacency, shared boundary length"}
   long_range: {strength: 0.0, links: [], status: ASSUMPTION, note: "groups of linked counties; no T1 source, off by default"}
 
+# Inputs built from the event table and county data (project/model/inputs.py, ADR 0008).
+school:
+  # Share of transmission that happens through school while it is in session; out of session
+  # that share is removed. Read from school_calendar events; none are recorded yet (U24), so it
+  # stays 0 (calendar off) until district calendars are added as events.
+  share: {value: 0.0, low: 0.0, high: 0.5, status: ASSUMPTION, register: U24}
+
+# Transmission factor from event_date + lag_days in each event's counties, by event type. A
+# factor of 1 is no effect: these are calibrated in 6c within [low, 1], never assumed. Context
+# for the range: in Ohio's Amish outbreak effective R fell from about 4 to 1 within 2 weeks of
+# containment (gastanaduy2018, doi:10.1093/aje/kwy082, abstract), which included vaccination.
+# Vaccination itself enters through doses (project/susceptibility), not through these factors.
+interventions:
+  intervention: {factor: 1.0, low: 0.25, lag_days: 14, status: ASSUMPTION}
+  health_alert: {factor: 1.0, low: 0.5, lag_days: 7, status: ASSUMPTION}
+
+# Seeding from the earliest date a source shows each county had an infectious case
+# (inputs.first_known). case_events: alerts whose text states cases in their county (checked
+# by hand: ev-001 "Five confirmed measles cases in Lancaster County", ev-002 "Advisory after
+# cases in Lebanon County"; HAN 830 reports wastewater only and is not listed). presence_types:
+# event types showing an infectious person was present. mode first seeds only the earliest
+# county, the rest spread through coupling; all seeds every county (sensitivity).
+seeding:
+  mode: first
+  exposed: 5
+  case_events: [ev-001, ev-002]
+  presence_types: [exposure]
+  # The first known date is an upper bound; seeding is this many days earlier (about one
+  # generation plus a reporting delay). Calibrated in 6c.
+  lead_days: {value: 21, low: 7, high: 42, status: ASSUMPTION}
+
 # Expected external exposures per day, statewide, spread by population (S11: other states'
 # outbreaks; no cross-state mobility data).
 external_introductions_per_day: {value: 0.0, status: ASSUMPTION}

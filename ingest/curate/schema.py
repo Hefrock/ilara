@@ -144,6 +144,11 @@ EVENT_TYPES = (
     "exposure",
     "wastewater_detection",
 )
+# Titles the model reads from `school_calendar` events: one date each, in session from
+# term_start to term_end, out from break_start to break_end. Checked where the model reads
+# them (project/model/inputs.py), not at seed load: free-text T3 rows such as "First Lancaster
+# County schools open" stay as recorded and are refused by the model rather than reinterpreted.
+SCHOOL_CALENDAR_TITLES = ("term_start", "term_end", "break_start", "break_end")
 TIERS = ("T1", "T2", "T3", "T3-derived")
 FLAG_CODES = (
     "PARSE_SCHEMA_CHANGE",

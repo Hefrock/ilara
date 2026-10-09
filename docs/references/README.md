@@ -55,7 +55,8 @@ under-vaccinated close-knit communities found:
 - U19: gastanaduy2016 reports 14 percent single-dose MMR coverage in affected Amish households
   in Ohio, lower than the 20 percent of the `high` under-covered scenario
   (`project/susceptibility/params.yml`). Affected households are selected for low coverage, so
-  this is not a community-wide figure; the scenarios are unchanged pending an owner decision.
+  this is not a community-wide figure. The owner decided on 2026-10-09 to keep the scenarios
+  unchanged.
 - Still to read from full text: yang2020 (New York City 2018-2019), and the serial interval used
   by gastanaduy2018.
 

@@ -7,6 +7,7 @@
 - ``as_known_at(table, T)``: ``current`` over rows with ``fetched_at_utc <= T`` only. The only
   source for validation replay (E11).
 - ``capture_status()``: latest capture outcome per source.
+- ``county_scope(scope)``: an event's ``county_scope`` resolved through the crosswalk.
 """
 
 from __future__ import annotations
@@ -19,7 +20,9 @@ import polars as pl
 
 from ingest import capture_log, paths, schedule
 from ingest.curate.schema import NATURAL_KEYS, conform
+from ingest.curate.schema import SCHOOL_CALENDAR_TITLES as SCHOOL_CALENDAR_TITLES  # for project/
 from ingest.curate.store import store_dir
+from ingest.reference import crosswalk
 
 
 def _files(table: str, store: str, root: Path | None) -> list[str]:
@@ -165,3 +168,18 @@ def open_flags(root: Path | None = None) -> pl.DataFrame:
     """Open data quality flags of the curated store (latest row per flag)."""
     df = current("data_quality_flag", "curated", root)
     return df.filter(pl.col("status") == "open") if df.height else df
+
+
+SCOPE_TOKENS = frozenset({"state", "affected_counties"})
+
+
+def county_scope(scope: str, root: Path | None = None) -> list[str]:
+    """FIPS codes (or the tokens ``state`` and ``affected_counties``) for an event's
+    ``;``-separated ``county_scope``. Names resolve only through the crosswalk; an unknown name
+    raises rather than being guessed."""
+    ref = reference_table("county_crosswalk", root)
+    xw = dict(ref.select("variant_normalized", "county_fips").rows())
+    out = []
+    for part in (p.strip() for p in scope.split(";")):
+        out.append(part if part in SCOPE_TOKENS else crosswalk.resolve(part, xw))
+    return out

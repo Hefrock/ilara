@@ -42,6 +42,12 @@ stages each give a mean generation time of 12.0 days. `generation_time` computes
 same daily transitions; tests tie it to the simulator's growth rate (Euler-Lotka) and check it
 against the literature band. One stage remains the default of `simulate`.
 
+## Amendment 2026-10-09: inputs from data
+
+School calendar, intervention factors and seeding are built from the event and county tables
+(`project/model/inputs.py`, ADR 0008). The simulator gained a `seeds` input: fixed exposures by
+day and county, alongside the random `imports`.
+
 ## Consequences
 
 - About 0.5 ms per simulated year after compilation, fast enough for calibration (6c).

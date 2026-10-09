@@ -5,7 +5,8 @@ S, E, I, R and population N. On day ``t``, from the start-of-day state:
 
 - force of infection ``lambda_i = beta x mult[t, i] x sum_j K[i, j] x I_j / N_j``;
 - new exposures ``Binomial(S_i, 1 - exp(-lambda_i))`` plus ``Poisson(imports[t, i])``
-  external exposures (capped by the susceptibles left);
+  external exposures plus ``seeds[t, i]`` fixed seeding exposures (each capped by the
+  susceptibles left);
 - commuting coupling is directed: residents of ``i`` meet the infectious of the counties they
   commute to;
 - vaccination moves ``Binomial(S_left, vacc[t, i] / S_left)`` susceptibles to R;
@@ -69,6 +70,7 @@ def _run(
     k: np.ndarray,
     mult: np.ndarray,
     imports: np.ndarray,
+    seeds: np.ndarray,
     vacc: np.ndarray,
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -106,6 +108,8 @@ def _run(
             if imports[t, a] > 0:
                 imp = np.random.poisson(imports[t, a])
                 inf += min(imp, s[a] - inf)
+            if seeds[t, a] > 0:
+                inf += min(seeds[t, a], s[a] - inf)
             left = s[a] - inf
             v = 0
             if vacc[t, a] > 0 and left > 0:
@@ -155,9 +159,11 @@ def simulate(
     mult: np.ndarray | None = None,
     imports: np.ndarray | None = None,
     vaccination: np.ndarray | None = None,
+    seeds: np.ndarray | None = None,
 ) -> Result:
     """Run once. ``susceptible``, ``exposed`` and ``infectious`` are counts per county; the
-    rest of the population starts immune (R)."""
+    rest of the population starts immune (R). ``seeds`` are fixed exposures by day and county
+    (``inputs.seeding``); ``imports`` are expected random ones."""
     n = np.asarray(population, dtype=np.int64)
     s = np.asarray(susceptible, dtype=np.int64)
     e = np.asarray(exposed, dtype=np.int64)
@@ -171,7 +177,8 @@ def simulate(
     m = np.ones((days, c)) if mult is None else np.asarray(mult, dtype=np.float64)
     imp = np.zeros((days, c)) if imports is None else np.asarray(imports, dtype=np.float64)
     vac = np.zeros((days, c)) if vaccination is None else np.asarray(vaccination, dtype=np.float64)
-    for name, arr in (("mult", m), ("imports", imp), ("vaccination", vac)):
+    sd = np.zeros((days, c), np.int64) if seeds is None else np.asarray(seeds, dtype=np.int64)
+    for name, arr in (("mult", m), ("imports", imp), ("vaccination", vac), ("seeds", sd)):
         if arr.shape != (days, c) or (arr < 0).any():
             raise ValueError(f"{name} must be a non-negative (days, counties) array")
     _check_stages(latent_days, infectious_days, latent_stages, infectious_stages)
@@ -194,6 +201,7 @@ def simulate(
         k,
         m,
         imp,
+        sd,
         vac,
         seed,
     )
