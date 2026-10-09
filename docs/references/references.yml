@@ -43,36 +43,49 @@ references:
     evidence:
       - {quantity: generation_time_mean_days, value: "11-12", where: abstract, read: abstract, via: references run 37860465223, date: 2026-10-08}
       - {quantity: household_setting_caveat, value: "not directly extrapolated beyond households", where: Introduction, read: abstract_and_introduction, via: owner-supplied text, date: 2026-10-09}
-  # Candidates from a literature search on 2026-10-09 for newer or closer-setting estimates
-  # (US outbreaks in under-vaccinated close-knit communities). DOIs to be confirmed by the
-  # references workflow before anything is read from them.
+  # Found by a literature search on 2026-10-09 for newer or closer-setting estimates (US
+  # outbreaks in under-vaccinated close-knit communities); all DOIs confirmed by references run
+  # 37864293925. Effective R in an outbreak is not R0: it already reflects immunity, clustering
+  # and control, so these inform calibration (6c) and U19 but set no prior.
   - key: gastanaduy2018
     pmid: null
     doi: 10.1093/aje/kwy082
     citation: "Gastañaduy PA, et al. Impact of public health responses during a measles outbreak in an Amish community in Ohio: modeling the dynamics of transmission. Am J Epidemiol. 2018."
     for: [U12, U13, U19]
-    status: to_read
+    status: context
+    evidence:
+      - {quantity: effective_r_early_ohio_amish_2014, value: "about 4, falling to about 1 within 2 weeks of containment", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
   - key: gastanaduy2016
     pmid: null
     doi: 10.1056/NEJMoa1602295
     citation: "Gastañaduy PA, et al. A measles outbreak in an underimmunized Amish community in Ohio. N Engl J Med. 2016."
     for: [U19]
-    status: to_read
+    status: context
+    evidence:
+      - {quantity: mmr_1dose_coverage_affected_amish_households, value: "14%", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
+      - {quantity: mmr_1dose_coverage_non_amish_ohio, value: ">88%", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
+      - {quantity: share_household_transmission, value: "68%", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
+      - {quantity: share_of_settlement_affected, value: "about 1% of 32,630", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
   - key: yang2020
     pmid: null
     doi: 10.1126/sciadv.aaz4037
     citation: "Yang W, et al. Transmission dynamics of and insights from the 2018-2019 measles outbreak in New York City: a modeling study. Sci Adv. 2020;6(22):eaaz4037."
     for: [U12]
-    status: to_read
+    status: to_read  # abstract gives no R0 or interval figure; full text needed
   - key: texasnm2025
     pmid: null
     doi: 10.3390/epidemiologia6040060
     citation: "Modeling and characterizing the growth of the Texas-New Mexico measles outbreak of 2025. Epidemiologia. 2025;6(4):60."
     for: [U12, U13]
-    status: to_read
+    status: context
+    evidence:
+      - {quantity: r0_exponential_growth_model, value: "32-40", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
+      - {quantity: r0_sir_model, value: "about 30", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
   - key: oraby2026
     pmid: null
     doi: 10.1186/s12879-026-13663-2
     citation: "Oraby T, Ndeffo-Mbah ML. The 2025 measles outbreak in Texas. BMC Infect Dis. 2026."
     for: [U12, U13]
-    status: to_read
+    status: context
+    evidence:
+      - {quantity: effective_r_95pct_hdi, value: "2.1-5.4", where: abstract, read: abstract, via: references run 37864293925, date: 2026-10-09}
