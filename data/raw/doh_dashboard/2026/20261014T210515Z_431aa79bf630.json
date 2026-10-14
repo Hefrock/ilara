@@ -1,0 +1,259 @@
+{
+ "final_url": "https://app.powerbigov.us/view?r=eyJrIjoiOGVkYzBiYjYtYTBhNy00MjVjLWFjZGQtM2Y3NDc4NmYxYzBiIiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9",
+ "refused": [],
+ "responses": [
+  {
+   "body": {
+    "error": {
+     "code": "UnableToFindKeyInDBorCacheException",
+     "pbi.error": {
+      "code": "UnableToFindKeyInDBorCacheException",
+      "details": [],
+      "exceptionCulprit": 1,
+      "parameters": {}
+     }
+    }
+   },
+   "method": "GET",
+   "post_data": null,
+   "status": 401,
+   "url": "https://wabi-us-gov-iowa-api.analysis.usgovcloudapi.net/public/reports/8edc0bb6-a0a7-425c-acdd-3f74786f1c0b/modelsAndExploration?preferReadOnlySession=true",
+   "view": "load"
+  }
+ ],
+ "seen": [
+  {
+   "content_type": "application/font-woff",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/fonts/PowrMDL3.woff",
+   "view": "load"
+  },
+  {
+   "content_type": "application/font-woff",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/fonts/SegoeUI-SemiBold-final.woff",
+   "view": "load"
+  },
+  {
+   "content_type": "application/font-woff",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/fonts/SegoeUI-SemiLight-final.woff",
+   "view": "load"
+  },
+  {
+   "content_type": "image/svg+xml",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/images/spinner-PBI-logo.svg",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/hash-manifest.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/jquery-ui.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/jquery.globalize/globalize.culture.en-US.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/jquery.globalize/globalize.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.PowerBIResources.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.app-insights.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.fluent-no-header-teal.json.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.json-contracts.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.reportEmbed.fabricUXVendors.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportEmbed.vendors.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/reportembed.externals.bundle.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "application/javascript; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/scripts/stylelibrary.min.js",
+   "view": "load"
+  },
+  {
+   "content_type": "text/css",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/styles/reportembed.bundle.min.css",
+   "view": "load"
+  },
+  {
+   "content_type": "text/css",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/13.0.28519.452/styles/reportembed.external.bundle.min.css",
+   "view": "load"
+  },
+  {
+   "content_type": "text/html; charset=utf-8",
+   "kept": "not data API",
+   "method": "GET",
+   "status": 200,
+   "url": "https://app.powerbigov.us/view?r=eyJrIjoiOGVkYzBiYjYtYTBhNy00MjVjLWFjZGQtM2Y3NDc4NmYxYzBiIiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9",
+   "view": "load"
+  },
+  {
+   "content_type": "application/json; charset=utf-8",
+   "kept": "yes",
+   "method": "GET",
+   "status": 401,
+   "url": "https://wabi-us-gov-iowa-api.analysis.usgovcloudapi.net/public/reports/8edc0bb6-a0a7-425c-acdd-3f74786f1c0b/modelsAndExploration?preferReadOnlySession=true",
+   "view": "load"
+  }
+ ],
+ "views": [
+  {
+   "ok": true,
+   "slicer_requested": null,
+   "slicer_selected": null,
+   "tab": "Overview",
+   "view": "overview_ytd"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"[title=\\\"April - Present\\\"]\").first\n",
+   "ok": false,
+   "slicer_requested": "April - Present",
+   "tab": "Overview",
+   "view": "overview_april"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"[title=\\\"January - March\\\"]\").first\n",
+   "ok": false,
+   "slicer_requested": "January - March",
+   "tab": "Overview",
+   "view": "overview_janmar"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"[title=\\\"Year to date\\\"]\").first\n",
+   "ok": false,
+   "slicer_requested": "Year to date",
+   "tab": "Overview",
+   "view": "overview_reset"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\".ui-role-button-text\").filter(has_text=re.compile(r\"^\\s*Cases\\ by\\ Age\\ and\\ Time\\s*$\")).first\n",
+   "ok": false,
+   "slicer_requested": null,
+   "tab": "Cases by Age and Time",
+   "view": "age_time"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\".ui-role-button-text\").filter(has_text=re.compile(r\"^\\s*Hospitalizations\\s*$\")).first\n",
+   "ok": false,
+   "slicer_requested": null,
+   "tab": "Hospitalizations",
+   "view": "hospitalizations"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\".ui-role-button-text\").filter(has_text=re.compile(r\"^\\s*Cases\\ by\\ County\\s*$\")).first\n",
+   "ok": false,
+   "slicer_requested": null,
+   "tab": "Cases by County",
+   "view": "county"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\".ui-role-button-text\").filter(has_text=re.compile(r\"^\\s*Community\\ Transmission\\s*$\")).first\n",
+   "ok": false,
+   "slicer_requested": null,
+   "tab": "Community Transmission",
+   "view": "community_transmission"
+  },
+  {
+   "error": "TimeoutError: Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\".ui-role-button-text\").filter(has_text=re.compile(r\"^\\s*Measles\\ Vaccine\\ Administered\\s*$\")).first\n",
+   "ok": false,
+   "slicer_requested": null,
+   "tab": "Measles Vaccine Administered",
+   "view": "vaccine"
+  }
+ ]
+}
