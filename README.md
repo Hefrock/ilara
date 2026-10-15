@@ -6,12 +6,17 @@
 
 Ilara tracks the 2026 Pennsylvania measles outbreak and is a way to learn Python epidemiological
 tooling. It captures public data on a fixed schedule, stores every capture with its provenance,
-curates it into typed tables and publishes weekly data releases. A county-level model is planned
-once enough data exists.
+curates it into typed tables and publishes weekly data releases. A county-level transmission model
+is built and tested on synthetic data; it is fitted to real data only once enough county snapshots
+exist, and its forecasts are published only if they pass validation.
 
 ## Status
 
-Work in progress. See [`docs/PROGRESS.md`](docs/PROGRESS.md) and the build plan in
+Work in progress. Data capture, curation, weekly releases and the dashboard run now. The model
+waits on two gates: ten county snapshot dates before any real fit (Gate G3, expected late October
+2026), and forecasts that beat a simple baseline over eight weekly origins before any forecast is
+shown (Gate G4, no earlier than 30 December 2026). How the data and model work:
+[`docs/methods.md`](docs/methods.md). Progress: [`docs/PROGRESS.md`](docs/PROGRESS.md). Build plan:
 [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
 ## Reading the numbers
@@ -28,6 +33,8 @@ Work in progress. See [`docs/PROGRESS.md`](docs/PROGRESS.md) and the build plan 
 uv sync --all-extras
 make check     # lint, type check, tests, guards (no network)
 make verify    # recompute raw hashes and provenance links
+make rebuild   # regenerate the curated tables from raw and seed files
+make dashboard # build the static site
 ```
 
 ## Licence
