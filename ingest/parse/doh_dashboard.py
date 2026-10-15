@@ -19,11 +19,11 @@ with the view it was captured under). Output rows for ``case_state``, ``case_cou
   and early infant doses cannot be told apart. Anything unexpected in the dose chart raises a
   flag and stores no dose rows; it never stops the case tables from being parsed.
 - ``case_demographics`` (statewide, "Year to date" so ``calendar_year``): cases by age group
-  and by month of report date ("Cases by Age and Time"), and hospitalized cases with their
-  denominators by age band ("Hospitalizations", cards such as "198 of 1,004"). A blank cell
-  in the report is stored as null, not zero (I5). Each set must add up to the year-to-date
-  total of the same capture; if a set does not, or looks different, it is flagged and not
-  stored.
+  and by month of report date ("Cases by Age and Time", renamed "Cases by Age Group" on
+  2026-10-13), and hospitalized cases with their denominators by age band ("Hospitalizations",
+  cards such as "198 of 1,004"). A blank cell in the report is stored as null, not zero (I5).
+  Each set must add up to the year-to-date total of the same capture; if a set does not, or
+  looks different, it is flagged and not stored.
 """
 
 from __future__ import annotations
