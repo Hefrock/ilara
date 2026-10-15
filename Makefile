@@ -2,7 +2,7 @@
 UV ?= uv
 RUN = $(UV) run --frozen
 
-.PHONY: check lint fmt typecheck test guards verify rebuild quality dashboard network-test
+.PHONY: check lint fmt typecheck test guards verify rebuild quality dashboard network-test calibration-check
 
 check: lint typecheck test guards
 
@@ -19,6 +19,10 @@ typecheck:
 
 test:
 	$(RUN) pytest -q
+
+# T6.10: calibration recovers known parameters across 20 synthetic datasets (minutes).
+calibration-check:
+	$(RUN) pytest -q -m slow
 
 guards:
 	$(RUN) measles guard boundary

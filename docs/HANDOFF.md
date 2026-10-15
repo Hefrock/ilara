@@ -301,7 +301,7 @@ Acceptance:
 Depends on: WP0, WP1 (D0, D1); WP3 (D2, D3); WP6 and Gate G4 (D4). Full specification, stages D0 to D5 and tests T5.1 to T5.9 are in DASHBOARD.md. The dashboard is built inside `release.yml` as an artifact (D09). Hard rules: reads only through `ingest/access.py`; no `T3-derived` in default build; gated panels absent from `--public` builds.
 
 ### WP6 Susceptibility and model
-Depends on: WP1, WP3. 6a and 6b may run on fixtures before G3. 6c and 6d require Gate G3.
+Depends on: WP1, WP3. 6a and 6b may run on fixtures before G3. 6c and 6d require Gate G3. (Owner, 2026-10-15: 6c may be built and tested on synthetic data before G3; fitting real county data still waits for G3, enforced in code. ADR 0011.)
 
 6a Susceptibility: per county, effective susceptible fraction = 1 minus (coverage × vaccine effectiveness), with uncertainty. Use school MMR coverage with exemption and suppression handling. Add an explicit under-covered subpopulation parameter (U19) with scenarios. School coverage is a December 2025 baseline; add post-outbreak vaccination as a separate dated adjustment from `event` rows, applying the accounting rule (the early infant dose does not count toward the routine series; an accelerated second dose does, S8). Default inputs are T1 event rows only; T3 events (such as the school opening date) enter only the sensitivity run until a T1 source is found (WP3c).
 

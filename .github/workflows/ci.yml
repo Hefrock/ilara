@@ -36,6 +36,9 @@ jobs:
       - name: make check (lint, type check, tests, guards)
         run: make check
 
+      - name: Calibration recovers known parameters (T6.10, slow)
+        run: make calibration-check
+
       - name: Rebuild matches the committed tables (T3.2)
         run: uv run --frozen measles rebuild
 
