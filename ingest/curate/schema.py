@@ -164,6 +164,7 @@ FLAG_CODES = (
     "HASH_MISMATCH",
     "SOURCE_CONFLICT",
     "DEMOGRAPHIC_SUM_MISMATCH",
+    "DASHBOARD_LINK_CHANGED",
 )
 STORES = ("curated", "sensitivity")
 

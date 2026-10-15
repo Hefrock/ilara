@@ -29,7 +29,7 @@ from typing import Any
 from ingest import rawstore
 from ingest.capture.caseguard import refusal_reason
 from ingest.capture.http import UA_TOKEN, PoliteClient, looks_like_challenge
-from ingest.capture_log import CaptureLog, CaptureRecord, runner_label
+from ingest.capture_log import UNAVAILABLE_MARKER, CaptureLog, CaptureRecord, runner_label
 from ingest.registry import Source
 from ingest.timeutil import iso_utc, utc_now
 
@@ -69,6 +69,8 @@ VIEWS: tuple[View, ...] = (
 )
 ALLOWED_TABS = frozenset(v.tab for v in VIEWS)
 SCREENSHOT_VIEWS = ("overview_ytd", "county")
+
+UNAVAILABLE_TEXT = "This content isn't available"
 
 Allowed = Callable[[str], bool | None]
 PageHook = Callable[[Any], None]
@@ -131,6 +133,26 @@ def _click_tab(page: Any, tab: str) -> None:
 
 def _click_slicer(page: Any, label: str) -> None:
     page.locator(f'[title="{label}"]').first.click(timeout=CLICK_TIMEOUT_MS)
+
+
+def unavailable_reason(
+    responses: list[dict[str, Any]], view_log: list[dict[str, Any]], html: bytes
+) -> str | None:
+    """Why the report itself was not reached, or None. Power BI answers a deleted or
+    unpublished report with an error body from its data API and a placeholder page; when no
+    view needing a click opens, the report did not render either."""
+    for r in responses:
+        body = r.get("body")
+        err = body.get("error") if isinstance(body, dict) else None
+        if err and (r.get("status") or 0) >= 400:
+            code = err.get("code") if isinstance(err, dict) else str(err)
+            return f"{UNAVAILABLE_MARKER}: data API HTTP {r.get('status')} {code}"
+    if UNAVAILABLE_TEXT.encode() in html:
+        return f"{UNAVAILABLE_MARKER}: page says {UNAVAILABLE_TEXT!r}"
+    clicked = [v for v in view_log if v["view"] != VIEWS[0].key]
+    if clicked and not any(v["ok"] for v in clicked):
+        return f"{UNAVAILABLE_MARKER}: no report tab could be opened"
+    return None
 
 
 def capture_browser(
@@ -329,6 +351,11 @@ def capture_browser(
     problems = [f"{v['view']}: {v['error']}" for v in view_log if not v["ok"]]
     if refused:
         problems.append(f"{len(refused)} response(s) refused by the case-level safeguard")
+    # Raw is saved above whatever happens (I1); a report that was not reached is a failure,
+    # not a capture of unchanged data.
+    reason = unavailable_reason(responses, view_log, html)
+    if reason:
+        problems.insert(0, reason)
     return [
         _record(
             log,
@@ -336,7 +363,7 @@ def capture_browser(
             started,
             capture_id=cid,
             http_status=status,
-            outcome="changed" if changed else "unchanged",
+            outcome="failed" if reason else ("changed" if changed else "unchanged"),
             raw_path=r_text.raw_path,
             sha256=r_text.sha256,
             content_hash=r_text.content_hash,

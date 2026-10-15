@@ -6,7 +6,9 @@
   documents disagree (``SOURCE_CONFLICT``).
 - ``as_known_at(table, T)``: ``current`` over rows with ``fetched_at_utc <= T`` only. The only
   source for validation replay (E11).
-- ``capture_status()``: latest capture outcome per source.
+- ``capture_status()``: latest capture per source (outcome, whether it was good and if not
+  why, error) and
+  the time of the last good one.
 - ``county_scope(scope)``: an event's ``county_scope`` resolved through the crosswalk.
 """
 
@@ -14,6 +16,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
+from typing import Any
 
 import duckdb
 import polars as pl
@@ -82,12 +85,35 @@ def capture_status(root: Path | None = None) -> pl.DataFrame:
                 "source_id": pl.Utf8,
                 "finished_utc": pl.Utf8,
                 "outcome": pl.Utf8,
+                "good": pl.Boolean,
+                "problem": pl.Utf8,
+                "error": pl.Utf8,
                 "last_good_utc": pl.Utf8,
             }
         )
-    df = pl.DataFrame(recs).select("source_id", "finished_utc", "outcome")
+    df = pl.DataFrame(
+        [
+            {
+                "source_id": r["source_id"],
+                "finished_utc": r["finished_utc"],
+                "outcome": r["outcome"],
+                "good": capture_log.is_good(r),
+                "problem": capture_log.problem(r),
+                "error": r.get("error"),
+            }
+            for r in recs
+        ],
+        schema={
+            "source_id": pl.Utf8,
+            "finished_utc": pl.Utf8,
+            "outcome": pl.Utf8,
+            "good": pl.Boolean,
+            "problem": pl.Utf8,
+            "error": pl.Utf8,
+        },
+    )
     good = (
-        df.filter(pl.col("outcome").is_in(["changed", "unchanged"]))
+        df.filter(pl.col("good"))
         .group_by("source_id")
         .agg(pl.col("finished_utc").max().alias("last_good_utc"))
     )
@@ -97,16 +123,22 @@ def capture_status(root: Path | None = None) -> pl.DataFrame:
 
 def capture_days(now: datetime, root: Path | None = None) -> pl.DataFrame:
     """Every scheduled dashboard capture day (HANDOFF 8.1) from the first scheduled window to
-    ``now``. ``status`` is ``covered`` (a changed or unchanged dashboard capture finished
-    between 18:00 and 23:59 UTC that day), ``missed``, or ``pending`` while that window is
-    still open. ``catch_up`` counts good captures the next morning before 18:00 UTC; they do
-    not cover the day (the data shown that afternoon may be lost) but are listed."""
+    ``now``. ``status`` is ``covered`` (a good dashboard capture, ``capture_log.is_good``,
+    finished between 18:00 and 23:59 UTC that day), ``missed``, or ``pending`` while that
+    window is still open. ``catch_up`` counts good captures the next morning before 18:00 UTC;
+    they do not cover the day (the data shown that afternoon may be lost) but are listed.
+    ``by`` lists what started the covering captures (``schedule``, ``workflow_dispatch``, or
+    ``unknown`` for records written before triggers were logged); ``unattended`` is true when
+    a scheduled run covered the day (G2)."""
     recs = [
         r
         for r in capture_log.read_all(root or paths.repo_root())
-        if r["source_id"] == "doh_dashboard" and r["outcome"] in ("changed", "unchanged")
+        if r["source_id"] == "doh_dashboard" and capture_log.is_good(r)
     ]
-    done = [datetime.fromisoformat(r["finished_utc"].replace("Z", "+00:00")) for r in recs]
+    done = [
+        (datetime.fromisoformat(r["finished_utc"].replace("Z", "+00:00")), r.get("trigger"))
+        for r in recs
+    ]
     rows = []
     day = schedule.SCHEDULE_START
     while day <= now.astimezone(UTC).date():
@@ -114,21 +146,62 @@ def capture_days(now: datetime, root: Path | None = None) -> pl.DataFrame:
             start = datetime.combine(day, time(schedule.COVER_START_HOUR_UTC), UTC)
             end = datetime.combine(day + timedelta(days=1), time(0), UTC)
             catch_end = end + timedelta(hours=schedule.COVER_START_HOUR_UTC)
-            n = sum(start <= t < end for t in done)
+            within = [trig or "unknown" for t, trig in done if start <= t < end]
+            n = len(within)
             status = "covered" if n else ("pending" if now < end else "missed")
             rows.append(
                 {
                     "day": day,
                     "status": status,
                     "captures": n,
-                    "catch_up": sum(end <= t < catch_end for t in done),
+                    "catch_up": sum(end <= t < catch_end for t, _ in done),
+                    "by": ", ".join(sorted(set(within))),
+                    "unattended": "schedule" in within,
                 }
             )
         day += timedelta(days=1)
     return pl.DataFrame(
         rows,
-        schema={"day": pl.Date, "status": pl.Utf8, "captures": pl.Int64, "catch_up": pl.Int64},
+        schema={
+            "day": pl.Date,
+            "status": pl.Utf8,
+            "captures": pl.Int64,
+            "catch_up": pl.Int64,
+            "by": pl.Utf8,
+            "unattended": pl.Boolean,
+        },
     )
+
+
+G2_WEEKS = 2
+
+
+def g2_status(now: datetime, root: Path | None = None) -> dict[str, Any]:
+    """Gate G2 (HANDOFF 6): two consecutive full Monday, Wednesday, Friday cycles in which every
+    capture day was covered by a scheduled run, with no manual or backup dispatch needed. A
+    week counts once all its capture days have passed; the first, partial week never does."""
+    days = capture_days(now, root)
+    weeks: list[dict[str, Any]] = []
+    for r in days.to_dicts():
+        monday = r["day"] - timedelta(days=r["day"].weekday())
+        if not weeks or weeks[-1]["week_of"] != monday:
+            weeks.append({"week_of": monday, "days": []})
+        weeks[-1]["days"].append(r)
+    for w in weeks:
+        full = len(w["days"]) == len(schedule.CAPTURE_DAYS)
+        w["complete"] = full and all(d["status"] != "pending" for d in w["days"])
+        w["unattended"] = w["complete"] and all(d["unattended"] for d in w["days"])
+    streak = 0
+    for w in reversed([w for w in weeks if w["complete"]]):
+        if not w["unattended"]:
+            break
+        streak += 1
+    return {
+        "status": "pass" if streak >= G2_WEEKS else "not yet",
+        "streak": streak,
+        "needed": G2_WEEKS,
+        "weeks": weeks,
+    }
 
 
 # Sources whose statewide counts are cross-checks of the DOH figures (S6), not part of the DOH

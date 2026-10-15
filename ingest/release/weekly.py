@@ -85,7 +85,7 @@ def covered_days(week: Week, log: list[dict[str, Any]]) -> dict[str, list[str]]:
             r["capture_id"]
             for r in log
             if r["source_id"] == DASHBOARD
-            and r["outcome"] in ("changed", "unchanged")
+            and capture_log.is_good(r)
             and start <= parse_utc(r["finished_utc"]) < end
         )
     return out

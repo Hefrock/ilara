@@ -113,6 +113,68 @@ def test_stale_banner(site_root: Path) -> None:  # T5.4
     assert "Data may be stale" in build.build_page(site_root, later).html
 
 
+def test_banners_explain_a_dead_source_and_missing_updates(site_root: Path) -> None:  # T5.4
+    t = "2026-10-08T19:00:00Z"
+    CaptureLog("r2", site_root).append(
+        CaptureRecord(
+            capture_id="r2:01:doh_dashboard",
+            source_id="doh_dashboard",
+            url="u",
+            started_utc=t,
+            finished_utc=t,
+            http_status=200,
+            outcome="failed",
+            raw_path=None,
+            sha256=None,
+            content_hash=None,
+            bytes=None,
+            runner="local",
+            error="report unavailable: data API HTTP 401 KeyFoundInDeletedResource",
+        )
+    )
+    now = datetime(2026, 10, 9, 12, tzinfo=UTC)  # before Friday's capture window
+    st = build.status(site_root, now)
+    assert st["source_problem"]["reason"] == "the dashboard link no longer opens the report"
+    # Figures as of Oct 5; the last good capture (Oct 7 03:43 UTC) came before Wednesday's
+    # window opened, so Wednesday could not be checked; nothing is said about DOH publishing.
+    assert (st["not_published"], st["not_checked"]) == ([], ["Wed Oct 7"])
+    text = " ".join(build.banners(st))
+    assert "could not be captured" in text and "Last good capture Tue Oct 6" in text  # 03:43 UTC
+    assert "Updates due Wed Oct 7 could not be checked, because the dashboard" in text
+    assert "could not be checked" in build.build_page(site_root, now).html
+
+
+def test_banner_says_doh_had_not_published_when_a_good_capture_saw_old_figures(
+    site_root: Path,
+) -> None:
+    t = "2026-10-07T19:00:00Z"  # good capture in Wednesday's window, figures still as of Oct 5
+    CaptureLog("r3", site_root).append(
+        CaptureRecord(
+            capture_id="r3:01:doh_dashboard",
+            source_id="doh_dashboard",
+            url="u",
+            started_utc=t,
+            finished_utc=t,
+            http_status=200,
+            outcome="unchanged",
+            raw_path=None,
+            sha256=None,
+            content_hash=None,
+            bytes=None,
+            runner="local",
+        )
+    )
+    st = build.status(site_root, datetime(2026, 10, 8, 12, tzinfo=UTC))
+    assert st["source_problem"] is None
+    assert (st["not_published"], st["not_checked"]) == (["Wed Oct 7"], [])
+    assert "DOH had not published newer figures" in " ".join(build.banners(st))
+
+
+def test_no_banner_when_current(site_root: Path) -> None:
+    st = build.status(site_root, NOW)
+    assert st["source_problem"] is None and build.banners(st) == []
+
+
 def test_no_gated_panels(site_root: Path) -> None:  # T5.5
     for public in (False, True):
         page = build.build_page(site_root, NOW, public=public)

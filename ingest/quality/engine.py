@@ -540,6 +540,28 @@ def open_flags(root: Path) -> pl.DataFrame:
     return df.filter(pl.col("status") == "open").sort(["code", "raised_utc"])
 
 
+def g2_lines(root: Path, now: datetime) -> list[str]:
+    """Each scheduled capture day, what covered it, and Gate G2 progress (HANDOFF 6, 8.1)."""
+    g2 = access.g2_status(now, root)
+    out = [
+        f"Gate G2: **{g2['status']}** ({g2['streak']} of {g2['needed']} consecutive weeks "
+        "covered by scheduled runs alone). A day covered only by a dispatched run (the backup "
+        "routine or a person) is covered but not unattended; `unknown` marks captures logged "
+        "before the trigger was recorded.",
+        "",
+        "| Day | Status | Covered by | Catch-up next morning |",
+        "|---|---|---|---|",
+    ]
+    for w in g2["weeks"]:
+        for d in w["days"]:
+            out.append(
+                f"| {d['day']:%a %Y-%m-%d} | {d['status']} | {d['by'] or '-'} | {d['catch_up']} |"
+            )
+    if not g2["weeks"]:
+        out.append("| none yet | | | |")
+    return out
+
+
 def render(f: Findings, root: Path, now: datetime) -> str:
     flags = open_flags(root)
     snap = access.current("case_state", "curated", root).filter(
@@ -581,6 +603,7 @@ def render(f: Findings, root: Path, now: datetime) -> str:
     for sec in order:
         if sec in f.sections:
             lines += ["", f"## {sec}", "", *f.sections[sec]]
+    lines += ["", "## Capture days and Gate G2", "", *g2_lines(root, now)]
     q = [(st, access.all_rows("quarantine", st, root)) for st in STORES]
     lines += ["", "## Quarantine", ""]
     for st, df in q:

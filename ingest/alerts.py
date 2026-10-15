@@ -12,7 +12,7 @@ from typing import Any
 
 import httpx
 
-from ingest import schedule
+from ingest import capture_log, schedule
 from ingest.timeutil import parse_utc, utc_now
 
 LABEL_FAILURE = "capture-failure"
@@ -50,7 +50,7 @@ def build_alerts(records: list[dict[str, Any]], history: list[dict[str, Any]]) -
             (
                 h["finished_utc"]
                 for h in history
-                if h["source_id"] == r["source_id"] and h["outcome"] in ("changed", "unchanged")
+                if h["source_id"] == r["source_id"] and capture_log.is_good(h)
             ),
             default="none recorded",
         )
