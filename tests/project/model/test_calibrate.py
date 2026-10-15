@@ -127,3 +127,22 @@ def test_real_county_fit_waits_for_gate_g3(root: Path) -> None:  # E12, ADR 0011
         )
     with pytest.raises(cal.GateError, match="Gate G3"):
         cal.observations_from_curated(["42071"], date(2026, 8, 1), root)
+
+
+def test_a_missing_county_count_is_a_gap_not_a_zero(root: Path) -> None:  # I5
+    for d in range(1, 12):
+        df = _county_rows("T1", date(2026, 9, d))
+        if d == 5:
+            df = df.with_columns(pl.lit(None, pl.Int64).alias("cum_cases"))
+        store.write(
+            "curated",
+            "case_county",
+            df,
+            df["ingest_run_id"][0],
+            datetime(2026, 9, d, tzinfo=UTC),
+            root,
+        )
+    obs, _ = cal.observations_from_curated(["42071"], date(2026, 8, 1), root)
+    days, y = obs.series[0]
+    assert len(days) == 10 and (date(2026, 9, 5) - date(2026, 8, 1)).days not in days
+    assert (y == 100).all()

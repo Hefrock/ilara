@@ -262,13 +262,38 @@ def curated_problem(
     return problem(model, obs), {**model.refs, **refs}
 
 
+def statewide_dates(
+    first: date, start: date, root: Path | None = None, known_at: datetime | None = None
+) -> list[date]:
+    """Dates of the T1 calendar-year statewide counts the real fit uses before the first county
+    snapshot (the selection in ``calibrate.observations_from_curated``); dates only, no counts."""
+    st = _read("case_state", root, known_at)
+    if not st.height:
+        return []
+    st = st.filter(
+        ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+        & (pl.col("source_tier") == "T1")
+        & (pl.col("count_definition") == "calendar_year")
+        & (pl.col("as_of_date") < first)
+        & (pl.col("as_of_date") >= start)
+    )
+    return sorted(set(st["as_of_date"].to_list()))
+
+
 def synthetic(
-    model: PAModel, truth: dict[str, float], snapshot_days: list[int], seed: int
+    model: PAModel,
+    truth: dict[str, float],
+    snapshot_days: list[int],
+    seed: int,
+    state_days: list[int] | None = None,
 ) -> cal.Observations:
     """A dataset from the model itself at ``truth``: county snapshots on ``snapshot_days``
-    (counties with any reported case by the last one) plus statewide totals before them."""
+    (counties with any reported case by the last one) plus statewide totals on ``state_days``
+    before them (default: weekly for 60 days), ending at the first snapshot."""
     first = snapshot_days[0]
-    state_days = [d for d in range(max(first - 60, 0), first, 7)] + [first]
+    if state_days is None:
+        state_days = list(range(max(first - 60, 0), first, 7))
+    state_days = sorted(d for d in state_days if 0 <= d < first) + [first]
     skeleton = cal.Observations(
         model.start,
         {
@@ -319,9 +344,11 @@ def dry_run(
     dates = snapshot_dates()
     model = build(dates[-1], root, seed=seed)
     snaps = [(d - model.start).days for d in dates]
+    # Statewide counts on the dates the real fit has them (DOH releases), simulated values.
+    state = [(d - model.start).days for d in statewide_dates(dates[0], model.start, root)]
     data_seed, obs = None, None
     for s in range(seed, seed + 200):
-        obs = synthetic(model, DRY_TRUTH, snaps, s)
+        obs = synthetic(model, DRY_TRUTH, snaps, s, state)
         if obs.series["state"][1][-1] >= min_cases:
             data_seed = s
             break
@@ -341,6 +368,7 @@ def dry_run(
             "truth": DRY_TRUTH,
             "data_seed": data_seed,
             "snapshot_days": snaps,
+            "statewide_days": state,
             "start": model.start.isoformat(),
             "particles": particles,
             "generations": generations,

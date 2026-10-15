@@ -378,11 +378,14 @@ def observations_from_curated(
         )
     series: dict[Any, tuple[np.ndarray, np.ndarray]] = {}
     for i, f in enumerate(fips):
-        rows = county.filter(pl.col("county_fips") == f).sort("as_of_date")
+        # A missing count is a gap, not a zero (I5): those snapshots are left out.
+        rows = county.filter((pl.col("county_fips") == f) & pl.col("cum_cases").is_not_null()).sort(
+            "as_of_date"
+        )
         if rows.height:
             series[i] = (
                 np.array([(d - start).days for d in rows["as_of_date"]]),
-                rows["cum_cases"].fill_null(0).to_numpy(),
+                rows["cum_cases"].to_numpy(),
             )
     st = (
         state.filter(

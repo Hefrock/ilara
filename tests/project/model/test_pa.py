@@ -122,3 +122,13 @@ def test_real_fit_refuses_before_gate_g3(model: pa.PAModel, root: Path) -> None:
         )
     with pytest.raises(cal.GateError, match="Gate G3"):
         pa.curated_problem(model, root)
+
+
+def test_dry_run_uses_the_real_statewide_dates(model: pa.PAModel) -> None:
+    first = pa.snapshot_dates()[0]
+    dates = pa.statewide_dates(first, model.start, REPO)
+    assert date(2026, 5, 6) in dates and all(model.start <= d < first for d in dates)
+    days = [(d - model.start).days for d in dates]
+    snaps = [(d - model.start).days for d in pa.snapshot_dates()]
+    obs = pa.synthetic(model, pa.DRY_TRUTH, snaps, 1, days)
+    assert list(obs.series["state"][0]) == sorted(days) + [snaps[0]]
