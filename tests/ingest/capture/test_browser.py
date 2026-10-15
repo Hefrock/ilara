@@ -22,7 +22,7 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 TABS = [
     "Overview",
-    "Cases by Age and Time",
+    "Cases by Age Group",
     "Hospitalizations",
     "Cases by County",
     "Community Transmission",

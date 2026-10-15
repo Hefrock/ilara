@@ -61,7 +61,9 @@ VIEWS: tuple[View, ...] = (
     View("overview_april", "Overview", "April - Present"),
     View("overview_janmar", "Overview", "January - March"),
     View("overview_reset", "Overview", SLICER_DEFAULT),
-    View("age_time", "Cases by Age and Time"),
+    # Tab renamed from "Cases by Age and Time" when DOH republished the report (ADR 0009);
+    # the key stays so the parser and older records line up.
+    View("age_time", "Cases by Age Group"),
     View("hospitalizations", "Hospitalizations"),
     View("county", "Cases by County"),
     View("community_transmission", "Community Transmission"),
