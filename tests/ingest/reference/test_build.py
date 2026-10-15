@@ -248,3 +248,21 @@ def test_manifest_records_inputs(built) -> None:
         "census_popest_agesex",
         "census_commuting",
     }
+
+
+def test_commuting_on_the_real_census_file() -> None:  # T1.6 on the committed build
+    repo = Path(__file__).resolve().parents[3]
+    path = repo / "data" / "reference" / "mobility_edge.csv"
+    if not path.exists():
+        pytest.skip("no reference build")
+    e = pl.read_csv(path, schema_overrides={"origin": pl.Utf8, "dest": pl.Utf8})
+    ok = set(FIPS) | {"EXTERNAL"}
+    assert set(e["origin"]) <= ok and set(e["dest"]) <= ok
+    assert (e["flow"] >= 0).all() and set(e["period"]) == {"ACS 2016-2020"}
+    assert set(FIPS) <= set(e["origin"])  # every county has residents who commute
+    flows = {(o, d): f for o, d, f, _ in e.rows()}
+    assert ("EXTERNAL", "EXTERNAL") not in flows
+    # Values read from Census table 1 (2016-2020) as built on 2026-10-07.
+    assert flows[("42071", "42071")] == 225291 and flows[("42071", "42075")] == 3834
+    m = json.loads((repo / "data" / "reference" / "MANIFEST.json").read_text())
+    assert m["inputs"]["census_commuting"]["raw_path"].endswith(".xlsx")
