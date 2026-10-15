@@ -1,0 +1,21 @@
+{
+  "bytes": 710817,
+  "capture_key": null,
+  "compression": "gzip",
+  "content_hash": "9e404d6ef14507a33281c518a293e71ed541d602bfba131c212fde0ed61d9740",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-38786169357-1:03:doh_han_index",
+    "content_type": "text/html;charset=utf-8"
+  },
+  "fetched_at_et": "2026-10-15T14:30:44-04:00",
+  "fetched_at_utc": "2026-10-15T18:30:44Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_han_index",
+  "raw_path": "data/raw/doh_han_index/2026/20261015T183044Z_73be70cd130c.html.gz",
+  "sha256": "73be70cd130ce8cdac07f09a389c39dfb1e2afe4993881d88a078324e23a9ba2",
+  "source_id": "doh_han_index",
+  "stored_sha256": "0663b2752a6057d92a2bf59a85c34e4591131a1386f81e22769941b8d5502801",
+  "url": "https://www.pa.gov/agencies/health/healthcare-and-public-health-professionals/han"
+}
