@@ -259,3 +259,19 @@ def test_parse_failure_is_quarantined_not_raised(root: Path) -> None:
     rep = runner.run(root)
     assert len(rep.failed) == 1
     assert set(access.all_rows("data_quality_flag", root=root)["code"]) == {"PARSE_SCHEMA_CHANGE"}
+
+
+def test_refresh_time_from_report_metadata() -> None:  # ADR 0010
+    # Power BI's refresh metadata in the real Oct 5 capture: 2026-10-05 18:19:30 UTC.
+    want = datetime(2026, 10, 5, 18, 19, 30, tzinfo=UTC)
+    assert doh_dashboard.refreshed_utc(bundle()) == want
+    assert {r["source_refreshed_utc"] for r in doh_dashboard.parse(bundle())["state"]} == {want}
+    # Both forms are read; the latest wins; none found is None, never a guess (I5).
+    fake = {
+        "responses": [
+            {"body": {"x": {"lastRefreshTime": "/Date(1791392442693)/"}}},
+            {"body": [{"LastRefreshTime": "2026-10-09T17:02:46.48"}]},
+        ]
+    }
+    assert doh_dashboard.refreshed_utc(fake) == datetime(2026, 10, 9, 17, 2, 46, tzinfo=UTC)
+    assert doh_dashboard.refreshed_utc({"responses": [{"body": {}}]}) is None

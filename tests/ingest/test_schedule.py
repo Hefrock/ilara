@@ -8,15 +8,19 @@ from ingest import schedule
 def test_next_dashboard_run() -> None:
     wed_noon = datetime(2026, 10, 7, 12, 0, tzinfo=UTC)  # a Wednesday
     assert schedule.next_run(schedule.DASHBOARD_CRONS, wed_noon) == datetime(
-        2026, 10, 7, 18, 0, tzinfo=UTC
+        2026, 10, 7, 19, 30, tzinfo=UTC
     )
-    wed_late = datetime(2026, 10, 7, 22, 0, tzinfo=UTC)
+    wed_evening = datetime(2026, 10, 7, 22, 0, tzinfo=UTC)
+    assert schedule.next_run(schedule.DASHBOARD_CRONS, wed_evening) == datetime(
+        2026, 10, 7, 23, 0, tzinfo=UTC
+    )
+    wed_late = datetime(2026, 10, 7, 23, 5, tzinfo=UTC)
     assert schedule.next_run(schedule.DASHBOARD_CRONS, wed_late) == datetime(
         2026, 10, 8, 13, 0, tzinfo=UTC
     )
     sat_late = datetime(2026, 10, 10, 14, 0, tzinfo=UTC)
     assert schedule.next_run(schedule.DASHBOARD_CRONS, sat_late) == datetime(
-        2026, 10, 12, 18, 0, tzinfo=UTC
+        2026, 10, 12, 19, 30, tzinfo=UTC
     )
 
 

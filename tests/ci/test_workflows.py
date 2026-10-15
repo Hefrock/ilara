@@ -50,7 +50,11 @@ def test_schedules_match_runbook() -> None:  # T2.8
     assert crons(load("capture-dashboard.yml")) == list(schedule.DASHBOARD_CRONS)
     assert crons(load("capture-light.yml")) == list(schedule.LIGHT_CRONS)
     assert crons(load("release.yml")) == list(schedule.RELEASE_CRONS)
-    assert schedule.DASHBOARD_CRONS == ("0 18,20,22 * * 1,3,5", "0 13 * * 2,4,6")
+    assert schedule.DASHBOARD_CRONS == (
+        "30 19,21 * * 1,3,5",
+        "0 23 * * 1,3,5",
+        "0 13 * * 2,4,6",
+    )
     assert schedule.LIGHT_CRONS == ("30 14 * * *",)
     assert schedule.RELEASE_CRONS == ("30 13 * * 1",)
 

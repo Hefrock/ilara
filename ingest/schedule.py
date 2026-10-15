@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 
-DASHBOARD_CRONS = ("0 18,20,22 * * 1,3,5", "0 13 * * 2,4,6")
+# After DOH's update, which lands about 13:00 to 14:20 ET (17:00 to 19:20 UTC across the
+# daylight saving change), and inside the 18:00 to 23:59 UTC cover window (ADR 0010).
+DASHBOARD_CRONS = ("30 19,21 * * 1,3,5", "0 23 * * 1,3,5", "0 13 * * 2,4,6")
 LIGHT_CRONS = ("30 14 * * *",)
 RELEASE_CRONS = ("30 13 * * 1",)
 CAPTURE_DAYS = (0, 2, 4)  # Monday, Wednesday, Friday (Python weekday numbers)

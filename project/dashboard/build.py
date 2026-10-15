@@ -408,6 +408,11 @@ def status(root: Path | None, now: datetime) -> dict[str, Any]:
         }
     snap = access.current("case_state", root=root).filter(pl.col("source_id") == DASHBOARD)
     as_of: date | None = snap["as_of_date"].max() if snap.height else None  # type: ignore[assignment]
+    refreshed = (
+        snap["source_refreshed_utc"].drop_nulls().max()
+        if snap.height and "source_refreshed_utc" in snap.columns
+        else None
+    )
     not_published: list[str] = []
     not_checked: list[str] = []
     if as_of is not None:
@@ -425,6 +430,7 @@ def status(root: Path | None, now: datetime) -> dict[str, Any]:
         "stale": stale,
         "source_problem": problem,
         "as_of": str(as_of) if as_of is not None else None,
+        "refreshed_et": _when_et(refreshed) if refreshed is not None else None,  # type: ignore[arg-type]
         "not_published": not_published,
         "not_checked": not_checked,
     }
@@ -1272,6 +1278,7 @@ dashboard (not stated as zero).</p>
         tiles=tiles_html,
         stale=stale_html,
         last_good=html.escape(st["last_good_et"] or "never"),
+        refreshed=html.escape(st["refreshed_et"] or "not recorded"),
         next_update=html.escape(st["next_update_et"]),
         statewide_chart=s_fig,
         statewide_table=_table(
@@ -1488,7 +1495,8 @@ reported cases are those known to and published by the Pennsylvania Department o
 {stale}
 <div class="tiles">{tiles}</div>
 <p class="floor">Forecasts are withheld until validated. Reported counts are a floor.</p>
-<p class="status">Last dashboard capture: {last_good}. Next expected update: {next_update}.</p>
+<p class="status">DOH last refreshed the figures: {refreshed}. Last dashboard capture: {last_good}.
+Next expected update: {next_update}.</p>
 </section>
 <section id="trend">
 <h2>Statewide cases have risen through 2026</h2>
