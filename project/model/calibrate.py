@@ -39,6 +39,7 @@ import polars as pl
 
 from ingest import access
 from project import manifest
+from project.leak import check_known
 
 ONSET_DAYS = 11.5  # infection to rash onset: mean incubation (klinkenberg2011, 11-12 days)
 DELAY_SD = 3.0  # spread of infection to report, days (assumption, ADR 0011)
@@ -358,7 +359,7 @@ def observations_from_curated(
     def read(table: str) -> pl.DataFrame:
         if known_at is None:
             return access.current(table, root=root)
-        return access.as_known_at(table, known_at, root=root)
+        return check_known(access.as_known_at(table, known_at, root=root), known_at, table)
 
     county = read("case_county")
     state = read("case_state")
@@ -378,11 +379,14 @@ def observations_from_curated(
         )
     series: dict[Any, tuple[np.ndarray, np.ndarray]] = {}
     for i, f in enumerate(fips):
-        rows = county.filter(pl.col("county_fips") == f).sort("as_of_date")
+        # A missing count is a gap, not a zero (I5): those snapshots are left out.
+        rows = county.filter((pl.col("county_fips") == f) & pl.col("cum_cases").is_not_null()).sort(
+            "as_of_date"
+        )
         if rows.height:
             series[i] = (
                 np.array([(d - start).days for d in rows["as_of_date"]]),
-                rows["cum_cases"].fill_null(0).to_numpy(),
+                rows["cum_cases"].to_numpy(),
             )
     st = (
         state.filter(

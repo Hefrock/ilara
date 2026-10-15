@@ -141,7 +141,7 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 | U2 | Dashboard field names, any history, any export | WP2 probe | `docs/probe_report.md` VERIFIED 2026-10-07: six visible pages and their fields listed in docs/probe_report.md; no export or history control seen |
 | U3 | School county Excel sheet layouts | WP3 | `docs/schemas.md` plus golden parser tests VERIFIED 2026-10-07: layout of the 2025-2026 county file recorded in docs/schemas.md; parser golden test passes |
 | U4 | Location of data in the school-level HTML | WP3 | `docs/schemas.md` VERIFIED 2026-10-07: embedded DataTable JSON in the page; layout in docs/schemas.md |
-| U5 | Census population file URLs | WP1 | URLs recorded in `data/registry/source_registry.yml` PARTIAL 2026-10-07: totals and age-sex file URLs work (data/registry); commuting file URL still to find |
+| U5 | Census population file URLs | WP1 | VERIFIED 2026-10-15: totals, age-sex and commuting URLs in `data/registry/source_registry.yml`. Commuting table 1 link read from the captured Census table page (capture gh-37617137202-1); file captured 2026-10-07 (sha256 1dbf52be...), built into `data/reference/mobility_edge.csv` (2,206 edges) |
 | U6 | Cartographic boundary file names; `pygris` usable | WP1 | registry entry plus T1.1 VERIFIED 2026-10-07: cb_2024_us_county_500k.zip captured; 67 valid PA counties (T1.1) |
 | U7 | PA county FIPS pattern | WP1 | T1.1, T1.2 VERIFIED 2026-10-07: PA FIPS are 42001 to 42133 odd, matching the boundary and population files (T1.2) |
 | U8 | CDC NWSS Socrata endpoint and schema | WP2 and WP3 (optional) | registry entry, schema doc |
@@ -159,5 +159,5 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 | U20 | Public PA measles sequences | Human (H9) | owner note |
 | U21 | Scheduled-workflow disablement rules for public repos | Gate G5 | checked against current GitHub docs |
 | U22 | GitHub-hosted runners can reach the dashboard | WP2 probe | `docs/probe_report.md` VERIFIED 2026-10-07: GitHub-hosted runners load the report (probe runs 37562037581, 37567917285) |
-| U23 | GitHub Free private repositories lack branch protection; `GITHUB_TOKEN` pushes do not trigger workflows | WP0 | ADR, checked against current GitHub documentation |
+| U23 | GitHub Free private repositories lack branch protection; `GITHUB_TOKEN` pushes do not trigger workflows | WP0 | ADR, checked against current GitHub documentation. Deferred to Gate G5 (ADR 0001): WP0 closed on the guards that compensate; to be checked against current GitHub documentation before the public flip |
 | U24 | Pennsylvania school calendars (term and break dates by county or district) | WP6 | `school_calendar` events with a T1 source (district or PDE calendar) for at least the counties with cases; until then the calendar covariate is off (`school.share` 0, ADR 0008) |

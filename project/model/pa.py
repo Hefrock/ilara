@@ -26,16 +26,19 @@ from __future__ import annotations
 import argparse
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from datetime import time as dt_time
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import polars as pl
 
 from ingest import access
+from project.leak import check_known
 from project.model import calibrate as cal
-from project.model import inputs, sensitivity, simulator
+from project.model import inputs, sensitivity, simulator, validate
 from project.susceptibility import estimate
 
 MARGIN_DAYS = 7
@@ -74,7 +77,7 @@ class PAModel:
 def _read(table: str, root: Path | None, known_at: datetime | None) -> pl.DataFrame:
     if known_at is None:
         return access.current(table, root=root)
-    return access.as_known_at(table, known_at, root=root)
+    return check_known(access.as_known_at(table, known_at, root=root), known_at, table)
 
 
 def vaccination_array(
@@ -262,13 +265,38 @@ def curated_problem(
     return problem(model, obs), {**model.refs, **refs}
 
 
+def statewide_dates(
+    first: date, start: date, root: Path | None = None, known_at: datetime | None = None
+) -> list[date]:
+    """Dates of the T1 calendar-year statewide counts the real fit uses before the first county
+    snapshot (the selection in ``calibrate.observations_from_curated``); dates only, no counts."""
+    st = _read("case_state", root, known_at)
+    if not st.height:
+        return []
+    st = st.filter(
+        ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+        & (pl.col("source_tier") == "T1")
+        & (pl.col("count_definition") == "calendar_year")
+        & (pl.col("as_of_date") < first)
+        & (pl.col("as_of_date") >= start)
+    )
+    return sorted(set(st["as_of_date"].to_list()))
+
+
 def synthetic(
-    model: PAModel, truth: dict[str, float], snapshot_days: list[int], seed: int
+    model: PAModel,
+    truth: dict[str, float],
+    snapshot_days: list[int],
+    seed: int,
+    state_days: list[int] | None = None,
 ) -> cal.Observations:
     """A dataset from the model itself at ``truth``: county snapshots on ``snapshot_days``
-    (counties with any reported case by the last one) plus statewide totals before them."""
+    (counties with any reported case by the last one) plus statewide totals on ``state_days``
+    before them (default: weekly for 60 days), ending at the first snapshot."""
     first = snapshot_days[0]
-    state_days = [d for d in range(max(first - 60, 0), first, 7)] + [first]
+    if state_days is None:
+        state_days = list(range(max(first - 60, 0), first, 7))
+    state_days = sorted(d for d in state_days if 0 <= d < first) + [first]
     skeleton = cal.Observations(
         model.start,
         {
@@ -319,9 +347,11 @@ def dry_run(
     dates = snapshot_dates()
     model = build(dates[-1], root, seed=seed)
     snaps = [(d - model.start).days for d in dates]
+    # Statewide counts on the dates the real fit has them (DOH releases), simulated values.
+    state = [(d - model.start).days for d in statewide_dates(dates[0], model.start, root)]
     data_seed, obs = None, None
     for s in range(seed, seed + 200):
-        obs = synthetic(model, DRY_TRUTH, snaps, s)
+        obs = synthetic(model, DRY_TRUTH, snaps, s, state)
         if obs.series["state"][1][-1] >= min_cases:
             data_seed = s
             break
@@ -341,6 +371,7 @@ def dry_run(
             "truth": DRY_TRUTH,
             "data_seed": data_seed,
             "snapshot_days": snaps,
+            "statewide_days": state,
             "start": model.start.isoformat(),
             "particles": particles,
             "generations": generations,
@@ -362,6 +393,96 @@ def main(argv: list[str] | None = None) -> int:
     path = dry_run(a.out, particles=a.particles, generations=a.generations, seed=a.seed)
     print(f"calibration dry run (synthetic data): wrote {path}")
     return 0
+
+
+ET = ZoneInfo("America/New_York")
+
+
+def cutoff(origin: date) -> datetime:
+    """Data known at a forecast origin: everything fetched by the end of that day, ET (I6)."""
+    return datetime.combine(origin, dt_time(23, 59, 59), ET).astimezone(UTC)
+
+
+def forecast_samples(
+    model: PAModel,
+    result: cal.Fit,
+    origin: date,
+    geographies: list[Any],
+    horizons: tuple[int, ...] = (1, 2, 3, 4),
+    draws: int = 200,
+    seed: int = 11,
+) -> dict[str, dict[int, np.ndarray]]:
+    """Posterior predictive samples of cases newly reported in each week after ``origin``, per
+    geography (county index or "state"): simulate from posterior draws, report through the
+    observation model, and draw negative binomial weekly counts."""
+    run = simulate_fn(model)
+    t0 = (origin - model.start).days
+    if t0 + 7 * max(horizons) >= model.days:
+        raise ValueError("the model run ends before the last forecast week")
+    rng = np.random.default_rng(seed)
+    out: dict[str, dict[int, list[float]]] = {
+        _geo_key(model, g): {h: [] for h in horizons} for g in geographies
+    }
+    for n, row in enumerate(result.resample(draws, seed)):
+        theta = {p.name: float(x) for p, x in zip(result.priors, row, strict=True)}
+        cum = cal.expected_cumulative(run(theta, 700_000 + n), theta, model.start)
+        k = theta["k"]
+        for g in geographies:
+            series = cum.sum(axis=1) if g == "state" else cum[:, g]
+            for h in horizons:
+                mu = max(float(series[t0 + 7 * h] - series[t0 + 7 * (h - 1)]), 1e-9)
+                out[_geo_key(model, g)][h].append(float(rng.negative_binomial(k, k / (k + mu))))
+    return {g: {h: np.array(v) for h, v in by_h.items()} for g, by_h in out.items()}
+
+
+def _geo_key(model: PAModel, g: Any) -> str:
+    return "state" if g == "state" else model.fips[g]
+
+
+def forecaster(
+    root: Path | None = None,
+    *,
+    particles: int = 300,
+    generations: int = 8,
+    draws: int = 200,
+    seed: int = 20261015,
+) -> validate.Forecaster:
+    """Fit at each origin with data known at its cutoff, then forecast 1 to 4 weeks ahead.
+    Refuses (``GateError``) at origins with fewer than ten county snapshot dates."""
+
+    def run(origin: date, known_at: datetime) -> dict[str, dict[int, np.ndarray]]:
+        model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
+        prob, _ = curated_problem(model, root, known_at)
+        result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
+        return forecast_samples(model, result, origin, list(prob.obs.series), draws=draws)
+
+    return run
+
+
+def observed_series(root: Path | None = None) -> dict[str, dict[date, int]]:
+    """What was later reported: T1 calendar-year county snapshots and the dashboard's statewide
+    total, by snapshot date (latest revision). Missing counts are absent, not zero (I5)."""
+    out: dict[str, dict[date, int]] = {}
+    county = access.current("case_county", root=root)
+    if county.height:
+        county = county.filter(
+            ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+            & (pl.col("source_tier") == "T1")
+            & (pl.col("count_definition") == "calendar_year")
+            & pl.col("cum_cases").is_not_null()
+        )
+        for f, d, c in county.select("county_fips", "as_of_date", "cum_cases").rows():
+            out.setdefault(f, {})[d] = c
+    state = access.current("case_state", root=root)
+    if state.height:
+        state = state.filter(
+            (pl.col("source_id") == "doh_dashboard")
+            & (pl.col("source_tier") == "T1")
+            & (pl.col("count_definition") == "calendar_year")
+            & pl.col("cum_cases").is_not_null()
+        )
+        out["state"] = dict(state.select("as_of_date", "cum_cases").rows())  # type: ignore[arg-type]
+    return out
 
 
 if __name__ == "__main__":

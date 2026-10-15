@@ -35,6 +35,7 @@ import numpy as np
 import polars as pl
 
 from ingest import access
+from project.leak import check_known
 
 IN_SESSION = {"term_start": True, "break_end": True, "term_end": False, "break_start": False}
 
@@ -222,7 +223,7 @@ def build(
     def read(table: str) -> pl.DataFrame:
         if known_at is None:
             return access.current(table, root=root)
-        return access.as_known_at(table, known_at, root=root)
+        return check_known(access.as_known_at(table, known_at, root=root), known_at, table)
 
     events = read("event")
     county = read("case_county")
