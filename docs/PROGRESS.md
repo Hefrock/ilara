@@ -18,8 +18,8 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 | WP3 Parse and curate | in progress | T3.1 (dashboard, school, release), T3.2 to T3.15 | Seed loader `ingest/curate/seed.py`; dashboard parser `ingest/parse/`; quality engine `ingest/quality/` and `data/quality/quality_report.md`; first seed load and Oct 5 snapshot in `data/curated/` | |
 | WP4 Release | in progress | T4.1 to T4.6 | `ingest/release/weekly.py`, `release.yml`; first scheduled release Monday 2026-10-12 13:30 UTC (data-2026-W41) | |
 | WP5 Dashboard | in progress | T5.1 to T5.9 (D4 model panels wait for WP6 and Gate G4) | `project/dashboard/build.py`; stages D0 to D3 and D5 (tiles, statewide step chart, county map, status line, kindergarten MMR coverage map with school strip plots, trust section with capture-day timeline, reconciliation, plain-language flags and methods, who-is-affected section with age, report month and hospitalization, small cells suppressed); ADR 0003 | |
-| WP6 Susceptibility and model | in progress | T6.1 to T6.12, T6.16 | 6a: `project/susceptibility/` (ADR 0004 doses); 6b done: `project/model/simulator.py`, `project/model/inputs.py`, `project/model/sensitivity.py` (ADR 0005, 0008); 6c built on synthetic data: `project/model/calibrate.py`, `project/model/pa.py` (ADR 0011, 0012), real fit and 6d wait for Gate G3 | |
-| WP7 Documentation | in progress | | README with unofficial notice, "counts are a floor", "forecasts withheld until validated" | |
+| WP6 Susceptibility and model | in progress | T6.1 to T6.16 (T6.10 slow, synthetic) | 6a: `project/susceptibility/` (ADR 0004); 6b: `project/model/simulator.py`, `inputs.py`, `sensitivity.py` (ADR 0005, 0008); 6c on synthetic data: `calibrate.py`, `pa.py` (ADR 0011, 0012); 6d on synthetic data: `validate.py`, `run_validation.py` (ADR 0013). Real fits and validation wait for Gate G3 | |
+| WP7 Documentation | in progress | T7.1, T7.2, T7.4 (`tests/docs/test_docs.py`) | README notices; `docs/methods.md` (data, susceptibility, simulator, calibration, validation, limitations); T7.3 waits for the write-up's figures | |
 
 ## Gates
 
@@ -29,7 +29,7 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 | G1 Dashboard access path decided | done | `docs/probe_report.md`: runners reach the dashboard (U22); path B works for page 1; path A decided; first county snapshot parsed (as of 2026-10-05, 67 counties, T3.11 values met); `docs/probe_report.md` |
 | G2 Unattended capture proven | in progress | tracker in `data/quality/quality_report.md` (`access.g2_status`, ADR 0009); 0 of 2 weeks |
 | G3 Modelling go | not started | |
-| G4 Forecast publication | not started | |
+| G4 Forecast publication | not started | earliest decision 2026-12-30: 8 Wednesday origins from 2026-10-28, 2-week targets (ADR 0013) |
 | G5 Public flip | not started | B13 must be decided first |
 
 ## Capture clock
@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-15 (35) | 6d built on synthetic data (ADR 0013): WIS and coverage scoring, persistence baseline, G4 gate pooled over counties, leak guard on every cutoff read (T6.13 to T6.15), 67-county forecaster and runner (refuses before G3). Dry run on the real statewide dates: intervals cover the truth; seeding, ascertainment and delay stay wide (ADR 0012 addendum). `docs/methods.md`; T7.1, T7.2, T7.4 tests; U23 marked deferred to G5 | G3 about Oct 28: first real fit and first validation origin; Friday captures, issue 27 |
 | 2026-10-15 (34) | WP1 closed: the commuting file was captured and built on 2026-10-07 (issue 7) but PROGRESS and U5 still said it was missing. T1.6 now also runs on the committed build: 2,206 edges, PA FIPS or EXTERNAL only, no negative flows; Lancaster 225,291 within county, 3,834 to Lebanon | CDC weekly series and statewide history for calibration; then 6d on synthetic data |
 | 2026-10-15 (33) | 67-county calibration problem (`project/model/pa.py`, ADR 0012): susceptibility draws, seeding and intervention factors calibrated, statewide doses allocated to counties with known cases (assumption). Dry run on synthetic data: all 8 parameters' 90% intervals cover the truth, R0 13.8 to 17.9 (truth 15), 13 min. Two ABC fixes (tied fade-out distances stalled the tolerance; out-of-range proposals counted against the budget); T6.10 unchanged | Real fit and 6d at G3 (about Oct 28); Friday captures; close issue 27 after a clean capture |
 | 2026-10-15 (32) | WP6c started on synthetic data (owner approved before G3; real county fits refuse until 10 snapshot dates): ABC-SMC with negative binomial reporting, delay, ascertainment and weekend terms (`project/model/calibrate.py`, ADR 0011). T6.10 passes (20 synthetic datasets: R0 20/20, rho 20/20, report_delay 18, weekend 18, k 16), T6.11 and T6.12 tested; slow T6.10 in `make calibration-check` and CI | 67-county real-data problem setup for when G3 passes; 6d scoring on synthetic data |

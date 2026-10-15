@@ -159,5 +159,5 @@ Why this matters: the model needs dated interventions and spatial-spread events,
 | U20 | Public PA measles sequences | Human (H9) | owner note |
 | U21 | Scheduled-workflow disablement rules for public repos | Gate G5 | checked against current GitHub docs |
 | U22 | GitHub-hosted runners can reach the dashboard | WP2 probe | `docs/probe_report.md` VERIFIED 2026-10-07: GitHub-hosted runners load the report (probe runs 37562037581, 37567917285) |
-| U23 | GitHub Free private repositories lack branch protection; `GITHUB_TOKEN` pushes do not trigger workflows | WP0 | ADR, checked against current GitHub documentation |
+| U23 | GitHub Free private repositories lack branch protection; `GITHUB_TOKEN` pushes do not trigger workflows | WP0 | ADR, checked against current GitHub documentation. Deferred to Gate G5 (ADR 0001): WP0 closed on the guards that compensate; to be checked against current GitHub documentation before the public flip |
 | U24 | Pennsylvania school calendars (term and break dates by county or district) | WP6 | `school_calendar` events with a T1 source (district or PDE calendar) for at least the counties with cases; until then the calendar covariate is off (`school.share` 0, ADR 0008) |

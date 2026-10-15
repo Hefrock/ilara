@@ -59,3 +59,19 @@ county fits; validation and scoring (6d) wait for G3 as the owner decided.
 - T6.10 (three-county recovery) is unchanged after the fixes: R0 20/20, rho 20/20,
   report_delay 18, weekend 18, k 16 out of 20.
 - Still to do at G3: run `curated_problem` on real data, then 6d validation and scoring.
+
+## Addendum (2026-10-15): the real observation design
+
+The first dry run gave the synthetic statewide series weekly for 60 days before the first
+snapshot. The real fit has statewide counts on 16 dates from 2026-01-30 to 2026-10-02 (DOH
+releases and one seed count), so the dry run now uses those dates (`statewide_dates`; counts
+simulated). Result (data seed 20261018, 41,424 simulations, 12 minutes): every 90 percent
+interval again covered the truth; R0 12.9 to 17.9, `factor_health_alert` 0.73 to 0.98,
+`lead_days` 8.1 to 40.4, `rho` 0.23 to 0.93, `report_delay` 1.5 to 9.7. The longer statewide
+history did not narrow seeding time, ascertainment or reporting delay. With counts only,
+ascertainment trades off against susceptibility and R0, so more count history will not pin it;
+informative priors from the literature or a line-list summary would. (One dataset per design,
+so the two runs are not a like-for-like comparison of precision.)
+
+Also: a missing county count in the curated store is now left out of the fit instead of being
+read as zero (I5).
