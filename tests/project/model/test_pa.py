@@ -132,3 +132,26 @@ def test_dry_run_uses_the_real_statewide_dates(model: pa.PAModel) -> None:
     snaps = [(d - model.start).days for d in pa.snapshot_dates()]
     obs = pa.synthetic(model, pa.DRY_TRUTH, snaps, 1, days)
     assert list(obs.series["state"][0]) == sorted(days) + [snaps[0]]
+
+
+def test_forecast_samples_from_a_posterior(model: pa.PAModel) -> None:
+    pri = pa.priors(model)
+    row = np.array([[pa.DRY_TRUTH[p.name] for p in pri]] * 4)
+    fit = cal.Fit(pri, row, np.full(4, 0.25), [float("inf")], 1)
+    lanc = model.fips.index("42071")
+    out = pa.forecast_samples(model, fit, date(2026, 9, 7), [lanc, "state"], draws=30)
+    assert set(out) == {"42071", "state"} and set(out["state"]) == {1, 2, 3, 4}
+    assert all(len(s) == 30 and (s >= 0).all() for by_h in out.values() for s in by_h.values())
+    with pytest.raises(ValueError, match="ends before"):
+        pa.forecast_samples(model, fit, date(2026, 10, 20), ["state"], draws=2)
+
+
+def test_cutoff_is_the_end_of_the_origin_day_eastern() -> None:
+    assert pa.cutoff(date(2026, 10, 28)) == datetime(2026, 10, 29, 3, 59, 59, tzinfo=UTC)
+    assert pa.cutoff(date(2026, 11, 4)) == datetime(2026, 11, 5, 4, 59, 59, tzinfo=UTC)  # EST
+
+
+def test_observed_series_from_repo_data() -> None:
+    obs = pa.observed_series(REPO)
+    assert obs["state"][date(2026, 10, 14)] == 1222
+    assert obs["42071"][date(2026, 10, 5)] > 0 and "EXTERNAL" not in obs

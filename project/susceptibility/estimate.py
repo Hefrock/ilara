@@ -28,6 +28,7 @@ import yaml
 
 from ingest import access
 from project import manifest
+from project.leak import check_known
 
 PARAMS = Path(__file__).with_name("params.yml")
 OUTPUTS = Path(__file__).resolve().parents[1] / "outputs" / "susceptibility"
@@ -40,7 +41,7 @@ def load_params(path: Path = PARAMS) -> dict[str, Any]:
 def _table(name: str, root: Path | None, known_at: datetime | None) -> pl.DataFrame:
     if known_at is None:
         return access.current(name, "curated", root)
-    return access.as_known_at(name, known_at, "curated", root)
+    return check_known(access.as_known_at(name, known_at, "curated", root), known_at, name)
 
 
 @dataclass

@@ -39,6 +39,7 @@ import polars as pl
 
 from ingest import access
 from project import manifest
+from project.leak import check_known
 
 ONSET_DAYS = 11.5  # infection to rash onset: mean incubation (klinkenberg2011, 11-12 days)
 DELAY_SD = 3.0  # spread of infection to report, days (assumption, ADR 0011)
@@ -358,7 +359,7 @@ def observations_from_curated(
     def read(table: str) -> pl.DataFrame:
         if known_at is None:
             return access.current(table, root=root)
-        return access.as_known_at(table, known_at, root=root)
+        return check_known(access.as_known_at(table, known_at, root=root), known_at, table)
 
     county = read("case_county")
     state = read("case_state")
