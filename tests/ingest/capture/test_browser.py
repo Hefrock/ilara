@@ -170,3 +170,40 @@ def test_hidden_tab_cannot_be_clicked() -> None:
     with pytest.raises(ValueError):
         browser._click_tab(object(), "Epidemic Curve")
     assert "Epidemic Curve" not in browser.ALLOWED_TABS
+
+
+def test_unavailable_reason() -> None:
+    ok = [{"view": v.key, "ok": True} for v in browser.VIEWS]
+    assert browser.unavailable_reason([], ok, b"<html>report</html>") is None
+    dead = [
+        {"status": 401, "body": {"error": {"code": "KeyFoundInDeletedResourceKeyCacheException"}}}
+    ]
+    assert "KeyFoundInDeleted" in (browser.unavailable_reason(dead, ok, b"") or "")
+    # An error body with a success status is a visual's problem, not a dead report.
+    assert browser.unavailable_reason([{"status": 200, "body": {"error": "x"}}], ok, b"") is None
+    page = b"<div>This content isn't available.</div>"
+    assert "isn't available" in (browser.unavailable_reason([], ok, page) or "")
+    none_open = [{"view": v.key, "ok": v.key == browser.VIEWS[0].key} for v in browser.VIEWS]
+    assert "no report tab" in (browser.unavailable_reason([], none_open, b"") or "")
+
+
+def test_deleted_report_is_failed_but_saved(root: Path, fast: None, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(browser, "CLICK_TIMEOUT_MS", 200)
+    dead = "<html><body>Microsoft Power BI This content isn't available.</body></html>"
+
+    def hook(page: Any) -> None:
+        page.route(
+            "**/*",
+            lambda route: (
+                route.fulfill(status=200, content_type="text/html", body=dead)
+                if route.request.url.startswith(REPORT)
+                else route.abort()
+            ),
+        )
+
+    log = CaptureLog("r1", root)
+    (rec,) = browser.capture_browser(
+        _src(root), log, root, robots_allowed=lambda u: True, page_hook=hook
+    )
+    assert rec.outcome == "failed" and "report unavailable" in (rec.error or "")
+    assert rec.raw_path is not None  # raw saved first (I1)

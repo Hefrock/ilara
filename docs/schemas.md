@@ -54,6 +54,21 @@ responses).
   1,004"). A blank cell is stored as null. Each set must add up to the year-to-date total of
   the same capture, else it is flagged `DEMOGRAPHIC_SUM_MISMATCH` and not stored.
 
+## DOH measles page (`doh_measles_page`)
+
+No rows. The parser reads the page's Power BI dashboard links and raises
+`DASHBOARD_LINK_CHANGED` when they differ from those on the page captured before, or when the
+page shows none (ADR 0009). The registry URL of `doh_dashboard` follows the page's link.
+
+## Capture log
+
+Each record has `trigger`: the GitHub event that started the run (`schedule`,
+`workflow_dispatch`) or `local`; records before 2026-10-15 have none. A dashboard capture that
+did not reach the report (Power BI error from the data API, a placeholder page, or no report
+tab opened) is `failed`, with `report unavailable: ...` in `error`; raw is still saved first.
+`capture_log.is_good` applies the same test to older records, which logged such captures as
+changed or unchanged; it decides capture-day cover, freshness, alerts and releases.
+
 ## CDC jurisdiction map (`cdc_measles_cases_map`, S6)
 
 `case_state` rows for Pennsylvania (`source_id` `cdc_measles_cases_map`, T1, `calendar_year`).

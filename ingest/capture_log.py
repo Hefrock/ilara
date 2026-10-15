@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -13,6 +14,49 @@ from ingest import paths
 from ingest.timeutil import utc_now
 
 OUTCOMES = ("changed", "unchanged", "failed", "blocked")
+GOOD_OUTCOMES = ("changed", "unchanged")
+
+# Dashboard views reached by a click (all but the first, which shows on load). Keys match
+# ``ingest.capture.browser.VIEWS`` (tested). A dashboard capture whose error names every one of
+# them, or says the report is unavailable, did not capture the report.
+DASHBOARD_CLICK_VIEWS = (
+    "overview_april",
+    "overview_janmar",
+    "overview_reset",
+    "age_time",
+    "hospitalizations",
+    "county",
+    "community_transmission",
+    "vaccine",
+)
+UNAVAILABLE_MARKER = "report unavailable"
+_VIEW_AT = re.compile(r"(?:^|; )(\w+): ")
+
+
+def problem(r: dict[str, Any]) -> str | None:
+    """Why a capture did not save the source's content (``report unavailable``, ``failed`` or
+    ``blocked``), or None for a good capture."""
+    if r["source_id"] == "doh_dashboard" and r["outcome"] != "blocked":
+        err = r.get("error") or ""
+        if UNAVAILABLE_MARKER in err or set(DASHBOARD_CLICK_VIEWS) <= set(_VIEW_AT.findall(err)):
+            return UNAVAILABLE_MARKER
+    if r["outcome"] not in GOOD_OUTCOMES:
+        return str(r["outcome"])
+    return None
+
+
+def is_good(r: dict[str, Any]) -> bool:
+    """A capture that saved the source's content: outcome changed or unchanged, and for the
+    dashboard, the report itself was reached. Logs from before this check (2026-10-13 to
+    2026-10-15) recorded captures of a deleted report as changed or unchanged; they are judged
+    here from what they recorded, without editing the log (I1)."""
+    return problem(r) is None
+
+
+def current_trigger() -> str:
+    """What started this run: the GitHub event (``schedule``, ``workflow_dispatch``) or
+    ``local``."""
+    return os.environ.get("GITHUB_EVENT_NAME") or "local"
 
 
 @dataclass
@@ -30,10 +74,13 @@ class CaptureRecord:
     bytes: int | None
     runner: str
     error: str | None = None
+    trigger: str | None = None  # absent in records written before 2026-10-15
 
     def __post_init__(self) -> None:
         if self.outcome not in OUTCOMES:
             raise ValueError(f"bad outcome {self.outcome!r}")
+        if self.trigger is None:
+            self.trigger = current_trigger()
 
 
 def default_run_id() -> str:

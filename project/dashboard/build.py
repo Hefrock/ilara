@@ -332,6 +332,7 @@ FLAG_TEXT = {
     "PARSE_SCHEMA_CHANGE": "A saved file could not be read as expected. The raw file is kept; "
     "no numbers were taken from it.",
     "STALE_SNAPSHOT": "A source has not been captured successfully within its expected interval.",
+    "DASHBOARD_LINK_CHANGED": "The DOH measles page links the dashboard at a new address.",
     "SOURCE_CONFLICT": "Two official documents give different figures for the same date. Both "
     "are kept and neither is used to overwrite the other.",
     "DATE_TO_CONFIRM": "A figure's date is not yet confirmed from an official source.",
@@ -366,7 +367,27 @@ def flag_groups(flags: pl.DataFrame) -> list[dict[str, Any]]:
     return out
 
 
+COVER_START_UTC = time(18, 0)  # a capture from 18:00 UTC on an update day sees that update
+PROBLEM_TEXT = {
+    "report unavailable": "the dashboard link no longer opens the report",
+    "blocked": "the source blocked the capture",
+    "failed": "the capture failed",
+}
+
+
+def _when_et(dt: datetime) -> str:
+    return dt.astimezone(ET).strftime("%a %b %-d, %Y %-I:%M %p ET")
+
+
 def status(root: Path | None, now: datetime) -> dict[str, Any]:
+    """Capture freshness and the facts behind the stale-data banners (T5.4):
+
+    - ``stale``: no good dashboard capture within ``STALE_HOURS``;
+    - ``source_problem``: the latest dashboard capture was not good, why, and the last good one;
+    - for each scheduled DOH update day after the latest figures' as-of date whose capture
+      window (from 18:00 UTC) has opened: ``not_published`` when a good capture after that
+      time still showed the older figures, ``not_checked`` when no good capture came after it.
+      Nothing is said beyond what the captures show (I5)."""
     cs = access.capture_status(root).filter(pl.col("source_id") == DASHBOARD)
     good = cs["last_good_utc"][0] if cs.height else None
     good_dt = datetime.fromisoformat(good.replace("Z", "+00:00")) if good else None
@@ -378,14 +399,62 @@ def status(root: Path | None, now: datetime) -> dict[str, Any]:
         nxt = datetime.combine(nxt.date() + timedelta(days=1), time(0), ET)
     nxt_upd = datetime.combine(nxt.date(), UPDATE_TIME_ET, ET)
     stale = good_dt is None or (now - good_dt) > timedelta(hours=STALE_HOURS)
+    problem = None
+    if cs.height and not cs["good"][0]:
+        why = cs["problem"][0] or "failed"
+        problem = {
+            "since": _when_et(good_dt) if good_dt else None,
+            "reason": PROBLEM_TEXT.get(why, why),
+        }
+    snap = access.current("case_state", root=root).filter(pl.col("source_id") == DASHBOARD)
+    as_of: date | None = snap["as_of_date"].max() if snap.height else None  # type: ignore[assignment]
+    not_published: list[str] = []
+    not_checked: list[str] = []
+    if as_of is not None:
+        d = as_of + timedelta(days=1)
+        while d <= now.astimezone(UTC).date():
+            opens = datetime.combine(d, COVER_START_UTC, UTC)
+            if d.weekday() in UPDATE_DAYS and opens <= now:
+                seen = good_dt is not None and good_dt >= opens
+                (not_published if seen else not_checked).append(f"{d:%a %b %-d}")
+            d += timedelta(days=1)
     return {
         "last_good_utc": good,
-        "last_good_et": good_dt.astimezone(ET).strftime("%a %b %-d, %Y %-I:%M %p ET")
-        if good_dt
-        else None,
+        "last_good_et": _when_et(good_dt) if good_dt else None,
         "next_update_et": nxt_upd.strftime("%a %b %-d, %Y %-I:%M %p ET"),
         "stale": stale,
+        "source_problem": problem,
+        "as_of": str(as_of) if as_of is not None else None,
+        "not_published": not_published,
+        "not_checked": not_checked,
     }
+
+
+def banners(st: dict[str, Any]) -> list[str]:
+    """Plain-language notices for the top of the page, most serious first."""
+    out = []
+    p = st["source_problem"]
+    if p:
+        out.append(
+            f"The DOH dashboard could not be captured: {p['reason']}. "
+            + (f"Last good capture {p['since']}." if p["since"] else "No good capture yet.")
+        )
+    if st["not_published"] or st["not_checked"]:
+        parts = [f"Figures shown are as of {st['as_of']}."]
+        if st["not_published"]:
+            parts.append(
+                "DOH had not published newer figures when we captured the dashboard after its "
+                f"scheduled update on {', '.join(st['not_published'])}."
+            )
+        if st["not_checked"]:
+            parts.append(
+                f"Updates due {', '.join(st['not_checked'])} could not be checked"
+                + (", because the dashboard could not be captured." if p else " yet.")
+            )
+        out.append(" ".join(parts))
+    if st["stale"]:
+        out.append(f"Data may be stale: no dashboard capture in the last {STALE_HOURS} hours.")
+    return out
 
 
 # ---------------------------------------------------------------- charts
@@ -953,13 +1022,8 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
         for r in top5.to_dicts()
     )
 
-    stale_html = (
-        (
-            "<div class='banner' role='status'>Data may be stale: no dashboard capture "
-            f"in the last {STALE_HOURS} hours.</div>"
-        )
-        if st["stale"]
-        else ""
+    stale_html = "".join(
+        f"<div class='banner' role='status'>{html.escape(b)}</div>" for b in banners(st)
     )
     groups = flag_groups(flags)
     flag_items = (
@@ -974,15 +1038,25 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
     )
     days = access.capture_days(now, root)
     mark = {"covered": "✓ covered", "missed": "✗ missed", "pending": "… pending"}
+    how = {"schedule": "scheduled run", "workflow_dispatch": "dispatched run"}
     timeline = (
         "".join(
             f"<li class='day day-{r['status']}'><span>{r['day']:%a %b %-d}</span>"
-            f"<span>{mark[r['status']]}</span></li>"
+            f"<span>{mark[r['status']]}</span>"
+            + (
+                "<span class='muted'>"
+                + html.escape(", ".join(how.get(b, b) for b in r["by"].split(", ")))
+                + "</span>"
+                if r["by"]
+                else ""
+            )
+            + "</li>"
             for r in days.to_dicts()
         )
         or "<li>No scheduled capture day yet.</li>"
     )
     missed = days.filter(pl.col("status") == "missed").height
+    g2 = access.g2_status(now, root)
     recon = reconciliation(root)
     differ = recon.filter(~pl.col("agree")).height
     cdc = cdc_comparison(root)
@@ -1269,7 +1343,10 @@ dashboard (not stated as zero).</p>
                 if missed
                 else ""
             )
-            + "."
+            + ". "
+            + f"Unattended capture (Gate G2): {g2['streak']} of {g2['needed']} consecutive "
+            "weeks covered by scheduled runs alone"
+            + (", passed." if g2["status"] == "pass" else ".")
         ),
         recon_summary=html.escape(
             "No date has more than one official statewide total yet."

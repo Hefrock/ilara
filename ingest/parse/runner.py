@@ -19,7 +19,7 @@ import polars as pl
 
 from ingest import access, paths, rawstore
 from ingest.curate import store
-from ingest.parse import cdc, doh_dashboard, doh_release, school_imm
+from ingest.parse import cdc, doh_dashboard, doh_measles_page, doh_release, school_imm
 from ingest.timeutil import ET, parse_utc
 
 
@@ -136,12 +136,26 @@ def _cdc_map(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
     return {"case_state": [{**common, **r} for r in out["state"]], "flags": out["flags"]}
 
 
+def _measles_page(m: dict[str, Any], run_id: str, root: Path) -> dict[str, Any]:
+    """Flags only: the dashboard link compared with the page captured just before (raw is saved
+    only when it changes, so that is the previous version of the page)."""
+    current = doh_measles_page.dashboard_links(rawstore.read_payload(m, root))
+    earlier = [rawstore.load_manifest(p) for p in rawstore.iter_manifests("doh_measles_page", root)]
+    earlier = [p for p in earlier if p["fetched_at_utc"] < m["fetched_at_utc"]]
+    previous = None
+    if earlier:
+        last = max(earlier, key=lambda p: (p["fetched_at_utc"], p["sha256"]))
+        previous = doh_measles_page.dashboard_links(rawstore.read_payload(last, root))
+    return {"flags": doh_measles_page.compare(current, previous)}
+
+
 PARSERS = {
     ("doh_dashboard", "responses"): (doh_dashboard.PARSER_VERSION, _dashboard),
     ("doh_school_imm_county", None): (school_imm.PARSER_VERSION, _school_county),
     ("doh_school_imm_school", None): (school_imm.PARSER_VERSION, _school_level),
     ("doh_release", "*"): (doh_release.PARSER_VERSION, _release),  # one document per URL
     ("cdc_measles_cases_map", None): (cdc.PARSER_VERSION, _cdc_map),
+    ("doh_measles_page", None): (doh_measles_page.PARSER_VERSION, _measles_page),
 }
 OUTPUT_TABLES = (
     "case_state",

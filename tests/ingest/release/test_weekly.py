@@ -90,6 +90,13 @@ def repo(root: Path) -> Path:
     return root
 
 
+@pytest.fixture(autouse=True)
+def _commit_date(monkeypatch: pytest.MonkeyPatch) -> None:
+    # git log --before filters on the committer date, which --date does not set; without this
+    # the fixture commit carries the real clock and drops out once the release week is past.
+    monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-10-08T00:00:00Z")
+
+
 def test_week_bounds_across_dst() -> None:  # T4.1
     w44 = weekly.Week.parse("2026-W44")  # DST ends Sunday 2026-11-01
     assert w44.start_utc == datetime(2026, 10, 26, 4, tzinfo=UTC)

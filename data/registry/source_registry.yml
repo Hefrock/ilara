@@ -11,7 +11,7 @@
 sources:
   - source_id: doh_dashboard
     name: Pennsylvania DOH measles dashboard
-    url: https://app.powerbigov.us/view?r=eyJrIjoiOGVkYzBiYjYtYTBhNy00MjVjLWFjZGQtM2Y3NDc4NmYxYzBiIiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9
+    url: https://app.powerbigov.us/view?r=eyJrIjoiMjRlZmUwMzEtNDQ3Yi00YmUyLWE1ODYtZGJiZjZjMmQ4M2Q4IiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9
     url_status: verified
     tier: T1
     cadence: mon_wed_fri
@@ -20,7 +20,7 @@ sources:
     robots_checked_utc: null
     terms_note: null
     last_verified_utc: null
-    notes: Embedded Power BI Gov report, client-rendered (sources S1). Embedded on the measles entry page; captured directly with one navigation. Field names, export and capture permission are U1, U2, U22 (WP2a probe).
+    notes: Embedded Power BI Gov report, client-rendered (sources S1). Embedded on the measles entry page; captured directly with one navigation. Field names, export and capture permission are U1, U2, U22 (WP2a probe). Report key changed 2026-10-13/14. The earlier publish-to-web key (8edc0bb6...) answers 401 KeyFoundInDeletedResourceKeyCacheException from 2026-10-13 19:48 UTC; the DOH measles page links the new key (24efe031..., same tenant) in its capture of 2026-10-14 18:48 UTC (raw sha256 e77ec034...). ADR 0009.
 
   - source_id: doh_measles_page
     name: Pennsylvania DOH measles information page

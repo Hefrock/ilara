@@ -27,7 +27,7 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 |---|---|---|
 | G0 Repo and CI | done | `ci` run 37558441571 green on the working branch; T0.1 to T0.7 |
 | G1 Dashboard access path decided | done | `docs/probe_report.md`: runners reach the dashboard (U22); path B works for page 1; path A decided; first county snapshot parsed (as of 2026-10-05, 67 counties, T3.11 values met); `docs/probe_report.md` |
-| G2 Unattended capture proven | not started | |
+| G2 Unattended capture proven | in progress | tracker in `data/quality/quality_report.md` (`access.g2_status`, ADR 0009); 0 of 2 weeks |
 | G3 Modelling go | not started | |
 | G4 Forecast publication | not started | |
 | G5 Public flip | not started | B13 must be decided first |
@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-15 (29) | DOH moved the dashboard to a new Power BI link (old key deleted, 401) from 2026-10-13; captures logged it as unchanged so Oct 14 looked covered. Registry follows the DOH page's new link; dead-report captures now `failed`; one good-capture rule for cover, freshness, alerts and releases; `DASHBOARD_LINK_CHANGED` flag from the DOH page; G2 tracker (trigger per capture, scheduled-only weeks) in the quality report and dashboard; stale banners say whether DOH had not published or we could not check (ADR 0009). Weekly release test time bomb fixed | Merge, confirm the next capture reaches the new report; Friday captures; G2 counts from week of Oct 19 |
 | 2026-10-09 (28) | WP6b finished: simulator inputs from data (ADR 0008): school calendar from `school_calendar` events (off until calendars recorded, U24), intervention factors by event type from date plus lag (no effect until calibrated), seeding from the earliest T1 evidence of a case per county (alerts stating cases, exposure notices, snapshots; censored when only the first snapshot). Owner kept the U19 scenarios | Friday backup routine; release Monday; G2 tracker; 6c after G3 |
 | 2026-10-09 (27) | Every reference cited by DOI with doi.org links; structured provenance (`evidence`: where, what read, how obtained, date) for every figure used, tested. Owner-supplied Guerra and Vink articles read (not committed): R0 prior 9.9-18.1 (ADR 0007, U12 VERIFIED, B17 resolved). Search for newer references: no newer R0 or interval review; 5 US outbreak papers added as context (run 37864293925), Ohio Amish 14% household coverage noted for U19 | Owner: U19 scenarios given gastanaduy2016? Read yang2020 full text; Friday backup routine; release Monday |
 | 2026-10-08 (26) | References rerun by DOI: Vink 2014 mean measles serial interval 11.7 days (VERIFIED). Simulator latent and infectious periods now Erlang (4 stages each, latent 7, infectious 8): mean generation time 12.0 days, inside 11-12, tested via Euler-Lotka and growth rate (ADR 0005 amendment) | Friday: confirm the backup routine; owner: Guerra medians (B17); 6c after G3 |
