@@ -1,20 +1,24 @@
 # Data quality report
 
-Generated 2026-10-15T04:08:04Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-14. Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-15T17:40:00Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-14 (DOH refreshed the report 2026-10-14T17:26:45Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
 ## Open flags
 
+- **DASHBOARD_LINK_CHANGED** (1)
+  - curated: DOH measles page now links the dashboard at https://app.powerbigov.us/view?r=eyJrIjoiMjRlZmUwMzEtNDQ3Yi00YmUyLWE1ODYtZGJiZjZjMmQ4M2Q4IiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9 (before: https://app.powerbigov.us/view?r=eyJrIjoiOGVkYzBiYjYtYTBhNy00MjVjLWFjZGQtM2Y3NDc4NmYxYzBiIiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9); check the registry URL
 - **DATE_TO_CONFIRM** (4)
   - curated: data/seed/statewide_backfill.csv sw-004: date to confirm
   - curated: data/seed/statewide_backfill.csv sw-005: date to confirm
   - sensitivity: data/sensitivity/seed/statewide_t3_derived.csv sw-m01: date to confirm
   - sensitivity: data/sensitivity/seed/statewide_t3_derived.csv sw-m04: date to confirm
-- **PARSE_SCHEMA_CHANGE** (5)
+- **PARSE_SCHEMA_CHANGE** (7)
   - curated: data/raw/doh_dashboard/2026/20261007T022732Z_f326ab94771c.json.gz: DashboardParseError: no data query responses in the capture
   - curated: data/raw/doh_dashboard/2026/20261013T194612Z_368a496a6009.json: DashboardParseError: no data query responses in the capture
   - curated: data/raw/doh_dashboard/2026/20261014T210515Z_431aa79bf630.json: DashboardParseError: no data query responses in the capture
+  - curated: cases by age group not found in the capture
+  - curated: cases by report month not found in the capture
   - curated: cases by age group not found in the capture
   - curated: cases by report month not found in the capture
 - **SOURCE_CONFLICT** (1)
@@ -26,26 +30,26 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-10-14T18:49:32Z (9 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-10-14T18:49:37Z (9 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-10-14T18:49:17Z (9 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-10-14T18:49:22Z (9 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-10-14T18:49:27Z (9 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-10-14T18:49:12Z (9 h ago)
-- census_commuting: last outcome unchanged, last good 2026-10-14T18:49:05Z (9 h ago)
-- census_commuting_index: last outcome changed, last good 2026-10-14T18:49:11Z (9 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-10-14T18:49:00Z (9 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-10-14T18:48:55Z (9 h ago)
-- doh_dashboard: last outcome changed, last good 2026-10-15T04:08:01Z (0 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-10-14T18:48:41Z (9 h ago)
-- doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (184 h ago) STALE
-- doh_measles_page: last outcome changed, last good 2026-10-14T18:48:30Z (9 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-10-14T18:48:36Z (9 h ago)
-- doh_release: last outcome changed, last good 2026-10-07T20:06:08Z (176 h ago) STALE
-- doh_school_imm_county: last outcome unchanged, last good 2026-10-14T18:48:45Z (9 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-10-14T18:48:50Z (9 h ago)
-- local_hd_lancaster: last outcome changed, last good 2026-10-14T18:49:42Z (9 h ago)
-- wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (184 h ago) STALE
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-10-14T18:49:32Z (23 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-10-14T18:49:37Z (23 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-10-14T18:49:17Z (23 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-10-14T18:49:22Z (23 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-10-14T18:49:27Z (23 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-10-14T18:49:12Z (23 h ago)
+- census_commuting: last outcome unchanged, last good 2026-10-14T18:49:05Z (23 h ago)
+- census_commuting_index: last outcome changed, last good 2026-10-14T18:49:11Z (23 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-10-14T18:49:00Z (23 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-10-14T18:48:55Z (23 h ago)
+- doh_dashboard: last outcome changed, last good 2026-10-15T17:39:58Z (0 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-10-14T18:48:41Z (23 h ago)
+- doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (198 h ago) STALE
+- doh_measles_page: last outcome changed, last good 2026-10-14T18:48:30Z (23 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-10-14T18:48:36Z (23 h ago)
+- doh_release: last outcome changed, last good 2026-10-07T20:06:08Z (190 h ago) STALE
+- doh_school_imm_county: last outcome unchanged, last good 2026-10-14T18:48:45Z (23 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-10-14T18:48:50Z (23 h ago)
+- local_hd_lancaster: last outcome changed, last good 2026-10-14T18:49:42Z (23 h ago)
+- wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (198 h ago) STALE
 
 ## Implied counts
 
@@ -93,7 +97,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Source conflicts
 
-- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
+- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 28 (ab7b6de37998); cum_cases 393, counties_with_cases 29 (ccf7dcb81392)
 
 ## Non-monotonic series
 
@@ -104,7 +108,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - curated doh_dashboard 2026-10-05 (calendar_year): 67 county rows sum to 1004; curated doh_dashboard:592880a918d0 (T1) total 1004 (consistent)
 - curated doh_dashboard 2026-10-07 (calendar_year): 67 county rows sum to 1078; curated doh_dashboard:1953c5cca960 (T1) total 1078 (consistent)
 - curated doh_dashboard 2026-10-09 (calendar_year): 67 county rows sum to 1136; curated doh_dashboard:2337068c2d2e (T1) total 1136 (consistent)
-- curated doh_dashboard 2026-10-14 (calendar_year): 67 county rows sum to 1222; curated doh_dashboard:b7dd78315fef (T1) total 1222 (consistent)
+- curated doh_dashboard 2026-10-14 (calendar_year): 67 county rows sum to 1222; curated doh_dashboard:510f30aedf39 (T1) total 1222 (consistent)
 - sensitivity seed_t3_county 2026-08-25 (unknown): 2 county rows sum to 214; sensitivity seed_statewide:sw-m06 (T3-derived) total 393 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-17 (unknown): 9 county rows sum to 629; sensitivity seed_statewide:sw-m07 (T3-derived) total 767 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-21 (unknown): 3 county rows sum to 514; sensitivity seed_statewide:sw-007 (T3-derived) total 792 [compared, cross-source, not flagged]
@@ -147,11 +151,11 @@ Gate G2: **not yet** (0 of 2 consecutive weeks covered by scheduled runs alone).
 | Wed 2026-10-07 | covered | unknown | 0 |
 | Fri 2026-10-09 | covered | unknown | 2 |
 | Mon 2026-10-12 | covered | unknown | 0 |
-| Wed 2026-10-14 | missed | - | 1 |
+| Wed 2026-10-14 | missed | - | 2 |
 
 ## Quarantine
 
-- curated doh_dashboard: 5 row(s), PARSE_SCHEMA_CHANGE
+- curated doh_dashboard: 8 row(s), PARSE_SCHEMA_CHANGE
 - curated case_state: 2 row(s), DATE_TO_CONFIRM
 - sensitivity case_state: 2 row(s), DATE_TO_CONFIRM
 
