@@ -44,6 +44,9 @@ See `docs/probe_report.md` and `ingest/parse/doh_dashboard.py` (Power BI `queryd
 responses).
 
 - `case_state`, `case_county`: headline cards and county counts (see the parser docstring).
+- `case_state.source_refreshed_utc` (parser 1.3.0): when DOH last refreshed the report's data,
+  from Power BI's own refresh metadata in the captured responses (ADR 0010); null when the
+  capture carries none, and for rows from other sources.
 - `vaccine_doses`: MMR doses administered by DOH staff, statewide, by month of 2026, from the
   "Measles Vaccine Administered" page (ADR 0004). The month containing `as_of_date` has
   `period_complete` false. No dose number is given.

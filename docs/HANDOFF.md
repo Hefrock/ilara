@@ -374,7 +374,7 @@ Paste this after placing the package files in the repository root (CLAUDE.md at 
 
 | What | Cron (UTC) | Notes |
 |---|---|---|
-| Dashboard capture | `0 18,20,22 * * 1,3,5` and `0 13 * * 2,4,6` | Three afternoon windows plus next-morning catch-up. Drop the next-morning window first if Actions minutes run short. Tune after two weeks from `capture_log`. |
+| Dashboard capture | `30 19,21 * * 1,3,5`, `0 23 * * 1,3,5` and `0 13 * * 2,4,6` | Three afternoon windows plus next-morning catch-up. Drop the next-morning window first if Actions minutes run short. Tuned 2026-10-15 from the report's own refresh times (DOH refreshes about 13:00 to 14:20 ET), so every window follows the update in both EDT and EST (ADR 0010; was `0 18,20,22`). A backup routine also checks at 15:40 and 18:20 ET (ADR 0006, 0010). |
 | Light HTTP sources (DOH pages, HAN, newsroom, CDC, school and Census files by hash) | `30 14 * * *` | Unchanged content is logged only. |
 | Weekly release | `30 13 * * 1` | Builds the prior ISO week (E07). |
 

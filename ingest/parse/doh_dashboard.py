@@ -36,7 +36,8 @@ from typing import Any
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.2.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization
+PARSER_VERSION = "1.3.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
+# 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010)
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -117,6 +118,38 @@ def _as_of(queries: list[dict[str, Any]]) -> date:
     return datetime.fromtimestamp(int(stamps["dlm"]) / 1000, UTC).date()
 
 
+_DATE_MS = re.compile(r"/Date\((\d+)\)/")
+
+
+def refreshed_utc(bundle: dict[str, Any]) -> datetime | None:
+    """When DOH last refreshed the report's data model, from Power BI's own metadata in the
+    captured responses (``lastRefreshTime`` as ``/Date(ms)/``, ``LastRefreshTime`` as an ISO time
+    in UTC). The latest value found, or None if the capture carries none."""
+    found: list[datetime] = []
+
+    def walk(x: Any) -> None:
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k in ("lastRefreshTime", "LastRefreshTime") and isinstance(v, str):
+                    m = _DATE_MS.fullmatch(v)
+                    if m:
+                        found.append(datetime.fromtimestamp(int(m.group(1)) / 1000, UTC))
+                    else:
+                        try:
+                            t = datetime.fromisoformat(v)
+                        except ValueError:
+                            continue
+                        found.append(t if t.tzinfo else t.replace(tzinfo=UTC))
+                else:
+                    walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+
+    walk(bundle.get("responses", []))
+    return max(found).replace(microsecond=0) if found else None
+
+
 def parse(bundle: dict[str, Any]) -> dict[str, Any]:
     """Return ``{"as_of_date", "state": [rows], "county": [rows], "flags": [(code, text)]}``.
     Rows hold table-specific columns only; the runner adds provenance columns."""
@@ -153,6 +186,7 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
             counties_with_cases = int(_single(q))
 
     state: list[dict[str, Any]] = []
+    refreshed = refreshed_utc(bundle)
     ytd_total = cards.get(("Year to date", f"Sum({T}.count)"))
     for tf, definition in DEFINITION.items():
         if (tf, f"Sum({T}.count)") not in cards:
@@ -162,6 +196,7 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
             "count_definition": definition,
             "date_precision": "exact",
             "is_backfill": False,
+            "source_refreshed_utc": refreshed,
         }
         for name, col in CARD.items():
             v = cards.get((tf, name))

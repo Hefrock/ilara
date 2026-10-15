@@ -568,6 +568,13 @@ def render(f: Findings, root: Path, now: datetime) -> str:
         pl.col("source_id") == "doh_dashboard"
     )
     latest = str(snap["as_of_date"].max()) if snap.height else None
+    refreshed = (
+        snap["source_refreshed_utc"].drop_nulls().max()
+        if snap.height and "source_refreshed_utc" in snap.columns
+        else None
+    )
+    if latest and refreshed is not None:
+        latest += f" (DOH refreshed the report {iso_utc(refreshed)})"  # type: ignore[arg-type]
     lines = [
         "# Data quality report",
         "",

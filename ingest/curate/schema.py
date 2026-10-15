@@ -40,6 +40,8 @@ SPECIFIC: dict[str, dict[str, pl.DataType | type[pl.DataType]]] = {
         "new_since_count": pl.Int64,
         "new_since_date": pl.Date,
         "new_7day": pl.Int64,
+        # When the source last refreshed the figures, from its own metadata (ADR 0010).
+        "source_refreshed_utc": pl.Datetime("us", "UTC"),
         **_CASE_TAIL,
     },
     "case_county": {
