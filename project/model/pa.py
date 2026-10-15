@@ -1,0 +1,368 @@
+"""The Pennsylvania calibration problem: 67 counties (WP6c, ADR 0012).
+
+Assembles everything the ABC calibration (``calibrate``) needs for the real outbreak:
+
+- counties, populations and coupling (``sensitivity.build``, WP6b);
+- susceptible fractions: ``n_draws`` seeded draws (WP6a, the ``under_covered`` scenario in
+  ``project/susceptibility/params.yml``); each simulation takes one draw, so that uncertainty
+  enters the fit;
+- seeding from the earliest known case dates and intervention factors from events
+  (``inputs``, ADR 0008), rebuilt for each candidate's ``lead_days`` and ``factor_<type>``;
+- post-outbreak vaccination: statewide immunity gained from DOH-staff doses (``estimate``,
+  the ``post_outbreak`` default scenario), spread evenly over each dose period and across the
+  counties with a known case by that day, in proportion to population (an assumption: the
+  doses are statewide, ADR 0012).
+
+Calibrated parameters: R0, ``lead_days``, one transmission factor per intervention event type,
+and the observation parameters (ascertainment, reporting delay, weekend factor, dispersion).
+Real observations come from ``calibrate.observations_from_curated``, which refuses before
+Gate G3; ``synthetic`` builds a dataset from the same model for dry runs.
+
+Reads only through ``ingest.access`` and the WP6 modules (I8).
+"""
+
+from __future__ import annotations
+
+import argparse
+import time
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import polars as pl
+
+from ingest import access
+from project.model import calibrate as cal
+from project.model import inputs, sensitivity, simulator
+from project.susceptibility import estimate
+
+MARGIN_DAYS = 7
+OUTPUTS = Path(__file__).resolve().parents[1] / "outputs" / "calibration_pa"
+# Dry-run truth: inside every prior; factors below 1 so the event effects are exercised.
+DRY_TRUTH = {
+    "r0": 15.0,
+    "lead_days": 21.0,
+    "factor_intervention": 0.8,
+    "factor_health_alert": 0.9,
+    "rho": 0.7,
+    "k": 20.0,
+    "report_delay": 3.0,
+    "weekend": 0.6,
+}
+FIRST_SNAPSHOT = date(2026, 10, 5)  # the first county snapshot (Gate G3 counts from here)
+
+
+@dataclass
+class PAModel:
+    fips: list[str]
+    population: np.ndarray
+    coupling: np.ndarray
+    fractions: np.ndarray  # (draws, counties) susceptible fractions
+    start: date
+    days: int
+    first_known: pl.DataFrame
+    events: pl.DataFrame
+    scopes: dict[str, list[str]]
+    vaccination: np.ndarray  # (days, counties) expected people made immune per day
+    params: dict[str, Any]
+    refs: dict[str, list[str]] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+def _read(table: str, root: Path | None, known_at: datetime | None) -> pl.DataFrame:
+    if known_at is None:
+        return access.current(table, root=root)
+    return access.as_known_at(table, known_at, root=root)
+
+
+def vaccination_array(
+    gains: pl.DataFrame,
+    fips: list[str],
+    population: np.ndarray,
+    known: pl.DataFrame,
+    start: date,
+    days: int,
+) -> np.ndarray:
+    """Immunity gained per day and county. Each dose period's ``immune_gained`` is spread
+    evenly over its days, then over counties with a known case by that day in proportion to
+    population; days with no such county get none (doses there are not modelled)."""
+    out = np.zeros((days, len(fips)))
+    idx = {f: i for i, f in enumerate(fips)}
+    known_day = np.full(len(fips), np.inf)
+    for f, d in known.select("county_fips", "known_by").rows():
+        if f in idx:
+            known_day[idx[f]] = (d - start).days
+    for r in gains.iter_rows(named=True):
+        a, b = (r["period_start"] - start).days, (r["period_end"] - start).days
+        span = max(b - a + 1, 1)
+        per_day = float(r["immune_gained"] or 0.0) / span
+        for t in range(max(a, 0), min(b + 1, days)):
+            on = known_day <= t
+            if on.any() and per_day > 0:
+                w = population * on
+                out[t] += per_day * w / w.sum()
+    return out
+
+
+def build(
+    end: date,
+    root: Path | None = None,
+    known_at: datetime | None = None,
+    n_draws: int = 200,
+    seed: int = 20261015,
+    scenario: str | None = None,
+) -> PAModel:
+    mp = simulator.load_params()
+    sp = estimate.load_params()
+    base = sensitivity.build(root, mp)
+    inp = estimate.county_inputs(root, known_at, sp)
+    if inp.counties["county_fips"].to_list() != base.fips:
+        raise ValueError("susceptibility and population counties differ")
+    scen = scenario or sp["under_covered"]["default"]
+    frac = estimate.draws(inp, sp, scen, n_draws, seed)["susceptible_fraction"]
+    if np.isnan(frac).any():
+        raise ValueError("a county has no susceptibility estimate; refusing to guess (I5)")
+    events = _read("event", root, known_at)
+    scopes = {
+        e: access.county_scope(s, root) for e, s in events.select("event_id", "county_scope").rows()
+    }
+    county = _read("case_county", root, known_at)
+    if county.height:
+        county = county.filter(~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES)))
+    sp_seed = mp["seeding"]
+    known = inputs.first_known(
+        events,
+        scopes,
+        county.select("county_fips", "as_of_date", "cum_cases") if county.height else county,
+        case_events=list(sp_seed["case_events"]),
+        presence_types=list(sp_seed["presence_types"]),
+    )
+    if not known.height:
+        raise ValueError("no county has a known first case; nothing to seed")
+    lead_max = int(sp_seed["lead_days"]["high"])
+    first: date = known["known_by"].min()  # type: ignore[assignment]
+    start = first - timedelta(days=lead_max + MARGIN_DAYS)
+    days = (end - start).days + 1
+    notes = []
+    doses = estimate.latest_doses(root, known_at)
+    vacc = np.zeros((days, len(base.fips)))
+    if doses.height:
+        po = sp["post_outbreak"]["scenarios"][sp["post_outbreak"]["default"]]
+        ve = sp["vaccine_effectiveness"]
+        gains = estimate.dose_adjustment(
+            doses,
+            po["infant_share"],
+            po["second_dose_share"],
+            ve["one_dose"]["mean"],
+            ve["two_dose"]["mean"],
+        )
+        vacc = vaccination_array(gains, base.fips, base.population, known, start, days)
+    else:
+        notes.append("no dose data: post-outbreak vaccination not modelled")
+    refs = {
+        **inp.raw_refs,
+        "case_county": [r for r in county["raw_sha256"].to_list() if r] if county.height else [],
+        "vaccine_doses": doses["raw_sha256"].drop_nulls().to_list() if doses.height else [],
+    }
+    return PAModel(
+        base.fips,
+        base.population,
+        base.coupling,
+        frac,
+        start,
+        days,
+        known,
+        events,
+        scopes,
+        vacc,
+        mp,
+        refs,
+        notes,
+    )
+
+
+def priors(model: PAModel) -> list[cal.Prior]:
+    d = model.params["disease"]
+    out = [
+        cal.Prior("r0", d["r0"]["low"], d["r0"]["high"]),
+        cal.Prior(
+            "lead_days",
+            float(model.params["seeding"]["lead_days"]["low"]),
+            float(model.params["seeding"]["lead_days"]["high"]),
+        ),
+    ]
+    for etype, v in model.params["interventions"].items():
+        out.append(cal.Prior(f"factor_{etype}", float(v["low"]), 1.0))
+    return out + list(cal.OBSERVATION_PRIORS)
+
+
+def simulate_fn(model: PAModel) -> cal.Simulate:
+    """theta, seed -> daily infections (days, counties) for the 67-county model."""
+    d = model.params["disease"]
+    sp_seed = model.params["seeding"]
+    lags = {t: int(v["lag_days"]) for t, v in model.params["interventions"].items()}
+    n = model.population.astype(np.int64)
+
+    def run(theta: dict[str, float], seed: int) -> np.ndarray:
+        frac = model.fractions[seed % len(model.fractions)]
+        s0 = np.round(model.population * frac).astype(np.int64)
+        seeds, _ = inputs.seeding(
+            model.first_known,
+            model.fips,
+            model.start,
+            model.days,
+            mode=sp_seed["mode"],
+            exposed=int(sp_seed["exposed"]),
+            lead_days=int(round(theta["lead_days"])),
+        )
+        effects = {t: {"factor": theta[f"factor_{t}"], "lag_days": lag} for t, lag in lags.items()}
+        mult, _ = inputs.intervention_mult(
+            model.events,
+            model.scopes,
+            model.fips,
+            model.start,
+            model.days,
+            effects,
+            model.first_known,
+        )
+        return simulator.simulate(
+            n,
+            s0,
+            np.zeros(len(n), np.int64),
+            np.zeros(len(n), np.int64),
+            r0=theta["r0"],
+            latent_days=d["latent_days"]["value"],
+            infectious_days=d["infectious_days"]["value"],
+            latent_stages=d["latent_days"]["stages"],
+            infectious_stages=d["infectious_days"]["stages"],
+            coupling=model.coupling,
+            days=model.days,
+            seed=seed,
+            mult=mult,
+            seeds=seeds,
+            vaccination=model.vaccination,
+        ).incidence
+
+    return run
+
+
+def problem(model: PAModel, obs: cal.Observations) -> cal.Problem:
+    if obs.start != model.start:
+        raise ValueError("observations and model must share a start date")
+    return cal.Problem(simulate_fn(model), priors(model), obs)
+
+
+def curated_problem(
+    model: PAModel, root: Path | None = None, known_at: datetime | None = None
+) -> tuple[cal.Problem, dict[str, list[str]]]:
+    """The real fit's problem; ``observations_from_curated`` refuses before Gate G3."""
+    obs, refs = cal.observations_from_curated(model.fips, model.start, root, known_at)
+    return problem(model, obs), {**model.refs, **refs}
+
+
+def synthetic(
+    model: PAModel, truth: dict[str, float], snapshot_days: list[int], seed: int
+) -> cal.Observations:
+    """A dataset from the model itself at ``truth``: county snapshots on ``snapshot_days``
+    (counties with any reported case by the last one) plus statewide totals before them."""
+    first = snapshot_days[0]
+    state_days = [d for d in range(max(first - 60, 0), first, 7)] + [first]
+    skeleton = cal.Observations(
+        model.start,
+        {
+            **{
+                c: (np.array(snapshot_days), np.zeros(len(snapshot_days)))
+                for c in range(len(model.fips))
+            },
+            "state": (np.array(state_days), np.zeros(len(state_days))),
+        },
+    )
+    sim = problem(model, skeleton).dataset(truth, seed)
+    series: dict[Any, tuple[np.ndarray, np.ndarray]] = {}
+    for geo, inc in sim.items():
+        days = state_days if geo == "state" else snapshot_days
+        if geo != "state" and inc.sum() == 0:
+            continue
+        series[geo] = (np.array(days), np.concatenate([[0.0], np.cumsum(inc)]))
+    return cal.Observations(model.start, series)
+
+
+def snapshot_dates(first: date = FIRST_SNAPSHOT, n: int = 10) -> list[date]:
+    """``n`` Monday, Wednesday and Friday dates from ``first``: the dashboard's publishing days
+    (ADR 0010); ten is Gate G3."""
+    out: list[date] = []
+    d = first
+    while len(out) < n:
+        if d.weekday() in (0, 2, 4):
+            out.append(d)
+        d += timedelta(days=1)
+    return out
+
+
+def dry_run(
+    out_dir: Path | None = None,
+    root: Path | None = None,
+    *,
+    particles: int = 300,
+    generations: int = 8,
+    min_cases: int = 500,
+    seed: int = 20261015,
+    now: datetime | None = None,
+) -> Path:
+    """Fit the 67-county problem to one synthetic dataset made from the model at ``DRY_TRUTH``
+    on ten snapshot dates. The dataset is the first simulation seed whose statewide count over
+    the observed window reaches ``min_cases``: an outbreak the size of the real one, not a
+    fade-out (the real data are conditioned on a large outbreak too). Writes the posterior,
+    predictive checks and a manifest under ``project/outputs/`` (gitignored, I10)."""
+    dates = snapshot_dates()
+    model = build(dates[-1], root, seed=seed)
+    snaps = [(d - model.start).days for d in dates]
+    data_seed, obs = None, None
+    for s in range(seed, seed + 200):
+        obs = synthetic(model, DRY_TRUTH, snaps, s)
+        if obs.series["state"][1][-1] >= min_cases:
+            data_seed = s
+            break
+    if obs is None or data_seed is None:
+        raise RuntimeError(f"no synthetic outbreak reached {min_cases} cases in 200 seeds")
+    prob = problem(model, obs)
+    t0 = time.monotonic()
+    result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
+    secs = time.monotonic() - t0
+    path = cal.write(
+        prob,
+        result,
+        out_dir or OUTPUTS / "synthetic",
+        kind="calibration-pa-synthetic",
+        inputs=model.refs,
+        params={
+            "truth": DRY_TRUTH,
+            "data_seed": data_seed,
+            "snapshot_days": snaps,
+            "start": model.start.isoformat(),
+            "particles": particles,
+            "generations": generations,
+            "fit_seconds": round(secs, 1),
+            "notes": model.notes,
+        },
+        now=now,
+    )
+    return path
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="python -m project.model.pa")
+    ap.add_argument("--particles", type=int, default=300)
+    ap.add_argument("--generations", type=int, default=8)
+    ap.add_argument("--seed", type=int, default=20261015)
+    ap.add_argument("--out", type=Path)
+    a = ap.parse_args(argv)
+    path = dry_run(a.out, particles=a.particles, generations=a.generations, seed=a.seed)
+    print(f"calibration dry run (synthetic data): wrote {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
