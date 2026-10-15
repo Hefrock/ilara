@@ -215,8 +215,9 @@ def fit(
     Generation 0 draws from the prior and keeps all draws; each later generation sets the
     tolerance to the ``quantile`` of the previous accepted distances, proposes from the previous
     weighted particles with a Gaussian kernel of twice their weighted covariance, keeps
-    proposals within tolerance, and weights them by prior over kernel mixture density. Stops
-    after ``generations`` or when acceptance falls below ``min_acceptance``."""
+    proposals within tolerance (strictly below it when several share that distance), and
+    weights them by prior over kernel mixture density. Stops after ``generations`` or when the
+    share of simulations accepted falls below ``min_acceptance``."""
     rng = np.random.default_rng(seed)
     pri = list(problem.priors)
     d = len(pri)
@@ -235,6 +236,9 @@ def fit(
     acc_rates: list[float] = []
     for _ in range(generations):
         eps = float(np.quantile(dist, quantile))
+        # Identical simulated datasets (every fade-out has zero reports) share one distance; if
+        # that atom sits at the tolerance, accepting it would stall the tolerance for good.
+        strict = int(np.sum(dist == eps)) > 1
         mean = w @ u
         cov = 2 * ((u - mean).T * w) @ (u - mean) + 1e-9 * np.eye(d)
         chol = np.linalg.cholesky(cov)
@@ -243,14 +247,14 @@ def fit(
         new_d: list[float] = []
         tries = 0
         while len(new_u) < particles:
+            prop = u[rng.choice(particles, p=w)] + chol @ rng.normal(size=d)
+            if np.any(prop <= 0) or np.any(prop >= 1):
+                continue  # zero prior density: rejected without a simulation
             tries += 1
             if tries > particles / min_acceptance:
                 break
-            prop = u[rng.choice(particles, p=w)] + chol @ rng.normal(size=d)
-            if np.any(prop <= 0) or np.any(prop >= 1):
-                continue
             dd = run(prop)
-            if dd <= eps:
+            if dd < eps or (dd == eps and not strict):
                 new_u.append(prop)
                 new_d.append(dd)
         if len(new_u) < particles:
