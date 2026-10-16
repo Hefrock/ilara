@@ -36,8 +36,9 @@ from typing import Any
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.3.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
-# 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010)
+PARSER_VERSION = "1.4.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
+# 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010);
+# 1.4.0: age groups from the republished report (from 2026-10-13)
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -63,6 +64,8 @@ DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
 DOSE_COUNT = f"CountNonNull({V}.vaccination_code)"
 MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
 AGE = ("AgeDimTable.agegrp", f"CountNonNull({T}.agegrp)")
+# Republished report (from 2026-10-13): counts from a separate age table, no "Unk" group.
+AGE_V2 = ("AgeDimTable.agegrp", "Min(AgeDimTable.agegrp)", "Sum(PAmeasles2026_agedist.COUNT)")
 REPORT_MONTH = (f"{T}.reportdate.Variation.Date Hierarchy.Month", f"Sum({T}.count)")
 AGE_GROUPS = ("0-4", "5-9", "10-17", "18-24", "25-49", "50-64", "65+", "Unk")
 HOSP_CARDS = {
@@ -289,7 +292,7 @@ def _demographics(
     def bad(what: str) -> None:
         flags.append(("DEMOGRAPHIC_SUM_MISMATCH", f"{what} not stored"))
 
-    def series(names: tuple[str, str]) -> list[dict[str, Any]] | None:
+    def series(names: tuple[str, ...]) -> list[dict[str, Any]] | None:
         found = [
             q
             for q in queries
@@ -302,18 +305,21 @@ def _demographics(
             return []  # two views disagree: treated as a problem below
         return first
 
-    age = series(AGE)
+    age, age_key, groups = series(AGE), AGE[1], set(AGE_GROUPS)
+    if age is None:
+        age, age_key, groups = series(AGE_V2), AGE_V2[2], set(AGE_GROUPS) - {"Unk"}
     if age is None:
         flags.append(("PARSE_SCHEMA_CHANGE", "cases by age group not found in the capture"))
     else:
-        got: dict[Any, Any] = {r.get(AGE[0]): r.get(AGE[1]) for r in age}
+        got: dict[Any, Any] = {r.get(AGE[0]): r.get(age_key) for r in age}
         n = sum(int(v) for v in got.values() if v is not None)
-        if set(got) != set(AGE_GROUPS) or total is None or n != total:
+        if set(got) != groups or total is None or n != total:
             bad(f"cases by age group (groups {sorted(map(str, got))}, sum {n}, total {total})")
         else:
             rows += [
                 _demo_row(as_of, "age_group", g, None if got[g] is None else int(got[g]))
                 for g in AGE_GROUPS
+                if g in groups  # a group the report no longer shows is absent, not zero (I5)
             ]
 
     months = series(REPORT_MONTH)
