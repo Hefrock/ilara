@@ -1,0 +1,21 @@
+{
+  "bytes": 653888,
+  "capture_key": null,
+  "compression": "gzip",
+  "content_hash": "0c713a6d452a9165be1544de8fb7fe439c1963b7835fe0b441dd9a5480381d10",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-38946018453-1:01:doh_measles_page",
+    "content_type": "text/html;charset=utf-8"
+  },
+  "fetched_at_et": "2026-10-16T14:16:27-04:00",
+  "fetched_at_utc": "2026-10-16T18:16:27Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_measles_page",
+  "raw_path": "data/raw/doh_measles_page/2026/20261016T181627Z_bd34db8d35d0.html.gz",
+  "sha256": "bd34db8d35d0e65f37d22cb8790df3920bf6dcd181c5a90b3f763c864e63ec90",
+  "source_id": "doh_measles_page",
+  "stored_sha256": "aeadce9d94a6626118163e28cab808c79a5ee8322ae60ccb6accf55122838b30",
+  "url": "https://www.pa.gov/agencies/health/diseases-conditions/infectious-disease/measles"
+}

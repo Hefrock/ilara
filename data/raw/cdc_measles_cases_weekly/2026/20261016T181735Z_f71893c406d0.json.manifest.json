@@ -1,0 +1,21 @@
+{
+  "bytes": 16378,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "e02de8ef66ea2c999a5684cb446a296da5912b77b6be2ada3b8cbef1c9d05abb",
+  "ext": "json",
+  "extra": {
+    "capture_id": "gh-38946018453-1:15:cdc_measles_cases_weekly",
+    "content_type": "application/json"
+  },
+  "fetched_at_et": "2026-10-16T14:17:35-04:00",
+  "fetched_at_utc": "2026-10-16T18:17:35Z",
+  "http_status": 200,
+  "normaliser": "json:1",
+  "parser_hint": "cdc_measles_cases_weekly",
+  "raw_path": "data/raw/cdc_measles_cases_weekly/2026/20261016T181735Z_f71893c406d0.json",
+  "sha256": "f71893c406d02e0eb65d0c0c397ca26fae4192f01675360a2f2b8f1d81bc757c",
+  "source_id": "cdc_measles_cases_weekly",
+  "stored_sha256": "f71893c406d02e0eb65d0c0c397ca26fae4192f01675360a2f2b8f1d81bc757c",
+  "url": "https://www.cdc.gov/wcms/vizdata/measles/MeaslesCasesWeekly.json"
+}
