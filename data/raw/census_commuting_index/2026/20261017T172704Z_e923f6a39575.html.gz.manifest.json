@@ -1,0 +1,21 @@
+{
+  "bytes": 330762,
+  "capture_key": null,
+  "compression": "gzip",
+  "content_hash": "f92a38e4377c4802e5b7c16eacb078bbffa13d23826feaa134b8d8dfc3d77f65",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-39053745019-1:09:census_commuting_index",
+    "content_type": "text/html; charset=UTF-8"
+  },
+  "fetched_at_et": "2026-10-17T13:27:04-04:00",
+  "fetched_at_utc": "2026-10-17T17:27:04Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "census_commuting_index",
+  "raw_path": "data/raw/census_commuting_index/2026/20261017T172704Z_e923f6a39575.html.gz",
+  "sha256": "e923f6a39575a29ccca088d800fdda8d94a96bd19db4e67d5526da6e6a40f5c9",
+  "source_id": "census_commuting_index",
+  "stored_sha256": "6a4588d0caafc947ecdb78ded737235b2c5adf4bfc4af82cdf703a21ab53b4bf",
+  "url": "https://www.census.gov/data/tables/2020/demo/metro-micro/commuting-flows-2020.html"
+}
