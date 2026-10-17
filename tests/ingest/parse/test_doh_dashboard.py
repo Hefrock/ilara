@@ -275,3 +275,22 @@ def test_refresh_time_from_report_metadata() -> None:  # ADR 0010
     }
     assert doh_dashboard.refreshed_utc(fake) == datetime(2026, 10, 9, 17, 2, 46, tzinfo=UTC)
     assert doh_dashboard.refreshed_utc({"responses": [{"body": {}}]}) is None
+
+
+def test_golden_age_groups_from_the_republished_report() -> None:  # T3.1, parser 1.4.0
+    fx = REPO / "tests/fixtures/doh_dashboard/2026-10-16_responses.json.gz"
+    out = doh_dashboard.parse(json.loads(gzip.decompress(fx.read_bytes())))
+    assert out["as_of_date"] == date(2026, 10, 16)
+    age = {r["category"]: r["cases"] for r in out["demographics"] if r["dimension"] == "age_group"}
+    assert age == {
+        "0-4": 152,
+        "5-9": 75,
+        "10-17": 193,
+        "18-24": 306,
+        "25-49": 479,
+        "50-64": 50,
+        "65+": 5,
+    }  # no "Unk" group in this report: absent, not zero
+    assert sum(age.values()) == 1260
+    # Report month is on the new Epidemic Curve tab, which this capture did not open.
+    assert ("PARSE_SCHEMA_CHANGE", "cases by report month not found in the capture") in out["flags"]
