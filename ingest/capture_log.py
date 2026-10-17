@@ -24,11 +24,15 @@ DASHBOARD_CLICK_VIEWS = (
     "overview_janmar",
     "overview_reset",
     "age_time",
+    "epi_curve",
     "hospitalizations",
     "county",
     "community_transmission",
     "vaccine",
 )
+# Views added after captures began. Records from before never tried them, so a dead report is
+# one whose error names every click view except these (a dead report fails all of them anyway).
+LATER_CLICK_VIEWS = frozenset({"epi_curve"})  # added 2026-10-17 (B18)
 UNAVAILABLE_MARKER = "report unavailable"
 _VIEW_AT = re.compile(r"(?:^|; )(\w+): ")
 
@@ -38,7 +42,9 @@ def problem(r: dict[str, Any]) -> str | None:
     ``blocked``), or None for a good capture."""
     if r["source_id"] == "doh_dashboard" and r["outcome"] != "blocked":
         err = r.get("error") or ""
-        if UNAVAILABLE_MARKER in err or set(DASHBOARD_CLICK_VIEWS) <= set(_VIEW_AT.findall(err)):
+        if UNAVAILABLE_MARKER in err or set(DASHBOARD_CLICK_VIEWS) - LATER_CLICK_VIEWS <= set(
+            _VIEW_AT.findall(err)
+        ):
             return UNAVAILABLE_MARKER
     if r["outcome"] not in GOOD_OUTCOMES:
         return str(r["outcome"])

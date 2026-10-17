@@ -292,5 +292,5 @@ def test_golden_age_groups_from_the_republished_report() -> None:  # T3.1, parse
         "65+": 5,
     }  # no "Unk" group in this report: absent, not zero
     assert sum(age.values()) == 1260
-    # Report month is on the new Epidemic Curve tab, which this capture did not open.
+    # Report month is on the Epidemic Curve tab, which captures open only from 2026-10-17 (B18).
     assert ("PARSE_SCHEMA_CHANGE", "cases by report month not found in the capture") in out["flags"]

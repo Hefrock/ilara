@@ -23,6 +23,7 @@ CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 TABS = [
     "Overview",
     "Cases by Age Group",
+    "Epidemic Curve",
     "Hospitalizations",
     "Cases by County",
     "Community Transmission",
@@ -168,8 +169,9 @@ def test_robots_disallow_blocks_before_browser(root: Path) -> None:
 
 def test_hidden_tab_cannot_be_clicked() -> None:
     with pytest.raises(ValueError):
-        browser._click_tab(object(), "Epidemic Curve")
-    assert "Epidemic Curve" not in browser.ALLOWED_TABS
+        browser._click_tab(object(), "Duplicate of Overview")
+    assert "Duplicate of Overview" not in browser.ALLOWED_TABS
+    assert "Epidemic Curve" in browser.ALLOWED_TABS  # visible since republication (B18)
 
 
 def test_unavailable_reason() -> None:
