@@ -16,7 +16,8 @@ percentages); hidden pages exist ("Epidemic Curve" by onset date, three duplicat
 1. One navigation per capture (I7). Within it the capture clicks, in a fixed order
    (`ingest/capture/browser.py`, `VIEWS`): the three slicer states on Overview, then back to
    "Year to date", then each other visible tab. Tab clicks are restricted to an allowlist of
-   visible tab names, so hidden pages are never opened. The capture never builds or replays
+   visible tab names, so hidden pages are never opened. (Epidemic Curve, hidden here, became a
+   visible tab in the republished report and is opened from 2026-10-17: ADR 0014.) The capture never builds or replays
    its own queries.
 2. Response bodies are kept only from the report's data API host. Static Power BI resources
    (visual code, themes) are listed in `seen` but not stored: they change with Power BI

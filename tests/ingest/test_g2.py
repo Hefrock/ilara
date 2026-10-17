@@ -101,3 +101,16 @@ def test_g2_needs_two_full_weeks_of_scheduled_cover(root: Path) -> None:
     log.append(_rec("r1:91:doh_dashboard", "2026-11-04T18:30:00Z", trigger="schedule"))
     g = access.g2_status(datetime(2026, 11, 7, 12, tzinfo=UTC), root)
     assert (g["status"], g["streak"]) == ("not yet", 0)
+
+
+def test_dead_report_rule_holds_for_records_from_before_a_view_was_added() -> None:
+    # Records before 2026-10-17 never tried epi_curve: a dead one names the other eight views.
+    old = "; ".join(
+        f"{v}: TimeoutError" for v in capture_log.DASHBOARD_CLICK_VIEWS if v != "epi_curve"
+    )
+    assert not capture_log.is_good(
+        {"source_id": "doh_dashboard", "outcome": "changed", "error": old}
+    )
+    # One view failing is a partial capture, not a dead report.
+    one = {"source_id": "doh_dashboard", "outcome": "changed", "error": "epi_curve: TimeoutError"}
+    assert capture_log.is_good(one)

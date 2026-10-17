@@ -64,6 +64,9 @@ VIEWS: tuple[View, ...] = (
     # Tab renamed from "Cases by Age and Time" when DOH republished the report (ADR 0009);
     # the key stays so the parser and older records line up.
     View("age_time", "Cases by Age Group"),
+    # Report month moved here in the republished report; a hidden onset-date page before it
+    # was republished. Opened with the owner's approval (B18, ADR 0014).
+    View("epi_curve", "Epidemic Curve"),
     View("hospitalizations", "Hospitalizations"),
     View("county", "Cases by County"),
     View("community_transmission", "Community Transmission"),
