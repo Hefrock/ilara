@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-19T19:43:51Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-19 (DOH refreshed the report 2026-10-19T17:04:30Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-19T20:07:07Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-19 (DOH refreshed the report 2026-10-19T17:04:30Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -40,25 +40,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-10-18T17:29:40Z (26 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-10-18T17:29:45Z (26 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-10-18T17:29:25Z (26 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-10-18T17:29:30Z (26 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-10-18T17:29:35Z (26 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-10-18T17:29:20Z (26 h ago)
-- census_commuting: last outcome unchanged, last good 2026-10-18T17:29:13Z (26 h ago)
-- census_commuting_index: last outcome changed, last good 2026-10-18T17:29:19Z (26 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-10-18T17:29:08Z (26 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-10-18T17:29:03Z (26 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-10-19T20:06:55Z (0 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-10-19T20:07:00Z (0 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-10-19T20:06:40Z (0 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-10-19T20:06:45Z (0 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-10-19T20:06:50Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-10-19T20:06:35Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-10-19T20:06:28Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-10-19T20:06:34Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-10-19T20:06:23Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-10-19T20:06:18Z (0 h ago)
 - doh_dashboard: last outcome changed, last good 2026-10-19T19:43:48Z (0 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-10-18T17:28:48Z (26 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-10-19T20:06:02Z (0 h ago)
 - doh_han_pdf: last outcome changed, last good 2026-10-07T11:55:46Z (296 h ago) STALE
-- doh_measles_page: last outcome unchanged, last good 2026-10-18T17:28:38Z (26 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-10-18T17:28:43Z (26 h ago)
+- doh_measles_page: last outcome unchanged, last good 2026-10-19T20:05:52Z (0 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-10-19T20:05:58Z (0 h ago)
 - doh_release: last outcome changed, last good 2026-10-07T20:06:08Z (288 h ago) STALE
-- doh_school_imm_county: last outcome unchanged, last good 2026-10-18T17:28:53Z (26 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-10-18T17:28:58Z (26 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-10-18T17:29:50Z (26 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-10-19T20:06:07Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-10-19T20:06:13Z (0 h ago)
+- local_hd_lancaster: last outcome changed, last good 2026-10-19T20:07:05Z (0 h ago)
 - wayback_cdx: last outcome changed, last good 2026-10-07T11:56:00Z (296 h ago) STALE
 
 ## Implied counts
