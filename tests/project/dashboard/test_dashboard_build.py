@@ -470,3 +470,14 @@ def test_charts_have_text_and_keyboard_access(site_root: Path, tmp_path: Path) -
         pg.keyboard.press("ArrowRight")
         assert "% kindergarten MMR" in pg.inner_text("#chart-live")
         b.close()
+
+
+def test_onset_weeks_stay_off_the_dashboard_and_out_of_the_model() -> None:  # ADR 0014, 0015
+    # Condition 3 of B18: the onset-week series is stored but not shown or modelled until
+    # reviewed. The dashboard picks dimensions by name; the model never reads demographics.
+    shown = build.demographics(REPO)
+    assert shown is not None and "onset" not in json.dumps(shown, default=str)
+    model = REPO / "project" / "model"
+    for f in model.glob("*.py"):
+        text = f.read_text()
+        assert "onset_week" not in text and "case_demographics" not in text, f.name

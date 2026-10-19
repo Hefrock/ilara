@@ -56,6 +56,12 @@ responses).
   `hospitalized_age_band` (hospitalized cases in the same bands, from cards like "198 of
   1,004"). A blank cell is stored as null. Each set must add up to the year-to-date total of
   the same capture, else it is flagged `DEMOGRAPHIC_SUM_MISMATCH` and not stored.
+  The report republished on 2026-10-13 has no `Unk` age group and no report-month chart
+  (`report_month` ends with the 2026-10-09 capture). Parser 1.5.0 adds `onset_week`
+  (category = the Monday that starts the onset week, `YYYY-MM-DD`) from the Epidemic Curve
+  tab: weeks up to the as-of date only (later bars are placeholders); the current week is
+  incomplete, and recent weeks are revised from capture to capture. Kept out of the model and
+  the dashboard until reviewed (ADR 0014, 0015).
 
 ## DOH measles page (`doh_measles_page`)
 
