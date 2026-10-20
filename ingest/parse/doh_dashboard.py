@@ -36,9 +36,10 @@ from typing import Any
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.4.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
+PARSER_VERSION = "1.5.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
 # 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010);
-# 1.4.0: age groups from the republished report (from 2026-10-13)
+# 1.4.0: age groups from the republished report (from 2026-10-13);
+# 1.5.0: cases by onset week from the Epidemic Curve tab (ADR 0014, 0015)
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -66,6 +67,9 @@ MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
 AGE = ("AgeDimTable.agegrp", f"CountNonNull({T}.agegrp)")
 # Republished report (from 2026-10-13): counts from a separate age table, no "Unk" group.
 AGE_V2 = ("AgeDimTable.agegrp", "Min(AgeDimTable.agegrp)", "Sum(PAmeasles2026_agedist.COUNT)")
+# Epidemic Curve tab (republished report): weekly bars by onset week, aggregates only.
+ONSET_WEEK = "Min(PAmeasles2026_epicurve.Onset Week)"
+ONSET_COUNT = "Sum(PAmeasles2026_epicurve.COUNT)"
 REPORT_MONTH = (f"{T}.reportdate.Variation.Date Hierarchy.Month", f"Sum({T}.count)")
 AGE_GROUPS = ("0-4", "5-9", "10-17", "18-24", "25-49", "50-64", "65+", "Unk")
 HOSP_CARDS = {
@@ -322,9 +326,38 @@ def _demographics(
                 if g in groups  # a group the report no longer shows is absent, not zero (I5)
             ]
 
+    onset = [
+        q
+        for q in queries
+        if ONSET_WEEK in q["names"] and ONSET_COUNT in q["names"] and q["timeframe"] == []
+    ]
+    if onset:
+        # Weeks start on Monday; a bar for a week that starts after the as-of date is a
+        # placeholder, not a reported zero (I5), so it is not stored. The current week is
+        # stored as shown (incomplete by nature). Stored as its own dimension, kept out of the
+        # model and the dashboard until reviewed (ADR 0014 condition 3, ADR 0015).
+        bars = onset[0]["blocks"].get("DM0", [])
+        weeks: dict[date, Any] = {}
+        for r in bars:
+            ms = r.get(ONSET_WEEK)
+            if not isinstance(ms, int | float):
+                weeks = {}
+                break
+            weeks[datetime.fromtimestamp(ms / 1000, UTC).date()] = r.get(ONSET_COUNT)
+        n = sum(int(v) for v in weeks.values() if v is not None)
+        if not weeks or total is None or n != total:
+            bad(f"cases by onset week (sum {n}, total {total})")
+        else:
+            rows += [
+                _demo_row(as_of, "onset_week", w.isoformat(), None if v is None else int(v))
+                for w, v in sorted(weeks.items())
+                if w <= as_of
+            ]
+
     months = series(REPORT_MONTH)
     if months is None:
-        flags.append(("PARSE_SCHEMA_CHANGE", "cases by report month not found in the capture"))
+        if not onset:  # the republished report has no report-month chart (ADR 0015)
+            flags.append(("PARSE_SCHEMA_CHANGE", "cases by report month not found in the capture"))
     else:
         got = {r.get(REPORT_MONTH[0]): r.get(REPORT_MONTH[1]) for r in months}
         if not all(isinstance(m, str) for m in got):

@@ -294,3 +294,19 @@ def test_golden_age_groups_from_the_republished_report() -> None:  # T3.1, parse
     assert sum(age.values()) == 1260
     # Report month is on the Epidemic Curve tab, which captures open only from 2026-10-17 (B18).
     assert ("PARSE_SCHEMA_CHANGE", "cases by report month not found in the capture") in out["flags"]
+
+
+def test_golden_onset_weeks_from_the_epidemic_curve_tab() -> None:  # T3.1, parser 1.5.0
+    fx = REPO / "tests/fixtures/doh_dashboard/2026-10-19_responses.json.gz"
+    out = doh_dashboard.parse(json.loads(gzip.decompress(fx.read_bytes())))
+    assert out["as_of_date"] == date(2026, 10, 19)
+    onset = {
+        r["category"]: r["cases"] for r in out["demographics"] if r["dimension"] == "onset_week"
+    }
+    assert min(onset) == "2026-01-05" and max(onset) == "2026-10-19"  # no future placeholders
+    assert sum(onset.values()) == 1286  # the year-to-date total
+    assert onset["2026-09-07"] > onset["2026-10-12"] > onset["2026-10-19"]
+    assert all(date.fromisoformat(w).weekday() == 0 for w in onset)  # weeks start Monday
+    # The republished report has no report-month chart: not flagged when the curve is present.
+    assert not any("report month" in t for _c, t in out["flags"])
+    assert not any(r["dimension"] == "report_month" for r in out["demographics"])
