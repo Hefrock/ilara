@@ -1,0 +1,64 @@
+name: reparse
+
+# When parser or curation code lands on main, re-parse every raw file whose parser version
+# changed (E20) and commit the curated tables, so `measles rebuild` matches without waiting for
+# the next capture (ADR 0016). Bot commits only under data/; same guards as the captures.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ingest/parse/**"
+      - "ingest/curate/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+# Shared with capture-dashboard and probe, so a re-parse never runs alongside a dashboard
+# capture; pushes from capture-light are absorbed by the rebase retry.
+concurrency:
+  group: capture-dashboard
+  cancel-in-progress: false
+
+jobs:
+  reparse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MEASLES_RUN_ID: gh-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Re-parse and curate
+        run: |
+          uv run --frozen measles seed load
+          uv run --frozen measles parse
+          uv run --frozen measles quality
+          .github/scripts/commit-data.sh "re-parse after ${GITHUB_SHA::7} ${MEASLES_RUN_ID}"
+
+      - name: Guards before push
+        run: |
+          uv run --frozen measles guard paths --bot --range "${BASE_SHA}..HEAD"
+          uv run --frozen measles guard append-only --base "${BASE_SHA}" --head HEAD
+          uv run --frozen measles guard size
+          uv run --frozen measles verify
+          uv run --frozen measles rebuild
+
+      - name: Push with rebase retry
+        run: .github/scripts/push-with-retry.sh "${GITHUB_REF_NAME}"
