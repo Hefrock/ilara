@@ -18,7 +18,7 @@ from typing import Any
 
 import polars as pl
 
-from ingest import access, paths
+from ingest import access, paths, rawstore, registry
 from ingest.curate import store
 from ingest.reference import pa_counties
 from ingest.timeutil import iso_utc, parse_utc, utc_now
@@ -430,7 +430,14 @@ def freshness(root: Path, now: datetime, f: Findings) -> None:
     if status.height == 0:
         f.add("Capture freshness", "- no captures logged yet")
         return
+    once = {sid for sid, src in registry.load(root).items() if src.cadence == "once"}
     for r in status.to_dicts():
+        if r["source_id"] in once:  # one-time backfill: never stale (ADR 0016)
+            f.add(
+                "Capture freshness",
+                f"- {r['source_id']}: one-time backfill, last good {r.get('last_good_utc')}",
+            )
+            continue
         limit = STALE_HOURS.get(r["source_id"], STALE_HOURS_DEFAULT)
         good = r.get("last_good_utc")
         age = (now - parse_utc(good)).total_seconds() / 3600 if good else None
@@ -518,6 +525,19 @@ def write_flags(f: Findings, root: Path, now: datetime) -> int:
                     "fetched_at_utc": now,
                 }
             )
+    if latest.height:
+        for r in _settled_parser_flags(latest, root):
+            rows.append(
+                {
+                    **{k: r[k] for k in ("flag_id", "raised_utc", "severity", "code")},
+                    "ref_raw_sha256": r["ref_raw_sha256"],
+                    "description": r["description"],
+                    "status": "resolved",
+                    "ingest_run_id": "",
+                    "parser_version": r["parser_version"],
+                    "fetched_at_utc": now,
+                }
+            )
     if not rows:
         return 0
     key = "|".join(f"{r['flag_id']}:{r['status']}" for r in rows) + ENGINE_VERSION + str(now)
@@ -526,6 +546,50 @@ def write_flags(f: Findings, root: Path, now: datetime) -> int:
         r["ingest_run_id"] = run_id
     store.write("curated", "data_quality_flag", pl.DataFrame(rows), run_id, now, root)
     return len(rows)
+
+
+def _settled_parser_flags(latest: pl.DataFrame, root: Path) -> list[dict[str, Any]]:
+    """Open flags raised by a parser that no longer hold (ADR 0016):
+
+    - the raw file is now read by a newer parser version, and that version raises no open flag
+      with the same code and description for that file (it no longer finds the problem);
+    - ``DASHBOARD_LINK_CHANGED`` once the registry already points at the new link.
+
+    Flags whose raw file still raises them (for example captures of the deleted report) stay
+    open. Seed flags are never touched."""
+    from ingest.parse import runner  # the parse layer's version table; imported late
+
+    current = {}
+    for p in rawstore.iter_manifests(None, root):
+        m = rawstore.load_manifest(p)
+        found = runner.parser_for(m)
+        if found is not None:
+            current[m["sha256"]] = found[0]
+    parser = latest.filter(
+        (pl.col("status") == "open")
+        & ~pl.col("parser_version").str.starts_with("quality-")
+        & pl.col("ref_raw_sha256").is_in(list(current))
+    )
+    still = {
+        (r["code"], r["ref_raw_sha256"], r["description"])
+        for r in parser.to_dicts()
+        if r["parser_version"] == current[r["ref_raw_sha256"]]
+    }
+    dashboard = registry.load(root).get("doh_dashboard")
+    out = []
+    for r in parser.sort("flag_id").to_dicts():
+        ref = r["ref_raw_sha256"]
+        newer = (
+            r["parser_version"] != current[ref] and (r["code"], ref, r["description"]) not in still
+        )
+        followed = (
+            r["code"] == "DASHBOARD_LINK_CHANGED"
+            and dashboard is not None
+            and f"links the dashboard at {dashboard.url} " in r["description"]
+        )
+        if newer or followed:
+            out.append(r)
+    return out
 
 
 def open_flags(root: Path) -> pl.DataFrame:
@@ -594,8 +658,10 @@ def render(f: Findings, root: Path, now: datetime) -> str:
     else:
         for code, g in flags.group_by("code", maintain_order=True):
             lines.append(f"- **{code[0]}** ({g.height})")
-            for r in g.to_dicts()[:20]:
-                lines.append(f"  - {r['store']}: {r['description']}")
+            same = g.group_by("store", "description", maintain_order=True).len()
+            for r in same.to_dicts()[:20]:  # identical flags from several captures shown once
+                times = f" (x{r['len']})" if r["len"] > 1 else ""
+                lines.append(f"  - {r['store']}: {r['description']}{times}")
     order = [
         "Capture freshness",
         "Implied counts",

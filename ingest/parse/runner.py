@@ -184,23 +184,32 @@ def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:
 
 
 def _county_drop(rows: list[dict[str, Any]], root: Path) -> str | None:
-    """T3.15: fewer counties with cases than the latest earlier snapshot of the same source."""
+    """T3.15 (ADR 0016): a county parse that looks like a broken load compared with the latest
+    earlier snapshot of the same source (whatever its count definition, so a broken load that
+    no longer matches the statewide total is still compared): fewer county rows, or a lower
+    county sum. A single county whose count falls while the total does not is a source
+    revision: it is stored, and the quality engine flags it ``CUM_DECREASE`` (T3.6)."""
     if not rows:
         return None
     as_of = rows[0]["as_of_date"]
     prev = access.current("case_county", root=root)
+    if prev.height == 0:
+        return None
     prev = prev.filter(
         (pl.col("source_id") == rows[0]["source_id"]) & (pl.col("as_of_date") < as_of)
     )
     if prev.height == 0:
         return None
-    last = str(prev["as_of_date"].max())
-    before = prev.filter(
-        (pl.col("as_of_date") == prev["as_of_date"].max()) & (pl.col("cum_cases") > 0)
-    ).height
-    now = sum(1 for r in rows if (r["cum_cases"] or 0) > 0)
-    if now < before:
-        return f"{now} counties with cases on {as_of}, {before} on {last}"
+    last_date = prev["as_of_date"].max()
+    last = prev.filter(pl.col("as_of_date") == last_date)
+    when = last["as_of_date"][0].isoformat()
+    before_n, now_n = last.height, len(rows)
+    before_sum = int(last["cum_cases"].fill_null(0).sum())
+    now_sum = sum(int(r["cum_cases"] or 0) for r in rows)
+    if now_n < before_n:
+        return f"{now_n} county rows on {as_of}, {before_n} on {when}"
+    if now_sum < before_sum:
+        return f"county sum {now_sum} on {as_of}, {before_sum} on {when}"
     return None
 
 

@@ -282,7 +282,7 @@ Acceptance:
 - T3.12 `docs/backfill_report.md` records an outcome for each of U11, U14, U16, U17.
 - T3.13 School county parse reproduces the Lancaster kindergarten MMR rate of about 87.6 percent and the Chester overall kindergarten rate of about 94.5 percent within rounding, or the difference exceeds 0.5 percentage points and is documented in an ADR (S2).
 - T3.14 `ND` values become null with `suppressed_flag = true`; none become 0.
-- T3.15 A parse that yields fewer counties than the previous snapshot sends its rows to quarantine and raises `COUNTY_COUNT_DROP`; the previous good `current` view is unchanged.
+- T3.15 A parse that yields fewer counties than the previous snapshot sends its rows to quarantine and raises `COUNTY_COUNT_DROP`; the previous good `current` view is unchanged. (Applied as: fewer county rows or a lower county sum; a single county revised down while the total holds is stored and flagged `CUM_DECREASE`, ADR 0016.)
 
 ### WP4 Release
 Depends on: WP3.
@@ -388,7 +388,7 @@ A Monday, Wednesday or Friday is **covered** when at least one dashboard capture
 | Blocked, challenged or disallowed | 403, 429, challenge page, robots | outcome `blocked`, stop, issue, no retry loop | decide; never evade (I7) |
 | HTTP error or timeout | status or exception | 2 retries with backoff, then `failed`, issue | none unless repeated |
 | Parser schema change | expected fields missing | raw saved, rows quarantined, `PARSE_SCHEMA_CHANGE`, issue | update parser, re-run `parse` on saved raw |
-| County count drops | fewer counties than previous snapshot | quarantine, `COUNTY_COUNT_DROP`, previous good view kept | review |
+| County count drops | fewer county rows or a lower county sum than the previous snapshot (ADR 0016) | quarantine, `COUNTY_COUNT_DROP`, previous good view kept, issue | review |
 | Push conflict | non-fast-forward | `pull --rebase`, up to 3 retries | none |
 | Actions minutes low | usage report | skip next-morning window, issue | consider self-hosted runner |
 | Repository size | CI size script | `SIZE_BUDGET`, issue proposing rotation | rotation only by owner decision (section 8.3) |

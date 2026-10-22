@@ -214,7 +214,9 @@ def _save(root: Path, b: dict[str, Any], ts: datetime) -> None:
     )
 
 
-def _later(b: dict[str, Any], drop_last_county: bool) -> dict[str, Any]:
+def _later(
+    b: dict[str, Any], drop_last_county: bool, move_to_first: bool = False
+) -> dict[str, Any]:
     b = json.loads(json.dumps(b))
     for r in b["responses"]:
         if "querydata" not in r["url"]:
@@ -227,7 +229,10 @@ def _later(b: dict[str, Any], drop_last_county: bool) -> dict[str, Any]:
         if drop_last_county and names == [doh_dashboard.COUNTY, doh_dashboard.COUNTY_COUNT]:
             dm1 = next(p for p in ph if "DM1" in p)["DM1"]
             removed = dm1.pop()  # York 33
-            ph[0]["DM0"][0]["A0"] -= removed["C"][1]
+            if move_to_first:  # a revision: York's cases reassigned, the total unchanged
+                dm1[0]["C"][1] += removed["C"][1]
+            else:
+                ph[0]["DM0"][0]["A0"] -= removed["C"][1]
     return b
 
 
@@ -310,3 +315,22 @@ def test_golden_onset_weeks_from_the_epidemic_curve_tab() -> None:  # T3.1, pars
     # The republished report has no report-month chart: not flagged when the curve is present.
     assert not any("report month" in t for _c, t in out["flags"])
     assert not any(r["dimension"] == "report_month" for r in out["demographics"])
+
+
+def test_a_county_revised_down_while_the_total_holds_is_stored(root: Path) -> None:
+    # ADR 0016: York's 33 cases move to Adams, so York falls to 0 and one fewer county has
+    # cases, but the county rows and the county sum are unchanged: a revision, not a broken
+    # load. Stored; the quality engine flags the county's decrease (T3.6).
+    _save(root, bundle(), datetime(2026, 10, 7, 18, tzinfo=UTC))
+    runner.run(root)
+    later = _later(bundle(), drop_last_county=True, move_to_first=True)
+    _save(root, later, datetime(2026, 10, 9, 18, tzinfo=UTC))
+    runner.run(root)
+    flags = access.all_rows("data_quality_flag", root=root)
+    assert "COUNTY_COUNT_DROP" not in set(flags["code"])
+    cur = access.current("case_county", root=root)
+    assert set(cur["as_of_date"]) == {date(2026, 10, 5), date(2026, 10, 7)}
+    york = cur.filter(
+        (pl.col("county_fips") == "42133") & (pl.col("as_of_date") == date(2026, 10, 7))
+    )
+    assert york["cum_cases"].to_list() == [0]
