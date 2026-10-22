@@ -314,3 +314,62 @@ def test_resolved_flag_reopens(seeded: Path) -> None:
     _dash_state(seeded, date(2026, 10, 7), 1001, "d" * 64, again)  # the same decrease returns
     engine.run(seeded, again)
     assert _flag_status(seeded, "CUM_DECREASE") == ["open"]
+
+
+def test_one_time_backfill_sources_are_never_stale(seeded: Path) -> None:  # ADR 0016
+    CaptureLog("r9", seeded).append(
+        CaptureRecord(
+            capture_id="r9:release",
+            source_id="doh_release",  # cadence "once" in the registry
+            url="u",
+            started_utc="2026-09-01T12:00:00Z",
+            finished_utc="2026-09-01T12:00:00Z",
+            http_status=200,
+            outcome="changed",
+            raw_path=None,
+            sha256=None,
+            content_hash=None,
+            bytes=None,
+            runner="local",
+        )
+    )
+    f = engine.Findings()
+    engine.freshness(seeded, NOW, f)
+    assert not any("doh_release" in x.description for x in f.flags)
+
+
+def _parser_flag(root: Path, ref: str, version: str, text: str, when: datetime) -> None:
+    from ingest.parse import runner
+
+    row = runner._flag("PARSE_SCHEMA_CHANGE", ref, text, f"run-{version}", version, when)
+    store.write(
+        "curated", "data_quality_flag", pl.DataFrame([row]), row["ingest_run_id"], when, root
+    )
+
+
+def test_parser_flags_close_when_a_newer_parser_no_longer_raises_them(seeded: Path) -> None:
+    import json
+
+    from ingest import rawstore
+    from ingest.parse import doh_dashboard
+
+    m = rawstore.save(
+        source_id="doh_dashboard",
+        url="https://report.test",
+        fetched_at=datetime(2026, 10, 6, 20, tzinfo=UTC),
+        data=json.dumps({"responses": []}).encode(),
+        ext="json",
+        capture_key="responses",
+        root=seeded,
+    )
+    sha = m.sha256
+    now_v = doh_dashboard.PARSER_VERSION
+    t = datetime(2026, 10, 6, 21, tzinfo=UTC)
+    _parser_flag(seeded, sha, "1.3.0", "cases by age group not found in the capture", t)
+    _parser_flag(seeded, sha, "1.3.0", "still a problem", t)
+    _parser_flag(seeded, sha, now_v, "still a problem", t)  # the current parser raises it too
+    engine.run(seeded, NOW)
+    cur = access.current("data_quality_flag", root=seeded).filter(pl.col("ref_raw_sha256") == sha)
+    status = dict(zip(cur["description"], cur["status"], strict=True))
+    assert status["cases by age group not found in the capture"] == "resolved"
+    assert status["still a problem"] == "open"
