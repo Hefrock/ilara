@@ -36,10 +36,11 @@ from typing import Any
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.5.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
+PARSER_VERSION = "1.6.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
 # 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010);
 # 1.4.0: age groups from the republished report (from 2026-10-13);
-# 1.5.0: cases by onset week from the Epidemic Curve tab (ADR 0014, 0015)
+# 1.5.0: cases by onset week from the Epidemic Curve tab (ADR 0014, 0015);
+# 1.6.0: re-parse for the narrower T3.15 county check (ADR 0016; runner change, same output)
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
