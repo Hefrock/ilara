@@ -2,6 +2,11 @@
 
 One open issue per (label, source, failure type). A repeat failure comments on the open
 issue; a later successful capture of that source closes it.
+
+Data-quality flags that mean the parse could not trust a capture (ALERT_FLAG_CODES) also open
+an issue, keyed by source and flag code, so a problem that is logged is never silent
+(ADR 0016). Those issues close when no open flag with that code remains for the source, not
+when the next capture succeeds.
 """
 
 from __future__ import annotations
@@ -17,6 +22,13 @@ from ingest.timeutil import parse_utc, utc_now
 
 LABEL_FAILURE = "capture-failure"
 LABEL_ANOMALY = "data-anomaly"
+ALERT_FLAG_CODES = (
+    "PARSE_SCHEMA_CHANGE",
+    "COUNTY_COUNT_DROP",
+    "COUNTY_SUM_MISMATCH",
+    "DEMOGRAPHIC_SUM_MISMATCH",
+    "DEFINITION_UNKNOWN",
+)
 
 
 @dataclass
@@ -103,6 +115,58 @@ def _partial_alert(r: dict[str, Any]) -> Alert:
     return Alert(
         LABEL_ANOMALY, f"[{LABEL_ANOMALY}] {r['source_id']}: partial capture", body, r["source_id"]
     )
+
+
+def _flag_key(source_id: str, code: str) -> str:
+    return f"{source_id}/{code}"
+
+
+def flag_alerts(
+    records: list[dict[str, Any]], flags: list[dict[str, Any]], source_of: dict[str, str]
+) -> list[Alert]:
+    """One alert per (source, code) for open parser flags raised in this run: flags on raw
+    files fetched at or after the run's first capture of that source. ``source_of`` maps a
+    raw sha256 to its source."""
+    started: dict[str, str] = {}
+    for r in records:
+        started[r["source_id"]] = min(r["started_utc"], started.get(r["source_id"], "~"))
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for fl in flags:
+        src = source_of.get(fl.get("ref_raw_sha256") or "")
+        if fl["code"] not in ALERT_FLAG_CODES or src not in started:
+            continue
+        when = fl["fetched_at_utc"]
+        stamp = when if isinstance(when, str) else when.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if stamp >= started[src]:
+            groups.setdefault(_flag_key(src, fl["code"]), []).append(fl)
+    out = []
+    for key, fls in sorted(groups.items()):
+        src, code = key.split("/", 1)
+        lines = sorted({f"- {fl['description']}" for fl in fls})
+        body = "\n".join(
+            [
+                f"**Flag:** `{code}` raised while parsing `{src}`",
+                f"**Run:** {run_link()}",
+                "",
+                *lines[:20],
+                "",
+                "Raw was saved first (I1); flagged rows are held back or labelled, never "
+                "guessed (I5). This issue closes when no open flag with this code remains for "
+                "the source.",
+            ]
+        )
+        out.append(Alert(LABEL_ANOMALY, f"[{LABEL_ANOMALY}] {key}: data-quality flag", body, key))
+    return out
+
+
+def cleared_flag_keys(
+    sources: set[str], flags: list[dict[str, Any]], source_of: dict[str, str]
+) -> set[str]:
+    """Flag-alert keys with no open flag left, for the given sources."""
+    still = {
+        _flag_key(source_of.get(fl.get("ref_raw_sha256") or "", ""), fl["code"]) for fl in flags
+    }
+    return {_flag_key(s, c) for s in sources for c in ALERT_FLAG_CODES} - still
 
 
 def recovered_sources(records: list[dict[str, Any]]) -> set[str]:

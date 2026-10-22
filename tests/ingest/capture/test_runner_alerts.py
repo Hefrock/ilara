@@ -136,3 +136,41 @@ def test_partial_capture_is_an_anomaly() -> None:
     al = alerts.build_alerts([rec], [])
     assert len(al) == 1 and al[0].label == "data-anomaly"
     assert alerts.recovered_sources([rec]) == set()
+
+
+def test_flags_raised_in_a_run_open_an_issue_and_close_only_when_cleared() -> None:  # ADR 0016
+    rec = {"source_id": "doh_dashboard", "started_utc": "2026-10-19T19:42:00Z"}
+    source_of = {"aaa": "doh_dashboard", "bbb": "doh_dashboard"}
+    flags = [
+        {  # raised by this run's parse
+            "code": "COUNTY_COUNT_DROP",
+            "ref_raw_sha256": "aaa",
+            "description": "66 county rows on 2026-10-19, 67 on 2026-10-16",
+            "fetched_at_utc": "2026-10-19T19:42:32Z",
+        },
+        {  # an older flag: already alerted when it was raised
+            "code": "PARSE_SCHEMA_CHANGE",
+            "ref_raw_sha256": "bbb",
+            "description": "old",
+            "fetched_at_utc": "2026-10-14T19:00:00Z",
+        },
+        {  # not an alerting code
+            "code": "CUM_DECREASE",
+            "ref_raw_sha256": "aaa",
+            "description": "x",
+            "fetched_at_utc": "2026-10-19T19:42:32Z",
+        },
+    ]
+    al = alerts.flag_alerts([rec], flags, source_of)
+    assert [a.title for a in al] == [
+        "[data-anomaly] doh_dashboard/COUNTY_COUNT_DROP: data-quality flag"
+    ]
+    assert "66 county rows" in al[0].body
+    cleared = alerts.cleared_flag_keys({"doh_dashboard"}, flags, source_of)
+    assert "doh_dashboard/COUNTY_COUNT_DROP" not in cleared  # still open: issue stays open
+    assert "doh_dashboard/PARSE_SCHEMA_CHANGE" not in cleared
+    assert "doh_dashboard/COUNTY_SUM_MISMATCH" in cleared
+    # A successful capture alone never closes a flag issue: its key is not a source id.
+    assert "doh_dashboard/COUNTY_COUNT_DROP" not in alerts.recovered_sources(
+        [{"source_id": "doh_dashboard", "outcome": "changed", "error": None}]
+    )
