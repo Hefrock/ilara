@@ -1,0 +1,21 @@
+{
+  "bytes": 8323,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "d21926c58634908b6fd26fa27e7f84494892ef8e1541acd29ae795e10444dccd",
+  "ext": "json",
+  "extra": {
+    "capture_id": "gh-40004730015-1:13:cdc_measles_weekly_config",
+    "content_type": "application/json"
+  },
+  "fetched_at_et": "2026-10-23T14:38:19-04:00",
+  "fetched_at_utc": "2026-10-23T18:38:19Z",
+  "http_status": 200,
+  "normaliser": "json:1",
+  "parser_hint": "cdc_measles_weekly_config",
+  "raw_path": "data/raw/cdc_measles_weekly_config/2026/20261023T183819Z_ef36ccee9bce.json",
+  "sha256": "ef36ccee9bce2cf1f2f672c5f320ebc6f5115df37ffc207db206ab620687c225",
+  "source_id": "cdc_measles_weekly_config",
+  "stored_sha256": "ef36ccee9bce2cf1f2f672c5f320ebc6f5115df37ffc207db206ab620687c225",
+  "url": "https://www.cdc.gov/measles/weekly-cases-chart.json"
+}

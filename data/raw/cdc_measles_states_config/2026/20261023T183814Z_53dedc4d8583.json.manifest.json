@@ -1,0 +1,21 @@
+{
+  "bytes": 5891,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "017524c3f6d092ef8718fd212931f7a9865031eedd7ad1ee59c6753f1449c9b3",
+  "ext": "json",
+  "extra": {
+    "capture_id": "gh-40004730015-1:12:cdc_measles_states_config",
+    "content_type": "application/json"
+  },
+  "fetched_at_et": "2026-10-23T14:38:14-04:00",
+  "fetched_at_utc": "2026-10-23T18:38:14Z",
+  "http_status": 200,
+  "normaliser": "json:1",
+  "parser_hint": "cdc_measles_states_config",
+  "raw_path": "data/raw/cdc_measles_states_config/2026/20261023T183814Z_53dedc4d8583.json",
+  "sha256": "53dedc4d858390a91aa72971d86815b8f8cb49dd01d29224e399bc9b10a4816e",
+  "source_id": "cdc_measles_states_config",
+  "stored_sha256": "53dedc4d858390a91aa72971d86815b8f8cb49dd01d29224e399bc9b10a4816e",
+  "url": "https://www.cdc.gov/measles/states-cases-2024.json"
+}
