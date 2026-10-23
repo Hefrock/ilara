@@ -30,7 +30,7 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 | G2 Unattended capture proven | in progress | tracker in `data/quality/quality_report.md` (`access.g2_status`, ADR 0009); 0 of 2 weeks |
 | G3 Modelling go | not started | |
 | G4 Forecast publication | not started | earliest decision 2026-12-30: 8 Wednesday origins from 2026-10-28, 2-week targets (ADR 0013) |
-| G5 Public flip | not started | B13 must be decided first |
+| G5 Public flip | not started | checklist `docs/adr/0017-g5-public-flip-checklist.md` (known exception E1: public Google Maps key in Lancaster captures) |
 
 ## Capture clock
 First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First county snapshot: 2026-10-07 03:42 (as of 2026-10-05). First scheduled window: 2026-10-07 18:00. Covered capture days so far: 0 (definition in docs/HANDOFF.md 8.1).
@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-23 (40) | G5 checklist started (ADR 0017) with known exception E1: the Google Maps browser key Lancaster County's site publishes, saved verbatim in its raw captures (secret-scanning alert 1) | Friday capture; G3 Oct 28 |
 | 2026-10-22 (39) | Post-mortem of Oct 13 to 21 and five fixes (ADR 0016): re-parse workflow on parser changes; T3.15 narrowed to broken loads (Oct 19 county snapshot released, 7 of 10 for G3); parser flags close when a newer parser clears them; one-time sources not checked for staleness; trust-breaking flags open an alert issue | Friday capture; G3 Oct 28; G2 Oct 30 |
 | 2026-10-19 (38) | Epidemic Curve tab captured (Oct 17 and 19): weekly cases by onset week, sums to the total; report month no longer published. Parser 1.5.0 stores `onset_week` (ADR 0015), kept out of the model and dashboard (test). Oct 19 county snapshot quarantined by T3.15 (Forest 2 to 0, 42 vs 43 counties with cases): fix proposed, awaiting owner | T3.15 decision before Wednesday; review onset series at G3 |
 | 2026-10-17 (37) | B18 decided: the capture opens the Epidemic Curve tab (ADR 0014), with the case-level safeguard unchanged, aggregates only, and any onset-date series kept out of the model and dashboard until reviewed. Dead-report rule ignores views added later, so older records are judged as before | Monday capture: read the new tab's responses and extend the parser; re-parse |
