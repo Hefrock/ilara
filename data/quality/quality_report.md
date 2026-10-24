@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-24T16:28:38Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-23 (DOH refreshed the report 2026-10-23T17:19:16Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-24T17:32:54Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-23 (DOH refreshed the report 2026-10-23T17:19:16Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -28,25 +28,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome changed, last good 2026-10-23T18:38:29Z (22 h ago)
-- cdc_measles_cases_weekly: last outcome changed, last good 2026-10-23T18:38:34Z (22 h ago)
-- cdc_measles_national: last outcome changed, last good 2026-10-23T18:38:14Z (22 h ago)
-- cdc_measles_states_config: last outcome changed, last good 2026-10-23T18:38:19Z (22 h ago)
-- cdc_measles_weekly_config: last outcome changed, last good 2026-10-23T18:38:24Z (22 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-10-23T18:38:09Z (22 h ago)
-- census_commuting: last outcome unchanged, last good 2026-10-23T18:37:53Z (22 h ago)
-- census_commuting_index: last outcome changed, last good 2026-10-23T18:38:08Z (22 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-10-23T18:37:48Z (22 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-10-23T18:37:43Z (22 h ago)
-- doh_dashboard: last outcome changed, last good 2026-10-24T16:28:36Z (0 h ago)
-- doh_han_index: last outcome changed, last good 2026-10-23T18:37:28Z (22 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-10-24T17:32:41Z (0 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-10-24T17:32:46Z (0 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-10-24T17:32:26Z (0 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-10-24T17:32:31Z (0 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-10-24T17:32:36Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-10-24T17:32:21Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-10-24T17:32:15Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-10-24T17:32:21Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-10-24T17:32:10Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-10-24T17:32:04Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-10-24T16:28:36Z (1 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-10-24T17:31:49Z (0 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
-- doh_measles_page: last outcome changed, last good 2026-10-23T18:37:18Z (22 h ago)
-- doh_newsroom: last outcome changed, last good 2026-10-23T18:37:23Z (22 h ago)
+- doh_measles_page: last outcome unchanged, last good 2026-10-24T17:31:39Z (0 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-10-24T17:31:44Z (0 h ago)
 - doh_release: one-time backfill, last good 2026-10-07T20:06:08Z
-- doh_school_imm_county: last outcome unchanged, last good 2026-10-23T18:37:33Z (22 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-10-23T18:37:38Z (22 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-10-23T18:38:39Z (22 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-10-24T17:31:54Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-10-24T17:31:59Z (0 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-10-24T17:32:52Z (0 h ago)
 - wayback_cdx: one-time backfill, last good 2026-10-07T11:56:00Z
 
 ## Implied counts
