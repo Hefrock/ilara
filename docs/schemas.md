@@ -86,7 +86,8 @@ changed or unchanged; it decides capture-day cover, freshness, alerts and releas
 ## CDC jurisdiction map (`cdc_measles_cases_map`, S6)
 
 `case_state` rows for Pennsylvania (`source_id` `cdc_measles_cases_map`, T1, `calendar_year`).
-The map file has no date; the row takes the "As of" date of the CDC cases page captured at or
+The map file has no data date (from 2026-10-23 it carries a `lastUpdated`, kept in `notes` only,
+ADR 0019); the row takes the "As of" date of the CDC cases page captured at or
 before it, and only when the map's 2026 total and number of jurisdictions with cases equal the
 page's. Otherwise nothing is stored and `DATE_TO_CONFIRM` is raised. These rows are listed in
 `ingest.access.CROSSCHECK_SOURCES`: they never join the DOH statewide series, its monotonicity

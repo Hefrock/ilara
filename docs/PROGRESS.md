@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-26 (42) | Issue 41 closed by hand (cause fixed in parser 1.7.0). CDC map file now wrapped with `lastUpdated`: CDC parser 1.1.0 (ADR 0019); flag issues now close when the newest capture parses without the flag (amends ADR 0016) | G3 Oct 28 |
 | 2026-10-26 (41) | DOH changed the county table (map v3, all 67 counties) and hospitalizations (one table by age group) on Oct 23; parser 1.7.0 reads both (ADR 0018), re-parse recovers Oct 23 (8 of 10 for G3). Oct 26 19:41 capture was a mixed load (overview from Oct 16), caught by the sum checks | Merge before Wednesday; G3 Oct 28 |
 | 2026-10-23 (40) | G5 checklist started (ADR 0017) with known exception E1: the Google Maps browser key Lancaster County's site publishes, saved verbatim in its raw captures (secret-scanning alert 1) | Friday capture; G3 Oct 28 |
 | 2026-10-22 (39) | Post-mortem of Oct 13 to 21 and five fixes (ADR 0016): re-parse workflow on parser changes; T3.15 narrowed to broken loads (Oct 19 county snapshot released, 7 of 10 for G3); parser flags close when a newer parser clears them; one-time sources not checked for staleness; trust-breaking flags open an alert issue | Friday capture; G3 Oct 28; G2 Oct 30 |

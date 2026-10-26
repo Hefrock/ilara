@@ -34,6 +34,8 @@ captures ran. No data was lost: raw was saved first every time (I1).
    open one `data-anomaly` issue per source and code (HANDOFF section 8.4 already called for an
    issue on a parser schema change; it had not been built). The issue closes when no open flag
    with that code remains, not when the next capture succeeds.
+   Amended by ADR 0019: the issue closes when the source's newest capture carries no open
+   flag with that code.
 
 ## Consequences
 

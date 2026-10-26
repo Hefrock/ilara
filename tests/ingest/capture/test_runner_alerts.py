@@ -138,7 +138,7 @@ def test_partial_capture_is_an_anomaly() -> None:
     assert alerts.recovered_sources([rec]) == set()
 
 
-def test_flags_raised_in_a_run_open_an_issue_and_close_only_when_cleared() -> None:  # ADR 0016
+def test_flags_raised_in_a_run_open_an_issue_and_close_only_when_cleared() -> None:  # ADR 16, 19
     rec = {"source_id": "doh_dashboard", "started_utc": "2026-10-19T19:42:00Z"}
     source_of = {"aaa": "doh_dashboard", "bbb": "doh_dashboard"}
     flags = [
@@ -166,11 +166,26 @@ def test_flags_raised_in_a_run_open_an_issue_and_close_only_when_cleared() -> No
         "[data-anomaly] doh_dashboard/COUNTY_COUNT_DROP: data-quality flag"
     ]
     assert "66 county rows" in al[0].body
-    cleared = alerts.cleared_flag_keys({"doh_dashboard"}, flags, source_of)
-    assert "doh_dashboard/COUNTY_COUNT_DROP" not in cleared  # still open: issue stays open
-    assert "doh_dashboard/PARSE_SCHEMA_CHANGE" not in cleared
+    cleared = alerts.cleared_flag_keys({"doh_dashboard"}, flags, source_of, {"aaa"})
+    assert "doh_dashboard/COUNTY_COUNT_DROP" not in cleared  # on the newest capture: stays open
+    # ADR 0019: an older flag that stays open by design does not hold an issue open once the
+    # newest capture parses without it.
+    assert "doh_dashboard/PARSE_SCHEMA_CHANGE" in cleared
     assert "doh_dashboard/COUNTY_SUM_MISMATCH" in cleared
+    # The next capture parses cleanly: the issue closes.
+    cleared = alerts.cleared_flag_keys({"doh_dashboard"}, flags, source_of, {"ccc"})
+    assert "doh_dashboard/COUNTY_COUNT_DROP" in cleared
     # A successful capture alone never closes a flag issue: its key is not a source id.
     assert "doh_dashboard/COUNTY_COUNT_DROP" not in alerts.recovered_sources(
         [{"source_id": "doh_dashboard", "outcome": "changed", "error": None}]
     )
+
+
+def test_newest_capture_holds_every_file_of_the_newest_capture() -> None:  # ADR 0019
+    m = [
+        {"source_id": "doh_dashboard", "sha256": "old", "fetched_at_utc": "2026-10-23T19:42:07Z"},
+        {"source_id": "doh_dashboard", "sha256": "txt", "fetched_at_utc": "2026-10-26T19:41:54Z"},
+        {"source_id": "doh_dashboard", "sha256": "json", "fetched_at_utc": "2026-10-26T19:41:54Z"},
+        {"source_id": "cdc_measles_cases_map", "sha256": "c", "fetched_at_utc": "2026-10-23T18:38"},
+    ]
+    assert alerts.newest_capture(m) == {"txt", "json", "c"}

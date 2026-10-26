@@ -80,15 +80,16 @@ def cmd_alerts(a: argparse.Namespace) -> int:
     history = capture_log.read_all(root)
     al = alerts.build_alerts(records, history)
     rec = alerts.recovered_sources(records)
-    # Open parser flags raised in this run also alert; their issues close only when cleared.
+    # Open parser flags raised in this run also alert; their issues close when the source's
+    # newest capture parses without the flag (ADR 0019).
     flags = access.open_flags(root)
     open_ = flags.to_dicts() if flags.height else []
-    source_of = {
-        m["sha256"]: m["source_id"]
-        for m in map(rawstore.load_manifest, rawstore.iter_manifests(None, root))
-    }
+    manifests = list(map(rawstore.load_manifest, rawstore.iter_manifests(None, root)))
+    source_of = {m["sha256"]: m["source_id"] for m in manifests}
     al += alerts.flag_alerts(records, open_, source_of)
-    rec |= alerts.cleared_flag_keys({r["source_id"] for r in records}, open_, source_of)
+    rec |= alerts.cleared_flag_keys(
+        {r["source_id"] for r in records}, open_, source_of, alerts.newest_capture(manifests)
+    )
     token, repo = os.environ.get("GITHUB_TOKEN"), os.environ.get("GITHUB_REPOSITORY")
     if not (token and repo) or a.dry_run:
         for x in al:

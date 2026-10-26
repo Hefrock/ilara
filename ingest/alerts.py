@@ -151,8 +151,8 @@ def flag_alerts(
                 *lines[:20],
                 "",
                 "Raw was saved first (I1); flagged rows are held back or labelled, never "
-                "guessed (I5). This issue closes when no open flag with this code remains for "
-                "the source.",
+                "guessed (I5). This issue closes when the newest capture of the source parses "
+                "without this flag.",
             ]
         )
         out.append(Alert(LABEL_ANOMALY, f"[{LABEL_ANOMALY}] {key}: data-quality flag", body, key))
@@ -160,13 +160,29 @@ def flag_alerts(
 
 
 def cleared_flag_keys(
-    sources: set[str], flags: list[dict[str, Any]], source_of: dict[str, str]
+    sources: set[str],
+    flags: list[dict[str, Any]],
+    source_of: dict[str, str],
+    newest: set[str],
 ) -> set[str]:
-    """Flag-alert keys with no open flag left, for the given sources."""
+    """Flag-alert keys whose source's newest capture carries no open flag with that code.
+    ``newest`` holds the raw sha256s of each source's newest capture. Older flags that stay
+    open by design (a dead capture, a chart a capture lacked) no longer keep an issue open
+    once the source parses cleanly again (ADR 0019, amending ADR 0016)."""
     still = {
-        _flag_key(source_of.get(fl.get("ref_raw_sha256") or "", ""), fl["code"]) for fl in flags
+        _flag_key(source_of.get(fl.get("ref_raw_sha256") or "", ""), fl["code"])
+        for fl in flags
+        if fl.get("ref_raw_sha256") in newest
     }
     return {_flag_key(s, c) for s in sources for c in ALERT_FLAG_CODES} - still
+
+
+def newest_capture(manifests: list[dict[str, Any]]) -> set[str]:
+    """Raw sha256s of each source's newest capture (all files saved at its newest time)."""
+    last: dict[str, str] = {}
+    for m in manifests:
+        last[m["source_id"]] = max(m["fetched_at_utc"], last.get(m["source_id"], ""))
+    return {m["sha256"] for m in manifests if m["fetched_at_utc"] == last[m["source_id"]]}
 
 
 def recovered_sources(records: list[dict[str, Any]]) -> set[str]:
