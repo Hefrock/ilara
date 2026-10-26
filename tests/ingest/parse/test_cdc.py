@@ -44,9 +44,27 @@ def test_no_date_without_a_matching_page() -> None:  # I6: never guess a date
     assert out["state"] == [] and out["flags"][0][0] == "DATE_TO_CONFIRM"
 
 
+def test_golden_wrapped_map_from_2026_10_23() -> None:  # T3.1, parser 1.1.0, ADR 0019
+    wrapped = (FX / "cases_map_2026-10-23.json").read_bytes()
+    page = cdc.page_snapshot(gzip.decompress((FX / "cases_page_2026-10-23.html.gz").read_bytes()))
+    assert page is not None and page["as_of_date"] == date(2026, 10, 22)
+    out = cdc.parse(wrapped, page)
+    assert out["flags"] == []
+    [row] = out["state"]
+    assert row["as_of_date"] == date(2026, 10, 22) and row["cum_cases"] == 1327
+    assert row["notes"].endswith("; map last updated October 22, 2026")
+    # The page still dates the row: an older page does not match the newer map.
+    out = cdc.parse(wrapped, cdc.page_snapshot(PAGE))
+    assert out["state"] == [] and out["flags"][0][0] == "DATE_TO_CONFIRM"
+
+
 def test_malformed_map_is_an_error() -> None:
     with pytest.raises(cdc.CdcParseError):
         cdc.parse(b"[]", cdc.page_snapshot(PAGE))
+    with pytest.raises(cdc.CdcParseError):
+        cdc.parse(b'{"lastUpdated": "October 22, 2026", "data": []}', cdc.page_snapshot(PAGE))
+    with pytest.raises(cdc.CdcParseError):
+        cdc.parse(b'{"data": [], "other": 1}', cdc.page_snapshot(PAGE))
     rows = [r for r in json.loads(MAP) if r["geography"] != "Pennsylvania"]
     with pytest.raises(cdc.CdcParseError):
         cdc.parse(json.dumps(rows).encode(), cdc.page_snapshot(PAGE))
