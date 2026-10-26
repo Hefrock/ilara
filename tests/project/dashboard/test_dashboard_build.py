@@ -366,6 +366,26 @@ def test_who_is_affected_suppresses_small_cells(site_root: Path, tmp_path: Path)
     assert not shown_numbers & {1, 2, 3, 4}
 
 
+def test_hospitalization_by_age_group_from_2026_10_23(site_root: Path) -> None:  # C, ADR 0018
+    rawstore.save(
+        source_id="doh_dashboard",
+        url="https://report.test",
+        data=gzip.decompress(
+            (REPO / "tests/fixtures/doh_dashboard/2026-10-23_responses.json.gz").read_bytes()
+        ),
+        ext="json",
+        capture_key="responses",
+        fetched_at=datetime(2026, 10, 23, 19, 42, tzinfo=UTC),
+        root=site_root,
+    )
+    runner.run(site_root)
+    demo = build.demographics(site_root)
+    assert demo is not None and str(demo["as_of_date"]) == "2026-10-23"
+    hosp = {r["age_band"]: r for r in demo["hospitalization"]}
+    assert list(hosp) == ["0-4", "5-9", "10-17", "18-24", "25-49", "50 and over"]
+    assert hosp["0-4"]["shown"] == "59 of 167" and hosp["0-4"]["share_pct"] == 35.3
+
+
 def test_cdc_cross_check(site_root: Path) -> None:  # S6
     from datetime import date
 

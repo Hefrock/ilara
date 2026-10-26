@@ -62,6 +62,11 @@ responses).
   tab: weeks up to the as-of date only (later bars are placeholders); the current week is
   incomplete, and recent weeks are revised from capture to capture. Kept out of the model and
   the dashboard until reviewed (ADR 0014, 0015).
+  Parser 1.7.0 (ADR 0018): from 2026-10-23 the Hospitalizations tab gives
+  `cases_hosp_age_group` and `hospitalized_age_group` (0-4, 5-9, 10-17, 18-24, 25-49, 50+;
+  its own groups, not the age tab's); `age_band` and `hospitalized_age_band` end with the
+  2026-10-21 captures. Stored only when all cases add up to the year-to-date total and
+  hospitalized cases to the hospitalized card.
 
 ## DOH measles page (`doh_measles_page`)
 
