@@ -36,15 +36,19 @@ from typing import Any
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.6.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
+PARSER_VERSION = "1.7.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
 # 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010);
 # 1.4.0: age groups from the republished report (from 2026-10-13);
 # 1.5.0: cases by onset week from the Epidemic Curve tab (ADR 0014, 0015);
-# 1.6.0: re-parse for the narrower T3.15 county check (ADR 0016; runner change, same output)
+# 1.6.0: re-parse for the narrower T3.15 county check (ADR 0016; runner change, same output);
+# 1.7.0: county table from any map table version, hospitalizations by age group (ADR 0018)
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
-M = "PAmeasles2026_map_Publicv2"
+M = "PAmeasles2026_map_Publicv2"  # the county map table; v3 from 2026-10-23 (ADR 0018)
+COUNTY = f"{M}.County"
+COUNTY_COUNT = f"Sum({M}.COUNT)"
+MAP_COUNTY = re.compile(r"^(PAmeasles2026_map_Public\w*)\.County$")
 CARD = {
     f"Sum({T}.count)": "cum_cases",
     f"Sum({T}.newcase)": "new_7day",
@@ -57,9 +61,6 @@ NOTE_CARDS = {
 }
 DEFINITION = {"Year to date": "calendar_year", "April - Present": "since_april"}
 LAST_UPDATED = f"Min({T}.meas_dlm)"
-COUNTY = f"{M}.County"
-COUNTY_COUNT = f"Sum({M}.COUNT)"
-COUNTIES_WITH_CASES = f"Min({M}.County)"  # the report's own card: number of counties
 V = "PAmeasles2026_Public_mmr"
 REPORT_YEAR = 2026  # the year in the report's table names and chart axes, "Month (2026)"
 DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
@@ -73,6 +74,10 @@ ONSET_WEEK = "Min(PAmeasles2026_epicurve.Onset Week)"
 ONSET_COUNT = "Sum(PAmeasles2026_epicurve.COUNT)"
 REPORT_MONTH = (f"{T}.reportdate.Variation.Date Hierarchy.Month", f"Sum({T}.count)")
 AGE_GROUPS = ("0-4", "5-9", "10-17", "18-24", "25-49", "50-64", "65+", "Unk")
+# Hospitalizations tab from 2026-10-23: one table, hospitalized and all cases by age group.
+H = "PAmeasles2026_Public_hosp"
+HOSP_TABLE = (f"{H}.agegrp", f"Sum({H}.hosptotal)", f"Sum({H}.total)")
+HOSP_AGE_GROUPS = ("0-4", "5-9", "10-17", "18-24", "25-49", "50+")
 HOSP_CARDS = {
     f"Min({T}.hosptotal)": "all",
     f"Min({T}.hospunder18)": "under18",
@@ -180,18 +185,27 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
     community: set[str] | None = None
     counties_with_cases: int | None = None
     for q in queries:
-        if q["names"] == [COUNTY, COUNTY_COUNT]:
-            for trow in q["blocks"].get("DM1", []):
-                _agree(table, trow[COUNTY], int(trow[COUNTY_COUNT]))
-            for trow in q["blocks"].get("DM0", []):
-                if "A0" in trow:
-                    table_total = int(trow["A0"])
-        elif q["names"] and q["names"][0] == COUNTY and "RangeDimTablev3.countrange" in q["names"]:
-            map_counties |= {r[COUNTY] for r in q["blocks"].get("DM0", []) if r.get(COUNTY)}
-        elif q["names"] == [COUNTY] and q["view"] == "community_transmission":
-            community = {r[COUNTY] for r in q["blocks"].get("DM0", []) if r.get(COUNTY)}
-        elif q["names"] == [COUNTIES_WITH_CASES] and q["view"] == "county":
-            counties_with_cases = int(_single(q))
+        names = q["names"]
+        m = MAP_COUNTY.match(names[0]) if names else None
+        if m:
+            # The county map tables are versioned (v2, then v3 from 2026-10-23); the same
+            # queries are read whichever version a capture uses. v3 lists all 67 counties in
+            # the table, with explicit zeros.
+            county, count = names[0], f"Sum({m.group(1)}.COUNT)"
+            if names == [county, count]:
+                for trow in q["blocks"].get("DM1", []):
+                    _agree(table, trow[county], int(trow[count]))
+                for trow in q["blocks"].get("DM0", []):
+                    if "A0" in trow:
+                        table_total = int(trow["A0"])
+            elif any(n.startswith("RangeDimTable") and n.endswith(".countrange") for n in names):
+                map_counties |= {r[county] for r in q["blocks"].get("DM0", []) if r.get(county)}
+            elif names == [county] and q["view"] == "community_transmission":
+                community = {r[county] for r in q["blocks"].get("DM0", []) if r.get(county)}
+        elif len(names) == 1 and q["view"] == "county":
+            mm = re.fullmatch(r"Min\((PAmeasles2026_map_Public\w*)\.County\)", names[0])
+            if mm:
+                counties_with_cases = int(_single(q))
 
     state: list[dict[str, Any]] = []
     refreshed = refreshed_utc(bundle)
@@ -264,7 +278,8 @@ def parse(bundle: dict[str, Any]) -> dict[str, Any]:
         flags.append(("PARSE_SCHEMA_CHANGE", "county table not found in the capture"))
     doses, dose_flags = _doses(queries, as_of)
     flags += dose_flags
-    demo, demo_flags = _demographics(queries, as_of, ytd_total)
+    ytd_hosp = cards.get(("Year to date", f"Sum({T}.hosp)"))
+    demo, demo_flags = _demographics(queries, as_of, ytd_total, ytd_hosp)
     flags += demo_flags
     return {
         "as_of_date": as_of,
@@ -288,7 +303,7 @@ def _demo_row(as_of: date, dimension: str, category: str, cases: int | None) -> 
 
 
 def _demographics(
-    queries: list[dict[str, Any]], as_of: date, ytd: Any
+    queries: list[dict[str, Any]], as_of: date, ytd: Any, ytd_hosp: Any = None
 ) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     rows: list[dict[str, Any]] = []
     flags: list[tuple[str, str]] = []
@@ -396,8 +411,12 @@ def _demographics(
                 cards[band] = (-1, -1)
             else:
                 cards[band] = val
+    hosp_rows, hosp_flags, hosp_seen = _hosp_by_age_group(queries, as_of, total, ytd_hosp)
+    rows += hosp_rows
+    flags += hosp_flags
     if not cards:
-        flags.append(("PARSE_SCHEMA_CHANGE", "hospitalization cards not found in the capture"))
+        if not hosp_seen:  # the cards were replaced by the table on 2026-10-23 (ADR 0018)
+            flags.append(("PARSE_SCHEMA_CHANGE", "hospitalizations not found in the capture"))
     elif (
         set(cards) != set(HOSP_CARDS.values())
         or any(h < 0 or h > c for h, c in cards.values())
@@ -411,6 +430,43 @@ def _demographics(
             rows.append(_demo_row(as_of, "age_band", band, cards[band][1]))
             rows.append(_demo_row(as_of, "hospitalized_age_band", band, cards[band][0]))
     return rows, flags
+
+
+def _hosp_by_age_group(
+    queries: list[dict[str, Any]], as_of: date, total: int | None, ytd_hosp: Any
+) -> tuple[list[dict[str, Any]], list[tuple[str, str]], bool]:
+    """Hospitalizations tab from 2026-10-23: hospitalized cases and all cases by age group.
+    Stored as ``cases_hosp_age_group`` and ``hospitalized_age_group`` (the tab's own groups,
+    which differ from the age tab's: "50+"). Every group present, each hospitalized count
+    within its group, all cases summing to the year-to-date total and hospitalized cases to
+    the hospitalized card; else flagged and not stored."""
+    found = [q for q in queries if tuple(q["names"][:3]) == HOSP_TABLE and q["timeframe"] == []]
+    if not found:
+        return [], [], False
+    first = found[0]["blocks"].get("DM0", [])
+    got: dict[Any, tuple[Any, Any]] = {
+        r.get(HOSP_TABLE[0]): (r.get(HOSP_TABLE[1]), r.get(HOSP_TABLE[2])) for r in first
+    }
+    disagree = any(q["blocks"].get("DM0", []) != first for q in found[1:])
+    ok = (
+        not disagree
+        and len(got) == len(first)
+        and set(got) == set(HOSP_AGE_GROUPS)
+        and all(isinstance(h, int) and isinstance(n, int) and 0 <= h <= n for h, n in got.values())
+    )
+    hosp = sum(h for h, _n in got.values()) if ok else None
+    cases = sum(n for _h, n in got.values()) if ok else None
+    hosp_card = int(ytd_hosp) if ytd_hosp is not None else None
+    if not ok or total is None or cases != total or hosp_card is None or hosp != hosp_card:
+        what = f"hospitalizations by age group (groups {sorted(map(str, got))}, "
+        what += f"hospitalized {hosp} of {cases}, totals {hosp_card} of {total})"
+        return [], [("DEMOGRAPHIC_SUM_MISMATCH", f"{what} not stored")], True
+    rows = []
+    for g in HOSP_AGE_GROUPS:
+        h, n = got[g]
+        rows.append(_demo_row(as_of, "cases_hosp_age_group", g, n))
+        rows.append(_demo_row(as_of, "hospitalized_age_group", g, h))
+    return rows, [], True
 
 
 def _doses(

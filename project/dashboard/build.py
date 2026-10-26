@@ -479,6 +479,16 @@ def _safe(v: int | None) -> int | None:
     return None if _small(v) else v
 
 
+HOSP_GROUPS = (
+    ("0-4", "0-4"),
+    ("5-9", "5-9"),
+    ("10-17", "10-17"),
+    ("18-24", "18-24"),
+    ("25-49", "25-49"),
+    ("50+", "50 and over"),
+)
+
+
 def _shown(v: int | None) -> str:
     """Display value for a count: blank in the source stays blank, 1 to 4 become "<5"."""
     if v is None:
@@ -488,7 +498,8 @@ def _shown(v: int | None) -> str:
 
 def demographics(root: Path | None) -> dict[str, Any] | None:
     """Latest dashboard snapshot of cases by age group, by month of report, and hospitalized
-    cases with denominators by age band. Counts of 1 to 4 are suppressed for display."""
+    cases with denominators by age group (by age band before 2026-10-23). Counts of 1 to 4
+    are suppressed for display."""
     d = access.current("case_demographics", "curated", root).filter(
         (pl.col("source_id") == DASHBOARD)
         & (pl.col("source_tier") == "T1")
@@ -521,8 +532,17 @@ def demographics(root: Path | None) -> dict[str, Any] | None:
         for m in months
     ]
     hosp = []
-    for band, label in (("under18", "Under 18"), ("18plus", "18 and over"), ("all", "All ages")):
-        h, n = val.get(("hospitalized_age_band", band)), val.get(("age_band", band))
+    # From 2026-10-23 the Hospitalizations tab gives age groups, before that three bands.
+    pairs = [
+        (label, ("hospitalized_age_group", g), ("cases_hosp_age_group", g))
+        for g, label in HOSP_GROUPS
+        if ("hospitalized_age_group", g) in val
+    ] or [
+        (label, ("hospitalized_age_band", band), ("age_band", band))
+        for band, label in (("under18", "Under 18"), ("18plus", "18 and over"), ("all", "All ages"))
+    ]
+    for label, hk, nk in pairs:
+        h, n = val.get(hk), val.get(nk)
         if h is None or not n:
             continue
         hosp.append(
@@ -1187,7 +1207,7 @@ dashboard (not stated as zero).</p>
             _table(
                 hosp_df,
                 {"age_band": "Ages", "shown": "Hospitalized of cases", "share_pct": "Percent"},
-                "Hospitalized cases by age band",
+                "Hospitalized cases by age",
             ).replace("<details class='tableview'>", "<details class='tableview' open>")
         }
 <a class="dl" href="data/demographics.csv">Download CSV</a>"""

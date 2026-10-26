@@ -334,3 +334,38 @@ def test_a_county_revised_down_while_the_total_holds_is_stored(root: Path) -> No
         (pl.col("county_fips") == "42133") & (pl.col("as_of_date") == date(2026, 10, 7))
     )
     assert york["cum_cases"].to_list() == [0]
+
+
+def test_golden_county_table_v3_and_hospitalizations_by_age_group() -> None:  # T3.1, 1.7.0
+    # ADR 0018: from 2026-10-23 the county table is map table v3 and lists all 67 counties
+    # with explicit zeros; the Hospitalizations tab is one table by age group, not three cards.
+    fx = REPO / "tests/fixtures/doh_dashboard/2026-10-23_responses.json.gz"
+    out = doh_dashboard.parse(json.loads(gzip.decompress(fx.read_bytes())))
+    assert out["as_of_date"] == date(2026, 10, 23)
+    assert out["flags"] == []
+    county = out["county"]
+    assert len(county) == 67 and len({r["county_fips"] for r in county}) == 67
+    assert sum(r["cum_cases"] for r in county) == 1338
+    assert sum(1 for r in county if r["cum_cases"] > 0) == 44
+    assert {r["count_definition"] for r in county} == {"calendar_year"}
+    ytd = next(r for r in out["state"] if r["count_definition"] == "calendar_year")
+    assert ytd["cum_cases"] == 1338 and ytd["counties_with_cases"] == 44
+    demo = {(r["dimension"], r["category"]): r["cases"] for r in out["demographics"]}
+    cases = {c: v for (d, c), v in demo.items() if d == "cases_hosp_age_group"}
+    hosp = {c: v for (d, c), v in demo.items() if d == "hospitalized_age_group"}
+    assert set(cases) == set(hosp) == set(doh_dashboard.HOSP_AGE_GROUPS)
+    assert sum(cases.values()) == 1338 and sum(hosp.values()) == ytd["hospitalizations"] == 255
+    assert (hosp["0-4"], cases["0-4"]) == (59, 167)
+    assert all(hosp[g] <= cases[g] for g in cases)
+
+
+def test_golden_mixed_load_is_not_stored_as_consistent() -> None:  # T3.1, 1.7.0
+    # ADR 0018: on 2026-10-26 the report showed the 2026-10-16 overview (1,260 cases) next to
+    # a county table summing to 1,360 and a hospitalizations table from another day (1,317).
+    fx = REPO / "tests/fixtures/doh_dashboard/2026-10-26_mixed_responses.json.gz"
+    out = doh_dashboard.parse(json.loads(gzip.decompress(fx.read_bytes())))
+    assert out["as_of_date"] == date(2026, 10, 16)  # what the report states
+    assert {r["count_definition"] for r in out["county"]} == {"unknown"}  # kept out of fits
+    codes = [c for c, _t in out["flags"]]
+    assert "DEFINITION_UNKNOWN" in codes and "DEMOGRAPHIC_SUM_MISMATCH" in codes
+    assert not any("hosp" in r["dimension"] for r in out["demographics"])
