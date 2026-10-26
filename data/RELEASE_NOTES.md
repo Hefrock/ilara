@@ -2,6 +2,14 @@
 
 Weekly data releases (HANDOFF WP4). Unofficial independent project; counts are a floor. Each release manifest is in `data/releases/`.
 
+## data-2026-W43 (2026-10-19 to week end, ET)
+
+- Dashboard as of 2026-10-23: 1338 cases (calendar year), None counties, 255 hospitalized, 5 deaths, 78 new in the last 7 days.
+- Capture days covered: 3 of 3
+- New rows: case_county 134, case_state 6, event 0
+- Flags raised: COUNTY_COUNT_DROP 10, CUM_DECREASE 4, PARSE_SCHEMA_CHANGE 13, STALE_SNAPSHOT 24
+- Data commit: `77a71802df24cd71cc176c62a41fda3ccc972808`
+
 ## data-2026-W42 (2026-10-12 to week end, ET)
 
 - Dashboard as of 2026-10-16: 1260 cases (calendar year), 43 counties, 238 hospitalized, 5 deaths, 121 new in the last 7 days.
