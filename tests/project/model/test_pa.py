@@ -124,6 +124,16 @@ def test_real_fit_refuses_before_gate_g3(model: pa.PAModel, root: Path) -> None:
         pa.curated_problem(model, root)
 
 
+def test_fit_real_refuses_before_gate_g3(
+    model: pa.PAModel, root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Wednesday's entry point (python -m project.model.pa --origin ...) goes through the gate.
+    monkeypatch.setattr(pa, "build", lambda *a, **k: model)
+    with pytest.raises(cal.GateError, match="Gate G3"):
+        pa.fit_real(date(2026, 10, 28), root / "out", root)
+    assert not (root / "out").exists()
+
+
 def test_dry_run_uses_the_real_statewide_dates(model: pa.PAModel) -> None:
     first = pa.snapshot_dates()[0]
     dates = pa.statewide_dates(first, model.start, REPO)

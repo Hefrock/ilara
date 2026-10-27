@@ -84,6 +84,14 @@ Checks so far, on synthetic data only:
 
 Real county data are not fitted before Gate G3 (ten county snapshot dates).
 
+Running it. `python -m project.model.preflight --origin <date>` runs the real path up to the
+gate without fitting: it counts the snapshot dates, builds the inputs, checks the gate, and times
+a simulation (0.01 s each on 2026-10-27, so a fit takes minutes). Once G3 passes,
+`python -m project.model.pa --origin <date>` fits the data known at that origin's cutoff and
+writes the posterior, predictive checks, forecast samples and a manifest under
+`project/outputs/` (gitignored, never public before G4). The onset-week curve is not used; see
+[the onset review](onset_review.md).
+
 ## 5. Validation (WP6d)
 
 At weekly origins from 2026-10-28, the model is refitted on data fetched by the end of that day
