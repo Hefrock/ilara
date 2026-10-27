@@ -383,13 +383,71 @@ def dry_run(
     return path
 
 
+def fit_real(
+    origin: date,
+    out_dir: Path | None = None,
+    root: Path | None = None,
+    *,
+    particles: int = 300,
+    generations: int = 8,
+    draws: int = 200,
+    seed: int = 20261015,
+) -> Path:
+    """The real fit at a forecast origin on the data known at its cutoff, and its 1 to 4 week
+    forecast samples. Refuses before Gate G3 (``GateError``). Writes under
+    ``project/outputs/calibration_pa/real/<origin>/`` (gitignored; nothing public before G4)."""
+    known_at = cutoff(origin)
+    model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
+    prob, refs = curated_problem(model, root, known_at)
+    t0 = time.monotonic()
+    result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
+    secs = time.monotonic() - t0
+    out = out_dir or OUTPUTS / "real" / origin.isoformat()
+    samples = forecast_samples(model, result, origin, list(prob.obs.series), draws=draws)
+    rows = [
+        {"geography": g, "horizon_weeks": h, "draw": i, "new_cases": float(v)}
+        for g, by_h in samples.items()
+        for h, vals in by_h.items()
+        for i, v in enumerate(vals)
+    ]
+    out.mkdir(parents=True, exist_ok=True)
+    pl.DataFrame(rows).write_csv(out / "forecast_samples.csv")
+    return cal.write(
+        prob,
+        result,
+        out,
+        kind="calibration-pa-real",
+        inputs=refs,
+        params={
+            "origin": origin.isoformat(),
+            "known_at": known_at.isoformat(),
+            "start": model.start.isoformat(),
+            "particles": particles,
+            "generations": generations,
+            "draws": draws,
+            "seconds": round(secs, 1),
+        },
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m project.model.pa")
     ap.add_argument("--particles", type=int, default=300)
     ap.add_argument("--generations", type=int, default=8)
     ap.add_argument("--seed", type=int, default=20261015)
     ap.add_argument("--out", type=Path)
+    ap.add_argument(
+        "--origin",
+        type=date.fromisoformat,
+        help="fit the real data known at this origin (refuses before Gate G3)",
+    )
     a = ap.parse_args(argv)
+    if a.origin is not None:
+        path = fit_real(
+            a.origin, a.out, particles=a.particles, generations=a.generations, seed=a.seed
+        )
+        print(f"real fit at origin {a.origin}: wrote {path}")
+        return 0
     path = dry_run(a.out, particles=a.particles, generations=a.generations, seed=a.seed)
     print(f"calibration dry run (synthetic data): wrote {path}")
     return 0

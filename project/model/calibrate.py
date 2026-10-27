@@ -345,6 +345,20 @@ class GateError(RuntimeError):
     pass
 
 
+def default_county_rows(
+    county: pl.DataFrame, allow_tiers: frozenset[str] = frozenset({"T1"})
+) -> pl.DataFrame:
+    """The county rows the default fit reads, and Gate G3 counts the dates of: DOH (not the
+    cross-check sources), the allowed tiers, calendar-year counts."""
+    if not county.height:
+        return county
+    return county.filter(
+        ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
+        & pl.col("source_tier").is_in(list(allow_tiers))
+        & (pl.col("count_definition") == "calendar_year")
+    )
+
+
 def observations_from_curated(
     fips: list[str],
     start: date,
@@ -366,11 +380,7 @@ def observations_from_curated(
     for name, df in (("case_county", county), ("case_state", state)):
         if df.height and (df["source_tier"] == "T3-derived").any():
             raise TierError(f"{name} contains T3-derived rows; the default fit uses T1 only")
-    county = county.filter(
-        ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
-        & pl.col("source_tier").is_in(list(allow_tiers))
-        & (pl.col("count_definition") == "calendar_year")
-    )
+    county = default_county_rows(county, allow_tiers)
     dates = county["as_of_date"].unique().sort().to_list() if county.height else []
     if len(dates) < G3_SNAPSHOTS:
         raise GateError(
