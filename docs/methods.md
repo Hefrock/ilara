@@ -71,7 +71,9 @@ kept when their simulated increases are close to the observed ones.
 
 Fitted: R0 (9.9 to 18.1), `lead_days` (7 to 42), the intervention and health-alert factors,
 ascertainment, reporting delay, weekend factor and dispersion. Observations are the T1 county
-snapshots plus the statewide counts in DOH releases before the first snapshot.
+snapshots plus the statewide counts in DOH releases before the first snapshot. A county count
+that DOH later revised down is superseded by the revision and left out of the fit as a gap,
+unchanged ([ADR 0020](adr/0020-superseded-snapshots-fit-guards-vaccine-chart.md)).
 
 Checks so far, on synthetic data only:
 

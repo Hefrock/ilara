@@ -426,6 +426,7 @@ def fit_real(
             "generations": generations,
             "draws": draws,
             "seconds": round(secs, 1),
+            "superseded_snapshots": prob.obs.superseded,
         },
     )
 
