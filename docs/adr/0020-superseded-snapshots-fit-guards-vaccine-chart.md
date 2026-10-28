@@ -1,4 +1,4 @@
-# ADR 0020: superseded county snapshots, fit guards, and the weekly vaccine chart
+# ADR 0020: superseded snapshots, fit guards, weekly vaccine chart, T3.15 baseline
 
 Status: accepted (owner, 2026-10-28: "yes, run the fit then the vaccine fix").
 
@@ -13,6 +13,12 @@ Status: accepted (owner, 2026-10-28: "yes, run the fit then the vaccine fix").
    never had a downward revision.
 2. From the capture of 2026-10-28 the "Measles Vaccine Administered" chart reads a new table,
    `MMR_Weekly_Dashboard_File` (`SHC_MMR_Doses` by month). Parser 1.7.0 did not find it.
+3. Re-parsing with 1.8.0 quarantined 271 county rows (Oct 19 to 23) that a rebuild keeps. The
+   T3.15 check compared each capture with the latest earlier snapshot in the store as it is
+   now, which, mid re-parse, already held the mixed load of 2026-10-26 (stored under the date
+   it stated, Oct 16, county sum 1,360, `unknown`). So the real Oct 19 snapshot (1,286) looked
+   like a drop. A rebuild, which has not yet parsed the later capture, did not see it: an
+   incremental re-parse and a rebuild disagreed (I2).
 
 ## Decision
 
@@ -28,6 +34,10 @@ Status: accepted (owner, 2026-10-28: "yes, run the fit then the vaccine fix").
    measure: every month from January to September equals the old chart as of 2026-10-26, and
    October rose from 1,703 to 1,948. Stored as before (`administered_by` `doh_staff`). The
    re-parse on merge stores the 2026-10-28 doses.
+4. **T3.15 baseline.** A capture is compared only with county rows known when it was fetched
+   (`as_known_at`), and never with a snapshot labelled `unknown`. The parse itself is still
+   checked whatever its own definition (ADR 0016). Incremental re-parses and rebuilds now
+   decide alike.
 
 ## Consequences
 
