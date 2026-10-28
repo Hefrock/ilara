@@ -49,7 +49,8 @@ responses).
   capture carries none, and for rows from other sources.
 - `vaccine_doses`: MMR doses administered by DOH staff, statewide, by month of 2026, from the
   "Measles Vaccine Administered" page (ADR 0004). The month containing `as_of_date` has
-  `period_complete` false. No dose number is given.
+  `period_complete` false. No dose number is given. From 2026-10-28 the chart reads the weekly table
+  `MMR_Weekly_Dashboard_File` (same measure, parser 1.8.0, ADR 0020).
 - `case_demographics` (statewide, calendar year, parser 1.2.0): `age_group` (0-4, 5-9, 10-17,
   18-24, 25-49, 50-64, 65+, Unk), `report_month` (`YYYY-MM`, month of report date, the only
   dated case series the dashboard gives), `age_band` (cases under 18, 18 and over, all) and

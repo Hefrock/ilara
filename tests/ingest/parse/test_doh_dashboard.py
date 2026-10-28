@@ -369,3 +369,26 @@ def test_golden_mixed_load_is_not_stored_as_consistent() -> None:  # T3.1, 1.7.0
     codes = [c for c, _t in out["flags"]]
     assert "DEFINITION_UNKNOWN" in codes and "DEMOGRAPHIC_SUM_MISMATCH" in codes
     assert not any("hosp" in r["dimension"] for r in out["demographics"])
+
+
+def test_golden_vaccine_doses_from_the_weekly_table() -> None:  # T3.1, parser 1.8.0, ADR 0020
+    fx = REPO / "tests/fixtures/doh_dashboard/2026-10-28_responses.json.gz"
+    out = doh_dashboard.parse(json.loads(gzip.decompress(fx.read_bytes())))
+    assert out["as_of_date"] == date(2026, 10, 28) and out["flags"] == []
+    doses = {r["period_start"].month: r for r in out["doses"]}
+    assert sorted(doses) == list(range(1, 11))
+    # Every complete month matches the old chart (as of 2026-10-26): the same measure.
+    assert [doses[m]["doses"] for m in range(1, 10)] == [
+        117,
+        129,
+        120,
+        152,
+        295,
+        679,
+        672,
+        3667,
+        2897,
+    ]
+    assert doses[10]["doses"] == 1948 and not doses[10]["period_complete"]
+    assert {r["administered_by"] for r in out["doses"]} == {"doh_staff"}
+    assert sum(r["cum_cases"] for r in out["county"]) == 1398
