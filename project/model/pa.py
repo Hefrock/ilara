@@ -54,6 +54,7 @@ DRY_TRUTH = {
     "report_delay": 3.0,
     "weekend": 0.6,
 }
+POOL_BELOW = 10  # counties with fewer cases are fitted as one "rest" group (ADR 0021)
 FIRST_SNAPSHOT = date(2026, 10, 5)  # the first county snapshot (Gate G3 counts from here)
 
 
@@ -261,7 +262,9 @@ def curated_problem(
     model: PAModel, root: Path | None = None, known_at: datetime | None = None
 ) -> tuple[cal.Problem, dict[str, list[str]]]:
     """The real fit's problem; ``observations_from_curated`` refuses before Gate G3."""
-    obs, refs = cal.observations_from_curated(model.fips, model.start, root, known_at)
+    obs, refs = cal.observations_from_curated(
+        model.fips, model.start, root, known_at, pool_below=POOL_BELOW
+    )
     return problem(model, obs), {**model.refs, **refs}
 
 
@@ -345,7 +348,7 @@ def dry_run(
     fade-out (the real data are conditioned on a large outbreak too). Writes the posterior,
     predictive checks and a manifest under ``project/outputs/`` (gitignored, I10)."""
     dates = snapshot_dates()
-    model = build(dates[-1], root, seed=seed)
+    model = build(dates[-1] + timedelta(days=35), root, seed=seed)
     snaps = [(d - model.start).days for d in dates]
     # Statewide counts on the dates the real fit has them (DOH releases), simulated values.
     state = [(d - model.start).days for d in statewide_dates(dates[0], model.start, root)]
@@ -357,10 +360,13 @@ def dry_run(
             break
     if obs is None or data_seed is None:
         raise RuntimeError(f"no synthetic outbreak reached {min_cases} cases in 200 seeds")
+    full = obs
+    obs = cal.drop_superseded(cal.pool_small(obs, POOL_BELOW), str)
     prob = problem(model, obs)
     t0 = time.monotonic()
     result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
     secs = time.monotonic() - t0
+    check = forecast_check(model, result, dates[-1], DRY_TRUTH, data_seed, full)
     path = cal.write(
         prob,
         result,
@@ -376,11 +382,61 @@ def dry_run(
             "particles": particles,
             "generations": generations,
             "fit_seconds": round(secs, 1),
+            "pool_below": POOL_BELOW,
+            "forecast_check": check,
             "notes": model.notes,
         },
         now=now,
     )
     return path
+
+
+def forecast_check(
+    model: PAModel,
+    result: cal.Fit,
+    origin: date,
+    truth: dict[str, float],
+    data_seed: int,
+    obs: cal.Observations,
+    min_cases: int = POOL_BELOW,
+    draws: int = 200,
+) -> dict[str, dict[str, float]]:
+    """Synthetic forecast check (ADR 0021): forecasts 1 to 4 weeks after ``origin``, made both
+    ways (continuing the accepted trajectories, and fresh simulations), scored against what the
+    synthetic truth went on to report: its own trajectory (``data_seed``) reported with
+    negative binomial noise. Geographies: the state and counties with at least ``min_cases``.
+    Returns, per method, the share of targets inside the 50 and 90 percent intervals and the
+    median absolute error of the forecast median."""
+    run = simulate_fn(model)
+    cum = cal.expected_cumulative(run(truth, data_seed), truth, model.start)
+    rng = np.random.default_rng(data_seed + 1)
+    t0 = (origin - model.start).days
+    geos: list[Any] = ["state"] + [
+        g for g, (_d, c) in obs.series.items() if g != "state" and float(c[-1]) >= min_cases
+    ]
+    out: dict[str, dict[str, float]] = {}
+    for name, cond in (("conditioned", True), ("fresh", False)):
+        fc = forecast_samples(model, result, origin, geos, draws=draws, conditioned=cond)
+        in50 = in90 = n = 0
+        errors = []
+        for g in geos:
+            series = cum.sum(axis=1) if g == "state" else cum[:, g]
+            for h in (1, 2, 3, 4):
+                mu = max(float(series[t0 + 7 * h] - series[t0 + 7 * (h - 1)]), 1e-9)
+                y = float(rng.negative_binomial(truth["k"], truth["k"] / (truth["k"] + mu)))
+                x = fc[_geo_key(model, g)][h]
+                lo50, hi50, lo90, hi90 = np.quantile(x, [0.25, 0.75, 0.05, 0.95])
+                in50 += lo50 <= y <= hi50
+                in90 += lo90 <= y <= hi90
+                errors.append(abs(float(np.median(x)) - y))
+                n += 1
+        out[name] = {
+            "targets": n,
+            "coverage_50": round(in50 / n, 3),
+            "coverage_90": round(in90 / n, 3),
+            "median_abs_error": round(float(np.median(errors)), 2),
+        }
+    return out
 
 
 def fit_real(
@@ -403,7 +459,7 @@ def fit_real(
     result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
     secs = time.monotonic() - t0
     out = out_dir or OUTPUTS / "real" / origin.isoformat()
-    samples = forecast_samples(model, result, origin, list(prob.obs.series), draws=draws)
+    samples = forecast_samples(model, result, origin, all_geographies(model), draws=draws)
     rows = [
         {"geography": g, "horizon_weeks": h, "draw": i, "new_cases": float(v)}
         for g, by_h in samples.items()
@@ -470,21 +526,27 @@ def forecast_samples(
     horizons: tuple[int, ...] = (1, 2, 3, 4),
     draws: int = 200,
     seed: int = 11,
+    conditioned: bool = True,
 ) -> dict[str, dict[int, np.ndarray]]:
     """Posterior predictive samples of cases newly reported in each week after ``origin``, per
-    geography (county index or "state"): simulate from posterior draws, report through the
-    observation model, and draw negative binomial weekly counts."""
+    geography (county index or "state"): report the epidemic through the observation model and
+    draw negative binomial weekly counts. ``conditioned`` (the default, ADR 0021) continues each
+    resampled particle's own accepted trajectory (its simulation seed), so a forecast starts
+    from an epidemic that matched the data; otherwise each draw is a fresh simulation."""
     run = simulate_fn(model)
     t0 = (origin - model.start).days
     if t0 + 7 * max(horizons) >= model.days:
         raise ValueError("the model run ends before the last forecast week")
+    if conditioned and result.seeds is None:
+        raise ValueError("the fit kept no particle seeds; cannot continue its trajectories")
     rng = np.random.default_rng(seed)
     out: dict[str, dict[int, list[float]]] = {
         _geo_key(model, g): {h: [] for h in horizons} for g in geographies
     }
-    for n, row in enumerate(result.resample(draws, seed)):
-        theta = {p.name: float(x) for p, x in zip(result.priors, row, strict=True)}
-        cum = cal.expected_cumulative(run(theta, 700_000 + n), theta, model.start)
+    for n, i in enumerate(result.resample_index(draws, seed)):
+        theta = {p.name: float(x) for p, x in zip(result.priors, result.samples[i], strict=True)}
+        sim_seed = int(result.seeds[i]) if conditioned and result.seeds is not None else 700_000 + n
+        cum = cal.expected_cumulative(run(theta, sim_seed), theta, model.start)
         k = theta["k"]
         for g in geographies:
             series = cum.sum(axis=1) if g == "state" else cum[:, g]
@@ -492,6 +554,11 @@ def forecast_samples(
                 mu = max(float(series[t0 + 7 * h] - series[t0 + 7 * (h - 1)]), 1e-9)
                 out[_geo_key(model, g)][h].append(float(rng.negative_binomial(k, k / (k + mu))))
     return {g: {h: np.array(v) for h, v in by_h.items()} for g, by_h in out.items()}
+
+
+def all_geographies(model: PAModel) -> list[Any]:
+    """Every county (by index) and the state: forecasts are made for each, pooled or not."""
+    return [*range(len(model.fips)), "state"]
 
 
 def _geo_key(model: PAModel, g: Any) -> str:
@@ -513,7 +580,7 @@ def forecaster(
         model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
         prob, _ = curated_problem(model, root, known_at)
         result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
-        return forecast_samples(model, result, origin, list(prob.obs.series), draws=draws)
+        return forecast_samples(model, result, origin, all_geographies(model), draws=draws)
 
     return run
 
