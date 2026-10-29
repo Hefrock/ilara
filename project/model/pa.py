@@ -47,6 +47,7 @@ OUTPUTS = Path(__file__).resolve().parents[1] / "outputs" / "calibration_pa"
 DRY_TRUTH = {
     "r0": 15.0,
     "lead_days": 21.0,
+    "censored_lead_days": 60.0,
     "factor_intervention": 0.8,
     "factor_health_alert": 0.9,
     "rho": 0.7,
@@ -197,6 +198,9 @@ def priors(model: PAModel) -> list[cal.Prior]:
             float(model.params["seeding"]["lead_days"]["high"]),
         ),
     ]
+    if "censored_lead_days" in model.params["seeding"]:  # ADR 0022
+        c = model.params["seeding"]["censored_lead_days"]
+        out.append(cal.Prior("censored_lead_days", float(c["low"]), float(c["high"])))
     for etype, v in model.params["interventions"].items():
         out.append(cal.Prior(f"factor_{etype}", float(v["low"]), 1.0))
     return out + list(cal.OBSERVATION_PRIORS)
@@ -220,6 +224,9 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
             mode=sp_seed["mode"],
             exposed=int(sp_seed["exposed"]),
             lead_days=int(round(theta["lead_days"])),
+            censored_lead_days=(
+                int(round(theta["censored_lead_days"])) if "censored_lead_days" in theta else None
+            ),
         )
         effects = {t: {"factor": theta[f"factor_{t}"], "lag_days": lag} for t, lag in lags.items()}
         mult, _ = inputs.intervention_mult(

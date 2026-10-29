@@ -45,16 +45,21 @@ interventions:
 # (inputs.first_known). case_events: alerts whose text states cases in their county (checked
 # by hand: ev-001 "Five confirmed measles cases in Lancaster County", ev-002 "Advisory after
 # cases in Lebanon County"; HAN 830 reports wastewater only and is not listed). presence_types:
-# event types showing an infectious person was present. mode first seeds only the earliest
-# county, the rest spread through coupling; all seeds every county (sensitivity).
+# event types showing an infectious person was present. mode all seeds every county with a known
+# case (the outbreak has several foci, ADR 0022); first seeds only the earliest county and the
+# rest spread through coupling (sensitivity).
 seeding:
-  mode: first
+  mode: all
   exposed: 5
   case_events: [ev-001, ev-002]
   presence_types: [exposure]
   # The first known date is an upper bound; seeding is this many days earlier (about one
   # generation plus a reporting delay). Calibrated in 6c.
   lead_days: {value: 21, low: 7, high: 42, status: ASSUMPTION}
+  # Counties first known only from the first county snapshot (censored: 35 counties holding 549
+  # of the 1,004 cases on 2026-10-05) had outbreaks under way by then, start unknown. One shared
+  # lead before that snapshot, calibrated in 6c; the range is wide on purpose (ADR 0022).
+  censored_lead_days: {value: 60, low: 14, high: 150, status: ASSUMPTION}
 
 # Expected external exposures per day, statewide, spread by population (S11: other states'
 # outbreaks; no cross-state mobility data).

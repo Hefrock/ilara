@@ -63,8 +63,9 @@ def test_build_on_repo_data(model: pa.PAModel) -> None:
     assert model.days == (date(2026, 10, 26) - model.start).days + 1
     assert model.vaccination.shape == (model.days, 67) and (model.vaccination >= 0).all()
     names = [p.name for p in pa.priors(model)]
-    assert names[:4] == ["r0", "lead_days", "factor_intervention", "factor_health_alert"]
-    assert set(names[4:]) == {p.name for p in cal.OBSERVATION_PRIORS}
+    assert names[:3] == ["r0", "lead_days", "censored_lead_days"]  # ADR 0022
+    assert names[3:5] == ["factor_intervention", "factor_health_alert"]
+    assert set(names[5:]) == {p.name for p in cal.OBSERVATION_PRIORS}
 
 
 def test_simulation_is_seeded_and_uses_theta(model: pa.PAModel) -> None:
@@ -75,6 +76,13 @@ def test_simulation_is_seeded_and_uses_theta(model: pa.PAModel) -> None:
     first = model.first_known["known_by"].min()
     seed_day = (first - model.start).days - 7
     assert f(lead, 3)[: seed_day + 1].sum() == model.params["seeding"]["exposed"]
+    # ADR 0022: counties first known only from the first snapshot are seeded the calibrated
+    # censored lead before it; a longer lead gives their outbreaks more time by then.
+    cz = [model.fips.index(c) for c in model.first_known.filter(pl.col("censored"))["county_fips"]]
+    t5 = (pa.FIRST_SNAPSHOT - model.start).days
+    short = f({**pa.DRY_TRUTH, "censored_lead_days": 14.0}, 3)[:t5, cz].sum()
+    long = f({**pa.DRY_TRUTH, "censored_lead_days": 150.0}, 3)[:t5, cz].sum()
+    assert long > short
 
 
 def test_synthetic_dry_run_fits_and_writes(model: pa.PAModel, tmp_path: Path) -> None:
