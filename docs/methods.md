@@ -69,14 +69,17 @@ after a gamma delay (11.5 days to rash plus a reporting delay), with fewer repor
 and with negative binomial noise on the increase between consecutive snapshots. Candidates are
 kept when their simulated increases are close to the observed ones.
 
-Fitted: R0 (9.9 to 18.1), `lead_days` (7 to 42), the intervention and health-alert factors,
+Fitted: R0 (9.9 to 18.1), `lead_days` (7 to 42), `censored_lead_days` (14 to 150), the intervention and health-alert factors,
 ascertainment, reporting delay, weekend factor and dispersion. Observations are the T1 county
 snapshots plus the statewide counts in DOH releases before the first snapshot. A county count
 that DOH later revised down is superseded by the revision and left out of the fit as a gap,
 unchanged ([ADR 0020](adr/0020-superseded-snapshots-fit-guards-vaccine-chart.md)). Counties with
 fewer than 10 cases at the origin are fitted as one group, so the distance is not dominated by
 counties with nothing to match
-([ADR 0021](adr/0021-conditioned-forecasts-and-pooled-small-counties.md)).
+([ADR 0021](adr/0021-conditioned-forecasts-and-pooled-small-counties.md)). Every county with
+a known case is seeded before its first known date; counties first seen only at the first county
+snapshot share one calibrated lead before it
+([ADR 0022](adr/0022-seed-every-county-censored-lead.md)).
 
 Checks so far, on synthetic data only:
 

@@ -185,9 +185,12 @@ def seeding(
     mode: str,
     exposed: int,
     lead_days: int,
+    censored_lead_days: int | None = None,
 ) -> tuple[np.ndarray, list[str]]:
-    """Fixed exposures ``lead_days`` before each county's first known date: the earliest
-    county only (``first``) or every county (``all``, a sensitivity variant)."""
+    """Fixed exposures ``lead_days`` before each county's first known date: every county with a
+    known case (``all``) or the earliest county only (``first``, a sensitivity variant). A county
+    first known only from the first snapshot (censored) is seeded ``censored_lead_days`` before
+    it when that is given (ADR 0022), else ``lead_days``."""
     if mode not in ("first", "all"):
         raise ValueError("seeding mode must be 'first' or 'all'")
     seeds = np.zeros((days, len(fips)), dtype=np.int64)
@@ -196,13 +199,14 @@ def seeding(
     if mode == "first":
         rows = rows.filter(pl.col("known_by") == rows["known_by"].min()) if rows.height else rows
     for f, d, censored in rows.select("county_fips", "known_by", "censored").rows():
-        t = _day(d, start) - lead_days
+        lead = censored_lead_days if censored and censored_lead_days is not None else lead_days
+        t = _day(d, start) - lead
         if t < 0:
             notes.append(f"{f}: seeding day before the run start, seeded on day 0")
             t = 0
         if t >= days:
             continue
-        if censored:
+        if censored and censored_lead_days is None:
             notes.append(f"{f}: first known only from the first snapshot ({d}), so seeding is late")
         seeds[t, fips.index(f)] += exposed
     if not rows.height:
@@ -256,5 +260,8 @@ def build(
         mode=sp["mode"],
         exposed=int(sp["exposed"]),
         lead_days=int(sp["lead_days"]["value"]),
+        censored_lead_days=(
+            int(sp["censored_lead_days"]["value"]) if "censored_lead_days" in sp else None
+        ),
     )
     return Inputs(fips, start, days, school * interv, seeds, known, n1 + n2 + n3)

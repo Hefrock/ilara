@@ -194,10 +194,31 @@ def test_build_on_curated_data() -> None:
     out = inputs.build(START, 300, fips, params)
     k = {r["county_fips"]: r for r in out.first_known.iter_rows(named=True)}
     assert (k["42071"]["known_by"], k["42071"]["basis"]) == (date(2026, 2, 3), "ev-001")
-    # Default seeding: the earliest county only, 21 days before its first known date.
-    assert out.seeds.sum() == params["seeding"]["exposed"]
+    # Default seeding (ADR 0022): every county with a known case, 21 days before its first
+    # known date, or the censored lead before the first snapshot for counties first seen there.
+    seeded = (out.seeds.sum(axis=0) > 0).sum()
+    assert out.seeds.sum() == params["seeding"]["exposed"] * seeded
+    assert seeded == out.first_known.filter(pl.col("county_fips").is_in(fips)).height
     assert out.seeds[(date(2026, 2, 3) - START).days - 21, fips.index("42071")] > 0
+    cz = out.first_known.filter(pl.col("censored"))["county_fips"][0]
+    t5 = (date(2026, 10, 5) - START).days - int(params["seeding"]["censored_lead_days"]["value"])
+    assert out.seeds[t5, fips.index(cz)] > 0
     assert (out.mult == 1).all()  # all factors default to no effect until calibrated
     # Replay: nothing fetched after a cutoff is used (E11).
     early = inputs.build(START, 300, fips, params, known_at=datetime(2026, 1, 1, tzinfo=UTC))
     assert early.seeds.sum() == 0 and early.first_known.height == 0
+
+
+def test_censored_counties_use_their_own_lead() -> None:  # ADR 0022
+    # Chester first known only from the first snapshot: an outbreak already under way.
+    snap = _snap([("42029", date(2026, 10, 5), 84)])
+    known = inputs.first_known(EV.head(0), {}, snap, case_events=[], presence_types=[])
+    assert known["censored"].to_list() == [True]
+    t5 = (date(2026, 10, 5) - START).days
+    seeds, notes = inputs.seeding(
+        known, ["42029"], START, 365, mode="all", exposed=5, lead_days=21, censored_lead_days=90
+    )
+    assert seeds[t5 - 90, 0] == 5 and seeds.sum() == 5
+    assert not any("seeding is late" in n for n in notes)
+    seeds, notes = inputs.seeding(known, ["42029"], START, 365, mode="all", exposed=5, lead_days=21)
+    assert seeds[t5 - 21, 0] == 5 and any("seeding is late" in n for n in notes)
