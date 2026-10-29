@@ -30,7 +30,8 @@ weekly forecasts, which is no earlier than 30 December 2026.
 
 How the data and model work: [`docs/methods.md`](docs/methods.md). Progress:
 [`docs/PROGRESS.md`](docs/PROGRESS.md). Build plan: [`docs/HANDOFF.md`](docs/HANDOFF.md).
-Decisions: [`docs/adr/`](docs/adr/).
+Decisions: [`docs/adr/`](docs/adr/). What went wrong and what it taught us:
+[`docs/lessons.md`](docs/lessons.md).
 
 ## Reading the numbers
 

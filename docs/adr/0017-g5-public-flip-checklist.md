@@ -16,6 +16,11 @@ checked, with evidence, before the owner decides B11 (the irreversible flip).
 - [ ] Scheduled-workflow behaviour for public repositories checked against current GitHub
       documentation (U21, U23).
 - [ ] B13 decided: how to treat the first commit's author metadata.
+- [ ] Licence for the documentation and the curated data decided (the code is MIT), so the
+      archive can be reused for teaching (owner, 2026-10-29).
+- [ ] Archiving decided: whether a release is deposited with a DOI (for example through Zenodo),
+      which publishes that snapshot permanently, and which release (owner, 2026-10-29; see the
+      end-of-outbreak plan, ADR 0023).
 
 ## Known exceptions
 
