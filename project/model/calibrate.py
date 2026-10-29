@@ -30,7 +30,7 @@ import csv
 import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +87,14 @@ class Observations:
     start: date
     series: dict[Any, tuple[np.ndarray, np.ndarray]]  # geo -> (days, cumulative counts)
     superseded: list[str] = field(default_factory=list)  # snapshots left out (ADR 0020)
+    groups: dict[Any, list[int]] = field(default_factory=dict)  # pooled geo -> county indices
+
+    def columns(self, geo: Any, n_counties: int) -> list[int]:
+        """Simulated county columns a geography sums: all for "state", the members of a
+        pooled group, or the county itself."""
+        if geo == "state":
+            return list(range(n_counties))
+        return self.groups.get(geo, [geo])
 
     def increments(self) -> dict[Any, tuple[np.ndarray, np.ndarray]]:
         """Per geography: the snapshot days and the increases between consecutive snapshots.
@@ -156,7 +164,7 @@ class Problem:
         k = theta["k"]
         out = {}
         for geo, (days, _y) in self._inc.items():
-            series = cum.sum(axis=1) if geo == "state" else cum[:, geo]
+            series = cum[:, self.obs.columns(geo, cum.shape[1])].sum(axis=1)
             mu = np.maximum(np.diff(series[np.minimum(days, len(series) - 1)]), 1e-9)
             out[geo] = rng.negative_binomial(k, k / (k + mu)).astype(float)
         return out
@@ -189,6 +197,7 @@ class Fit:
     seed: int
     simulations: int = 0
     acceptance: list[float] = field(default_factory=list)
+    seeds: np.ndarray | None = None  # each particle's simulation seed (its accepted trajectory)
 
     def summary(self, level: float = 0.9) -> dict[str, dict[str, float]]:
         lo, hi = (1 - level) / 2, 1 - (1 - level) / 2
@@ -200,9 +209,12 @@ class Fit:
             out[p.name] = {"low": q[0], "median": q[1], "high": q[2]}
         return out
 
-    def resample(self, n: int, seed: int = 0) -> np.ndarray:
+    def resample_index(self, n: int, seed: int = 0) -> np.ndarray:
         rng = np.random.default_rng(seed)
-        return self.samples[rng.choice(len(self.samples), size=n, p=self.weights)]
+        return rng.choice(len(self.samples), size=n, p=self.weights)
+
+    def resample(self, n: int, seed: int = 0) -> np.ndarray:
+        return self.samples[self.resample_index(n, seed)]
 
 
 def _theta(priors: Sequence[Prior], row: np.ndarray) -> dict[str, float]:
@@ -231,14 +243,17 @@ def fit(
     d = len(pri)
     sims = 0
 
-    def run(u: np.ndarray) -> float:
+    def run(u: np.ndarray) -> tuple[float, int]:
         nonlocal sims
         sims += 1
         x = np.array([p.from_unit(u[j]) for j, p in enumerate(pri)])
-        return problem.distance(problem.dataset(_theta(pri, x), int(rng.integers(2**31))))
+        s = int(rng.integers(2**31))
+        return problem.distance(problem.dataset(_theta(pri, x), s)), s
 
     u = rng.random((particles, d))
-    dist = np.array([run(r) for r in u])
+    first = [run(r) for r in u]
+    dist = np.array([dd for dd, _s in first])
+    seeds = np.array([s for _dd, s in first])
     if not np.isfinite(dist).all():
         raise ValueError("a distance is not finite: the fit would return the prior (ADR 0020)")
     w = np.full(particles, 1.0 / particles)
@@ -255,6 +270,7 @@ def fit(
         inv = np.linalg.inv(cov)
         new_u: list[np.ndarray] = []
         new_d: list[float] = []
+        new_s: list[int] = []
         tries = 0
         while len(new_u) < particles:
             prop = u[rng.choice(particles, p=w)] + chol @ rng.normal(size=d)
@@ -263,23 +279,24 @@ def fit(
             tries += 1
             if tries > particles / min_acceptance:
                 break
-            dd = run(prop)
+            dd, sd = run(prop)
             if dd < eps or (dd == eps and not strict):
                 new_u.append(prop)
                 new_d.append(dd)
+                new_s.append(sd)
         if len(new_u) < particles:
             break  # acceptance too low: keep the previous generation
         nu = np.array(new_u)
         diff = nu[:, None, :] - u[None, :, :]
         kern = np.exp(-0.5 * np.einsum("ijk,kl,ijl->ij", diff, inv, diff))
         nw = 1.0 / (kern @ w)
-        u, dist, w = nu, np.array(new_d), nw / nw.sum()
+        u, dist, w, seeds = nu, np.array(new_d), nw / nw.sum(), np.array(new_s)
         tols.append(eps)
         acc_rates.append(particles / tries)
     if generations > 0 and len(tols) == 1:
         raise RuntimeError("no generation was accepted: the result would be the prior")
     x = np.column_stack([p.from_unit(u[:, i]) for i, p in enumerate(pri)])
-    return Fit(pri, x, w, tols, seed, sims, acc_rates)
+    return Fit(pri, x, w, tols, seed, sims, acc_rates, seeds)
 
 
 def posterior_predictive(
@@ -365,6 +382,38 @@ def superseded_mask(cum: np.ndarray) -> np.ndarray:
     return c <= later_min
 
 
+def pool_small(obs: Observations, min_cases: int) -> Observations:
+    """Counties whose latest count is below ``min_cases`` fitted as one "rest" geography: the
+    sum of their counts on the snapshot days they all have (a missing count is a gap, I5).
+    Counties at or above it and "state" are kept as they are (ADR 0021)."""
+    small = [g for g, (_d, c) in obs.series.items() if g != "state" and float(c[-1]) < min_cases]
+    if min_cases <= 0 or len(small) < 2:
+        return obs
+    by_day = [
+        dict(zip(obs.series[g][0].tolist(), obs.series[g][1].tolist(), strict=True)) for g in small
+    ]
+    days = sorted(set.intersection(*(set(b) for b in by_day)))
+    series = {g: v for g, v in obs.series.items() if g not in small}
+    if days:
+        series["rest"] = (np.array(days), np.array([sum(b[d] for b in by_day) for d in days]))
+    return Observations(obs.start, series, list(obs.superseded), {**obs.groups, "rest": small})
+
+
+def drop_superseded(obs: Observations, label: Callable[[Any], str]) -> Observations:
+    """Every geography's superseded snapshots left out (``superseded_mask``), listed by
+    ``label(geo)``, day and count."""
+    series, gone = {}, list(obs.superseded)
+    for g, (days, cum) in obs.series.items():
+        keep = superseded_mask(cum)
+        gone += [
+            f"{label(g)} {obs.start + timedelta(days=int(d))} {int(n)}"
+            for d, n, k in zip(days, cum, keep, strict=True)
+            if not k
+        ]
+        series[g] = (np.asarray(days)[keep], np.asarray(cum)[keep])
+    return Observations(obs.start, series, gone, dict(obs.groups))
+
+
 def default_county_rows(
     county: pl.DataFrame, allow_tiers: frozenset[str] = frozenset({"T1"})
 ) -> pl.DataFrame:
@@ -385,10 +434,13 @@ def observations_from_curated(
     root: Path | None = None,
     known_at: datetime | None = None,
     allow_tiers: frozenset[str] = frozenset({"T1"}),
+    pool_below: int = 0,
 ) -> tuple[Observations, dict[str, list[str]]]:
     """County snapshots (and statewide totals before them) from the curated store, for the
     default fit: T1 rows only (T6.12), calendar-year counts, DOH source. Refuses before Gate G3.
-    Returns the observations and the raw references read, for the run manifest."""
+    Counties whose latest count is below ``pool_below`` are fitted as one group (ADR 0021);
+    superseded snapshots are then left out (ADR 0020). Returns the observations and the raw
+    references read, for the run manifest."""
 
     def read(table: str) -> pl.DataFrame:
         if known_at is None:
@@ -408,23 +460,15 @@ def observations_from_curated(
             "county fit on real data"
         )
     series: dict[Any, tuple[np.ndarray, np.ndarray]] = {}
-    superseded: list[str] = []
     for i, f in enumerate(fips):
         # A missing count is a gap, not a zero (I5): those snapshots are left out.
         rows = county.filter((pl.col("county_fips") == f) & pl.col("cum_cases").is_not_null()).sort(
             "as_of_date"
         )
         if rows.height:
-            cum = rows["cum_cases"].to_numpy()
-            keep = superseded_mask(cum)
-            superseded += [
-                f"{f} {d} {n}"
-                for d, n, k in zip(rows["as_of_date"], cum, keep, strict=True)
-                if not k
-            ]
             series[i] = (
-                np.array([(d - start).days for d in rows["as_of_date"]])[keep],
-                cum[keep],
+                np.array([(d - start).days for d in rows["as_of_date"]]),
+                rows["cum_cases"].to_numpy(),
             )
     st = (
         state.filter(
@@ -438,17 +482,14 @@ def observations_from_curated(
         .unique("as_of_date", keep="last", maintain_order=True)
     )
     if st.height:
-        cum = st["cum_cases"].to_numpy()
-        keep = superseded_mask(cum)
-        superseded += [
-            f"state {d} {n}" for d, n, k in zip(st["as_of_date"], cum, keep, strict=True) if not k
-        ]
         series["state"] = (
-            np.array([(d - start).days for d in st["as_of_date"]])[keep],
-            cum[keep],
+            np.array([(d - start).days for d in st["as_of_date"]]),
+            st["cum_cases"].to_numpy(),
         )
     refs = {
         "case_county": [r for r in county["raw_sha256"].to_list() if r],
         "case_state": [r for r in st["raw_sha256"].to_list() if r] if st.height else [],
     }
-    return Observations(start, series, superseded), refs
+    obs = pool_small(Observations(start, series), pool_below)
+    obs = drop_superseded(obs, lambda g: fips[g] if isinstance(g, int) else str(g))
+    return obs, refs

@@ -73,7 +73,10 @@ Fitted: R0 (9.9 to 18.1), `lead_days` (7 to 42), the intervention and health-ale
 ascertainment, reporting delay, weekend factor and dispersion. Observations are the T1 county
 snapshots plus the statewide counts in DOH releases before the first snapshot. A county count
 that DOH later revised down is superseded by the revision and left out of the fit as a gap,
-unchanged ([ADR 0020](adr/0020-superseded-snapshots-fit-guards-vaccine-chart.md)).
+unchanged ([ADR 0020](adr/0020-superseded-snapshots-fit-guards-vaccine-chart.md)). Counties with
+fewer than 10 cases at the origin are fitted as one group, so the distance is not dominated by
+counties with nothing to match
+([ADR 0021](adr/0021-conditioned-forecasts-and-pooled-small-counties.md)).
 
 Checks so far, on synthetic data only:
 
@@ -97,7 +100,8 @@ writes the posterior, predictive checks, forecast samples and a manifest under
 ## 5. Validation (WP6d)
 
 At weekly origins from 2026-10-28, the model is refitted on data fetched by the end of that day
-and forecasts cases newly reported in each of the next four weeks, per county and statewide
+and forecasts cases newly reported in each of the next four weeks, per county and statewide,
+by continuing the accepted simulated epidemics past the origin (ADR 0021)
 ([ADR 0013](adr/0013-forecast-validation-and-g4-gate.md)). Forecasts are scored with the
 weighted interval score and the coverage of their 50, 80 and 90 percent intervals, against a
 persistence baseline on the same targets. Any read of data fetched after an origin stops the

@@ -147,13 +147,53 @@ def test_dry_run_uses_the_real_statewide_dates(model: pa.PAModel) -> None:
 def test_forecast_samples_from_a_posterior(model: pa.PAModel) -> None:
     pri = pa.priors(model)
     row = np.array([[pa.DRY_TRUTH[p.name] for p in pri]] * 4)
-    fit = cal.Fit(pri, row, np.full(4, 0.25), [float("inf")], 1)
+    fit = cal.Fit(pri, row, np.full(4, 0.25), [float("inf")], 1, seeds=np.array([5, 6, 7, 8]))
     lanc = model.fips.index("42071")
     out = pa.forecast_samples(model, fit, date(2026, 9, 7), [lanc, "state"], draws=30)
     assert set(out) == {"42071", "state"} and set(out["state"]) == {1, 2, 3, 4}
     assert all(len(s) == 30 and (s >= 0).all() for by_h in out.values() for s in by_h.values())
     with pytest.raises(ValueError, match="ends before"):
         pa.forecast_samples(model, fit, date(2026, 10, 20), ["state"], draws=2)
+    # Without particle seeds only an unconditioned forecast is possible (ADR 0021).
+    bare = cal.Fit(pri, row, np.full(4, 0.25), [float("inf")], 1)
+    with pytest.raises(ValueError, match="no particle seeds"):
+        pa.forecast_samples(model, bare, date(2026, 9, 7), ["state"], draws=2)
+    assert pa.forecast_samples(model, bare, date(2026, 9, 7), ["state"], draws=2, conditioned=False)
+
+
+def test_conditioned_forecasts_continue_the_accepted_trajectory(model: pa.PAModel) -> None:
+    # ADR 0021: one particle, so every conditioned draw continues the same epidemic; only the
+    # reporting noise differs. Fresh simulations spread far wider.
+    pri = pa.priors(model)
+    row = np.array([[pa.DRY_TRUTH[p.name] for p in pri]])
+    fit = cal.Fit(pri, row, np.ones(1), [float("inf")], 1, seeds=np.array([20261015]))
+    o = date(2026, 9, 7)
+    cond = pa.forecast_samples(model, fit, o, ["state"], draws=40)["state"][1]
+    fresh = pa.forecast_samples(model, fit, o, ["state"], draws=40, conditioned=False)["state"][1]
+    run = pa.simulate_fn(model)
+    theta = {p.name: pa.DRY_TRUTH[p.name] for p in pri}
+    cum = cal.expected_cumulative(run(theta, 20261015), theta, model.start).sum(axis=1)
+    t0 = (o - model.start).days
+    mean = cum[t0 + 7] - cum[t0]
+    assert abs(np.mean(cond) - mean) < 4 * np.sqrt(mean + mean**2 / theta["k"]) / np.sqrt(40) + 1
+    assert np.std(fresh) >= np.std(cond)
+
+
+def test_curated_problem_pools_small_counties(model: pa.PAModel) -> None:  # ADR 0021
+    obs = cal.Observations(
+        model.start,
+        {
+            0: (np.array([10, 12]), np.array([50.0, 60.0])),
+            1: (np.array([10, 12]), np.array([2.0, 3.0])),
+            2: (np.array([10, 12]), np.array([0.0, 1.0])),
+            3: (np.array([12]), np.array([4.0])),  # a gap on day 10: not summed there (I5)
+        },
+    )
+    p = cal.pool_small(obs, 10)
+    assert set(p.series) == {0, "rest"} and p.groups["rest"] == [1, 2, 3]
+    assert p.series["rest"][0].tolist() == [12] and p.series["rest"][1].tolist() == [8.0]
+    assert p.columns("rest", 4) == [1, 2, 3] and p.columns(0, 4) == [0]
+    assert cal.pool_small(obs, 0) is obs
 
 
 def test_cutoff_is_the_end_of_the_origin_day_eastern() -> None:
