@@ -36,12 +36,13 @@ from typing import Any
 from ingest.parse.dsr import decode_result, where_values
 from ingest.reference import crosswalk, pa_counties
 
-PARSER_VERSION = "1.7.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
+PARSER_VERSION = "1.8.0"  # 1.1.0: MMR doses by DOH staff; 1.2.0: age, month, hospitalization;
 # 1.3.0: when DOH last refreshed the report data (source_refreshed_utc, ADR 0010);
 # 1.4.0: age groups from the republished report (from 2026-10-13);
 # 1.5.0: cases by onset week from the Epidemic Curve tab (ADR 0014, 0015);
 # 1.6.0: re-parse for the narrower T3.15 county check (ADR 0016; runner change, same output);
-# 1.7.0: county table from any map table version, hospitalizations by age group (ADR 0018)
+# 1.7.0: county table from any map table version, hospitalizations by age group (ADR 0018);
+# 1.8.0: vaccine doses from the weekly MMR table used from 2026-10-28 (ADR 0020)
 SOURCE_LABEL = "DOH measles dashboard"
 
 T = "PAmeasles2026_Public"
@@ -65,6 +66,13 @@ V = "PAmeasles2026_Public_mmr"
 REPORT_YEAR = 2026  # the year in the report's table names and chart axes, "Month (2026)"
 DOSE_MONTH = f"{V}.vaccination_date.Variation.Date Hierarchy.Month"
 DOSE_COUNT = f"CountNonNull({V}.vaccination_code)"
+# From 2026-10-28 the chart reads a weekly table of doses given at state health centers (the
+# same DOH-staff doses: every month to September matches the old chart exactly, ADR 0020).
+W = "MMR_Weekly_Dashboard_File"
+DOSE_CHARTS = (
+    (DOSE_MONTH, DOSE_COUNT),
+    (f"{W}.Date.Variation.Date Hierarchy.Month", f"Sum({W}.SHC_MMR_Doses)"),
+)
 MONTHS = {m: i for i, m in enumerate(calendar.month_name) if m}
 AGE = ("AgeDimTable.agegrp", f"CountNonNull({T}.agegrp)")
 # Republished report (from 2026-10-13): counts from a separate age table, no "Unk" group.
@@ -476,11 +484,20 @@ def _doses(
     seen = False
     problem: str | None = None
     for q in queries:
-        if q["names"] != [DOSE_MONTH, DOSE_COUNT]:
+        chart = next(
+            (
+                (m, c)
+                for m, c in DOSE_CHARTS
+                if q["names"] and q["names"][0] == m and q["names"][-1] == c
+            ),
+            None,
+        )
+        if chart is None:
             continue
         seen = True
+        month_col, count_col = chart
         for r in q["blocks"].get("DM0", []):
-            name, n = r.get(DOSE_MONTH), r.get(DOSE_COUNT)
+            name, n = r.get(month_col), r.get(count_col)
             if name not in MONTHS:
                 problem = f"unexpected month {name!r} in the vaccine doses chart"
             elif n is None:

@@ -146,3 +146,34 @@ def test_a_missing_county_count_is_a_gap_not_a_zero(root: Path) -> None:  # I5
     days, y = obs.series[0]
     assert len(days) == 10 and (date(2026, 9, 5) - date(2026, 8, 1)).days not in days
     assert (y == 100).all()
+
+
+def test_a_count_revised_down_later_is_superseded_not_changed() -> None:  # I5, ADR 0020
+    # Forest County on the real dashboard: 2 cases on Oct 14 and 16, then 0 from Oct 19.
+    keep = cal.superseded_mask(np.array([0, 0, 0, 2, 2, 0, 0]))
+    assert keep.tolist() == [True, True, True, False, False, True, True]
+    # Mifflin County: 194 on Oct 19, then 193; the later 194 is kept.
+    keep = cal.superseded_mask(np.array([183, 193, 194, 193, 193, 194, 198]))
+    assert keep.tolist() == [True, True, False, True, True, True, True]
+    assert cal.superseded_mask(np.array([1, 2, 3])).all()
+
+
+def test_decreasing_observations_and_nan_distances_fail_loudly() -> None:  # ADR 0020
+    obs = cal.Observations(date(2026, 1, 1), {0: (np.array([0, 7, 14]), np.array([2, 0, 0]))})
+    with pytest.raises(ValueError, match="decrease"):
+        cal.Problem(lambda theta, seed: np.zeros((30, 1)), [cal.Prior("rho", 0.1, 1.0)], obs)
+
+
+def test_a_fit_with_no_finite_distance_raises() -> None:  # ADR 0020
+    obs = cal.Observations(date(2026, 1, 1), {0: (np.array([0, 7, 14]), np.array([0, 1, 2]))})
+
+    class Broken(cal.Problem):
+        def dataset(self, theta: dict, seed: int) -> dict:  # type: ignore[type-arg]
+            return {}
+
+        def distance(self, sim: dict) -> float:  # type: ignore[type-arg]
+            return float("nan")
+
+    prob = Broken(lambda theta, seed: np.zeros((30, 1)), [cal.Prior("rho", 0.1, 1.0)], obs)
+    with pytest.raises(ValueError, match="not finite"):
+        cal.fit(prob, particles=5, generations=1)

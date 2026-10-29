@@ -183,20 +183,25 @@ def _outputs_exist(run_id: str, when: datetime, root: Path) -> bool:
     )
 
 
-def _county_drop(rows: list[dict[str, Any]], root: Path) -> str | None:
+def _county_drop(rows: list[dict[str, Any]], fetched: datetime, root: Path) -> str | None:
     """T3.15 (ADR 0016): a county parse that looks like a broken load compared with the latest
-    earlier snapshot of the same source (whatever its count definition, so a broken load that
-    no longer matches the statewide total is still compared): fewer county rows, or a lower
-    county sum. A single county whose count falls while the total does not is a source
-    revision: it is stored, and the quality engine flags it ``CUM_DECREASE`` (T3.6)."""
+    earlier snapshot of the same source: fewer county rows, or a lower county sum. The parse
+    is checked whatever its own count definition (a broken load that no longer matches the
+    statewide total is still compared), but the baseline is only what was known when this
+    capture was fetched, and never a snapshot labelled ``unknown`` (a broken or mixed load),
+    so an incremental re-parse and a rebuild decide alike (I2, ADR 0020). A single county
+    whose count falls while the total does not is a source revision: it is stored, and the
+    quality engine flags it ``CUM_DECREASE`` (T3.6)."""
     if not rows:
         return None
     as_of = rows[0]["as_of_date"]
-    prev = access.current("case_county", root=root)
+    prev = access.as_known_at("case_county", fetched, root=root)
     if prev.height == 0:
         return None
     prev = prev.filter(
-        (pl.col("source_id") == rows[0]["source_id"]) & (pl.col("as_of_date") < as_of)
+        (pl.col("source_id") == rows[0]["source_id"])
+        & (pl.col("as_of_date") < as_of)
+        & (pl.col("count_definition") != "unknown")
     )
     if prev.height == 0:
         return None
@@ -267,7 +272,7 @@ def run(root: Path | None = None, source: str | None = None) -> ParseReport:
             rep.flags += 1
             continue
         flags = [_flag(c, m["sha256"], t, run_id, version, when) for c, t in out["flags"]]
-        drop = _county_drop(out.get("case_county", []), root)
+        drop = _county_drop(out.get("case_county", []), when, root)
         if drop:
             flags.append(_flag("COUNTY_COUNT_DROP", m["sha256"], drop, run_id, version, when))
             store.write(

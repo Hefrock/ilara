@@ -86,6 +86,7 @@ class Observations:
 
     start: date
     series: dict[Any, tuple[np.ndarray, np.ndarray]]  # geo -> (days, cumulative counts)
+    superseded: list[str] = field(default_factory=list)  # snapshots left out (ADR 0020)
 
     def increments(self) -> dict[Any, tuple[np.ndarray, np.ndarray]]:
         """Per geography: the snapshot days and the increases between consecutive snapshots.
@@ -140,6 +141,12 @@ class Problem:
 
     def __post_init__(self) -> None:
         self._inc = self.obs.increments()
+        bad = [g for g, (_d, y) in self._inc.items() if (y < 0).any()]
+        if bad:
+            raise ValueError(
+                f"observed counts decrease for {bad}: cumulative counts must not fall "
+                "(use superseded_mask, ADR 0020)"
+            )
 
     def dataset(self, theta: dict[str, float], seed: int) -> dict[Any, np.ndarray]:
         """One simulated dataset: snapshot increments per geography drawn from the full model
@@ -232,6 +239,8 @@ def fit(
 
     u = rng.random((particles, d))
     dist = np.array([run(r) for r in u])
+    if not np.isfinite(dist).all():
+        raise ValueError("a distance is not finite: the fit would return the prior (ADR 0020)")
     w = np.full(particles, 1.0 / particles)
     tols = [float("inf")]
     acc_rates: list[float] = []
@@ -267,6 +276,8 @@ def fit(
         u, dist, w = nu, np.array(new_d), nw / nw.sum()
         tols.append(eps)
         acc_rates.append(particles / tries)
+    if generations > 0 and len(tols) == 1:
+        raise RuntimeError("no generation was accepted: the result would be the prior")
     x = np.column_stack([p.from_unit(u[:, i]) for i, p in enumerate(pri)])
     return Fit(pri, x, w, tols, seed, sims, acc_rates)
 
@@ -345,6 +356,15 @@ class GateError(RuntimeError):
     pass
 
 
+def superseded_mask(cum: np.ndarray) -> np.ndarray:
+    """True for snapshots to keep: a count is kept only if no later snapshot of the same
+    geography is lower. A later, lower count is the source's own revision of it, so the higher
+    one is superseded and left out as a gap; no count is changed (I5, ADR 0020)."""
+    c = np.asarray(cum, dtype=float)
+    later_min = np.minimum.accumulate(c[::-1])[::-1]  # min of this and every later count
+    return c <= later_min
+
+
 def default_county_rows(
     county: pl.DataFrame, allow_tiers: frozenset[str] = frozenset({"T1"})
 ) -> pl.DataFrame:
@@ -388,15 +408,23 @@ def observations_from_curated(
             "county fit on real data"
         )
     series: dict[Any, tuple[np.ndarray, np.ndarray]] = {}
+    superseded: list[str] = []
     for i, f in enumerate(fips):
         # A missing count is a gap, not a zero (I5): those snapshots are left out.
         rows = county.filter((pl.col("county_fips") == f) & pl.col("cum_cases").is_not_null()).sort(
             "as_of_date"
         )
         if rows.height:
+            cum = rows["cum_cases"].to_numpy()
+            keep = superseded_mask(cum)
+            superseded += [
+                f"{f} {d} {n}"
+                for d, n, k in zip(rows["as_of_date"], cum, keep, strict=True)
+                if not k
+            ]
             series[i] = (
-                np.array([(d - start).days for d in rows["as_of_date"]]),
-                rows["cum_cases"].to_numpy(),
+                np.array([(d - start).days for d in rows["as_of_date"]])[keep],
+                cum[keep],
             )
     st = (
         state.filter(
@@ -410,12 +438,17 @@ def observations_from_curated(
         .unique("as_of_date", keep="last", maintain_order=True)
     )
     if st.height:
+        cum = st["cum_cases"].to_numpy()
+        keep = superseded_mask(cum)
+        superseded += [
+            f"state {d} {n}" for d, n, k in zip(st["as_of_date"], cum, keep, strict=True) if not k
+        ]
         series["state"] = (
-            np.array([(d - start).days for d in st["as_of_date"]]),
-            st["cum_cases"].to_numpy(),
+            np.array([(d - start).days for d in st["as_of_date"]])[keep],
+            cum[keep],
         )
     refs = {
         "case_county": [r for r in county["raw_sha256"].to_list() if r],
         "case_state": [r for r in st["raw_sha256"].to_list() if r] if st.height else [],
     }
-    return Observations(start, series), refs
+    return Observations(start, series, superseded), refs
