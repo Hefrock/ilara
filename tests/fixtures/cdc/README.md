@@ -6,3 +6,5 @@
 | `cases_page_2026-10-07.html.gz` | `data/raw/cdc_measles_national/2026/20261007T111650Z_e22bfc046224.html` (capture `gh-37612900766-1`) | CDC "Measles Cases and Outbreaks" page, updated October 2, data as of October 1, 2026 |
 | `cases_map_2026-10-23.json` | `data/raw/cdc_measles_cases_map/2026/20261023T183824Z_69a5149836a1.json` (capture `gh-40004730015-1`) | Map data in the wrapped format from 2026-10-23: `{"lastUpdated": "October 22, 2026", "data": [...]}` (ADR 0019) |
 | `cases_page_2026-10-23.html.gz` | `data/raw/cdc_measles_national/2026/20261023T183809Z_9c929808d90d.html` (capture `gh-40004730015-1`), gzipped | CDC cases page, data as of October 22, 2026 |
+| `cases_map_2026-10-30.json` | `data/raw/cdc_measles_cases_map/2026/20261030T193722Z_ded6b0df1bd2.json` (capture `gh-41116558883-1`) | Map data with a Spanish date beside `lastUpdated` and `data` (ADR 0024) |
+| `cases_page_2026-10-30.html.gz` | `data/raw/cdc_measles_national/2026/20261030T193707Z_007f7e614e78.html` (capture `gh-41116558883-1`), gzipped | CDC cases page, data as of October 29, 2026 |

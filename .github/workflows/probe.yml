@@ -16,7 +16,7 @@ concurrency:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       MEASLES_RUN_ID: gh-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
@@ -32,7 +32,8 @@ jobs:
         run: uv sync --frozen --all-extras
 
       - name: Install browser
-        run: uv run --frozen playwright install --with-deps --only-shell chromium
+        timeout-minutes: 11
+        run: .github/scripts/install-browser.sh
 
       - name: Git identity
         run: |

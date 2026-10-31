@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-31T02:14:00Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-30 (DOH refreshed the report 2026-10-30T20:10:42Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-31T02:21:14Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-30 (DOH refreshed the report 2026-10-30T20:10:42Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -18,13 +18,12 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
   - curated: county table total 1360 differs from the year-to-date total 1260
 - **DEMOGRAPHIC_SUM_MISMATCH** (1)
   - curated: hospitalizations by age group (groups ['0-4', '10-17', '18-24', '25-49', '5-9', '50+'], hospitalized 251 of 1317, totals 238 of 1260) not stored
-- **PARSE_SCHEMA_CHANGE** (10)
+- **PARSE_SCHEMA_CHANGE** (9)
   - curated: data/raw/doh_dashboard/2026/20261007T022732Z_f326ab94771c.json.gz: DashboardParseError: no data query responses in the capture
   - curated: data/raw/doh_dashboard/2026/20261013T194612Z_368a496a6009.json: DashboardParseError: no data query responses in the capture
   - curated: data/raw/doh_dashboard/2026/20261014T210515Z_431aa79bf630.json: DashboardParseError: no data query responses in the capture
   - curated: cases by age group not found in the capture
   - curated: cases by report month not found in the capture (x5)
-  - curated: data/raw/cdc_measles_cases_map/2026/20261030T193722Z_ded6b0df1bd2.json: CdcParseError: map data is not a non-empty list
 - **SOURCE_CONFLICT** (1)
   - curated: curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
 
@@ -97,7 +96,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Source conflicts
 
-- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
+- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 28 (ab7b6de37998); cum_cases 393, counties_with_cases 29 (ccf7dcb81392)
 
 ## Non-monotonic series
 
