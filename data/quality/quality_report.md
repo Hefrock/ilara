@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-31T02:21:14Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-30 (DOH refreshed the report 2026-10-30T20:10:42Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-31T02:30:28Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-30 (DOH refreshed the report 2026-10-30T20:10:42Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
