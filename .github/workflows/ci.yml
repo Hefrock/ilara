@@ -17,7 +17,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,7 +31,8 @@ jobs:
         run: uv sync --frozen --all-extras
 
       - name: Install browser for the offline capture tests
-        run: uv run --frozen playwright install --with-deps --only-shell chromium
+        timeout-minutes: 11
+        run: .github/scripts/install-browser.sh
 
       - name: make check (lint, type check, tests, guards)
         run: make check

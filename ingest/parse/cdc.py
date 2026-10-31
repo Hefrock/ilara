@@ -9,8 +9,9 @@ jurisdictions with cases equals K, so both describe the same snapshot (I6). Othe
 is stored and a ``DATE_TO_CONFIRM`` flag is raised.
 
 From 2026-10-23 the map file is an object, ``{"lastUpdated": "<Month D, YYYY>", "data": [rows]}``
-(ADR 0019); the rows are unchanged. ``lastUpdated`` is kept in the notes only: CDC's "updated"
-and "data as of" dates can differ by a day, so the page's "As of" date still dates the row.
+(ADR 0019), from 2026-10-30 with a Spanish date beside them (ADR 0024); the rows are unchanged.
+``lastUpdated`` is kept in the notes only: CDC's "updated" and "data as of" dates can differ by
+a day, so the page's "As of" date still dates the row.
 
 CDC counts are a cross-check (S6): DOH stays primary, and CDC rows never join the DOH series.
 """
@@ -23,7 +24,8 @@ import re
 from datetime import date, datetime
 from typing import Any
 
-PARSER_VERSION = "1.1.0"  # 1.1.0: map file wrapped with lastUpdated (ADR 0019)
+PARSER_VERSION = "1.2.0"  # 1.1.0: map file wrapped with lastUpdated (ADR 0019);
+# 1.2.0: extra keys beside the data list are ignored (lastUpdated_esp from 2026-10-30, ADR 0024)
 SOURCE_LABEL = "CDC measles cases by jurisdiction"
 STATE = "Pennsylvania"
 
@@ -59,7 +61,8 @@ def parse(map_bytes: bytes, page: dict[str, Any] | None) -> dict[str, Any]:
     """Return ``{"state": [rows], "flags": [(code, text)]}`` for Pennsylvania."""
     rows = json.loads(map_bytes)
     updated = None
-    if isinstance(rows, dict) and set(rows) == {"lastUpdated", "data"}:
+    if isinstance(rows, dict) and {"lastUpdated", "data"} <= set(rows):
+        # Other keys (such as the Spanish date, lastUpdated_esp) carry nothing we store.
         updated, rows = rows["lastUpdated"], rows["data"]
     if not isinstance(rows, list) or not rows:
         raise CdcParseError("map data is not a non-empty list")

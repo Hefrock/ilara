@@ -72,7 +72,7 @@ def test_parse_step_cannot_block_raw_commit() -> None:  # E19
 
 
 def test_scripts_exist() -> None:
-    for s in ("push-with-retry.sh", "commit-data.sh"):
+    for s in ("push-with-retry.sh", "commit-data.sh", "install-browser.sh"):
         assert (REPO / ".github" / "scripts" / s).stat().st_mode & 0o111
 
 
@@ -85,3 +85,16 @@ def test_reparse_follows_parser_changes_and_never_overlaps_a_dashboard_capture()
     steps = doc["jobs"]["reparse"]["steps"]
     guards = next(s["run"] for s in steps if s.get("name", "").startswith("Guards"))
     assert "measles rebuild" in guards  # never pushes a store that does not rebuild
+
+
+@pytest.mark.parametrize("name", sorted(p.name for p in WF.glob("*.yml")))
+def test_browser_install_has_a_time_limit_and_retries(name: str) -> None:  # ADR 0024
+    # A hung install once cost a scheduled dashboard capture (2026-10-26).
+    for job in load(name)["jobs"].values():
+        for step in job.get("steps", []):
+            run = step.get("run", "")
+            if "playwright install" in run:
+                raise AssertionError(f"{name}: install the browser through install-browser.sh")
+            if "install-browser.sh" in run:
+                assert step.get("timeout-minutes", 0) >= 10, name
+                assert job["timeout-minutes"] >= step["timeout-minutes"] + 5, name

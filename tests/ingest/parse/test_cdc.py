@@ -58,6 +58,18 @@ def test_golden_wrapped_map_from_2026_10_23() -> None:  # T3.1, parser 1.1.0, AD
     assert out["state"] == [] and out["flags"][0][0] == "DATE_TO_CONFIRM"
 
 
+def test_golden_map_with_extra_keys_from_2026_10_30() -> None:  # T3.1, parser 1.2.0, ADR 0024
+    data = (FX / "cases_map_2026-10-30.json").read_bytes()
+    assert set(json.loads(data)) == {"lastUpdated", "lastUpdated_esp", "data"}
+    page = cdc.page_snapshot(gzip.decompress((FX / "cases_page_2026-10-30.html.gz").read_bytes()))
+    assert page is not None and page["as_of_date"] == date(2026, 10, 29)
+    out = cdc.parse(data, page)
+    assert out["flags"] == []
+    [row] = out["state"]
+    assert row["as_of_date"] == date(2026, 10, 29) and row["cum_cases"] == 1411
+    assert row["notes"].endswith("; map last updated October 29, 2026")
+
+
 def test_malformed_map_is_an_error() -> None:
     with pytest.raises(cdc.CdcParseError):
         cdc.parse(b"[]", cdc.page_snapshot(PAGE))
