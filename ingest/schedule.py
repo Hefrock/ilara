@@ -4,9 +4,17 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 
-# After DOH's update, which lands about 13:00 to 14:20 ET (17:00 to 19:20 UTC across the
-# daylight saving change), and inside the 18:00 to 23:59 UTC cover window (ADR 0010).
-DASHBOARD_CRONS = ("30 19,21 * * 1,3,5", "0 23 * * 1,3,5", "0 13 * * 2,4,6")
+# DOH's update lands about 13:00 to 14:20 ET (17:00 to 19:20 UTC across the daylight saving
+# change), and a day is covered by a capture between 18:00 and 23:59 UTC (ADR 0010). Scheduled
+# runs have started 1 to 3 hours late and the earliest slot never ran, so the slots sit earlier
+# and off the hour and half hour, where most still land inside the window when late (ADR 0025).
+DASHBOARD_CRONS = (
+    "13 19 * * 1,3,5",
+    "7 20 * * 1,3,5",
+    "53 20 * * 1,3,5",
+    "47 21 * * 1,3,5",
+    "17 13 * * 2,4,6",
+)
 LIGHT_CRONS = ("30 14 * * *",)
 RELEASE_CRONS = ("30 13 * * 1",)
 CAPTURE_DAYS = (0, 2, 4)  # Monday, Wednesday, Friday (Python weekday numbers)
