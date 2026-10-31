@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-10-31T02:09:49Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-30 (DOH refreshed the report 2026-10-30T20:10:42Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-10-31T02:14:00Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-10-30 (DOH refreshed the report 2026-10-30T20:10:42Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -18,12 +18,13 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
   - curated: county table total 1360 differs from the year-to-date total 1260
 - **DEMOGRAPHIC_SUM_MISMATCH** (1)
   - curated: hospitalizations by age group (groups ['0-4', '10-17', '18-24', '25-49', '5-9', '50+'], hospitalized 251 of 1317, totals 238 of 1260) not stored
-- **PARSE_SCHEMA_CHANGE** (9)
+- **PARSE_SCHEMA_CHANGE** (10)
   - curated: data/raw/doh_dashboard/2026/20261007T022732Z_f326ab94771c.json.gz: DashboardParseError: no data query responses in the capture
   - curated: data/raw/doh_dashboard/2026/20261013T194612Z_368a496a6009.json: DashboardParseError: no data query responses in the capture
   - curated: data/raw/doh_dashboard/2026/20261014T210515Z_431aa79bf630.json: DashboardParseError: no data query responses in the capture
   - curated: cases by age group not found in the capture
   - curated: cases by report month not found in the capture (x5)
+  - curated: data/raw/cdc_measles_cases_map/2026/20261030T193722Z_ded6b0df1bd2.json: CdcParseError: map data is not a non-empty list
 - **SOURCE_CONFLICT** (1)
   - curated: curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
 
@@ -39,7 +40,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - census_commuting_index: last outcome changed, last good 2026-10-30T19:37:07Z (7 h ago)
 - census_popest_agesex: last outcome unchanged, last good 2026-10-30T19:36:46Z (7 h ago)
 - census_popest_totals: last outcome unchanged, last good 2026-10-30T19:36:41Z (7 h ago)
-- doh_dashboard: last outcome changed, last good 2026-10-30T23:09:32Z (3 h ago)
+- doh_dashboard: last outcome changed, last good 2026-10-31T02:13:57Z (0 h ago)
 - doh_han_index: last outcome unchanged, last good 2026-10-30T19:36:26Z (7 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
 - doh_measles_page: last outcome unchanged, last good 2026-10-30T19:36:16Z (7 h ago)
@@ -115,7 +116,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - curated doh_dashboard 2026-10-23 (calendar_year): 67 county rows sum to 1338; curated doh_dashboard:5c4c01c919f6 (T1) total 1338 (consistent)
 - curated doh_dashboard 2026-10-26 (calendar_year): 67 county rows sum to 1360; curated doh_dashboard:0e20267f4b11 (T1) total 1360 (consistent)
 - curated doh_dashboard 2026-10-28 (calendar_year): 67 county rows sum to 1398; curated doh_dashboard:80d76da363f0 (T1) total 1398 (consistent)
-- curated doh_dashboard 2026-10-30 (calendar_year): 67 county rows sum to 1426; curated doh_dashboard:28b5e83f8e42 (T1) total 1426 (consistent)
+- curated doh_dashboard 2026-10-30 (calendar_year): 67 county rows sum to 1426; curated doh_dashboard:29d39db8986e (T1) total 1426 (consistent)
 - sensitivity seed_t3_county 2026-08-25 (unknown): 2 county rows sum to 214; sensitivity seed_statewide:sw-m06 (T3-derived) total 393 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-17 (unknown): 9 county rows sum to 629; sensitivity seed_statewide:sw-m07 (T3-derived) total 767 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-21 (unknown): 3 county rows sum to 514; sensitivity seed_statewide:sw-007 (T3-derived) total 792 [compared, cross-source, not flagged]
@@ -179,7 +180,7 @@ Gate G2: **not yet** (0 of 2 consecutive weeks covered by scheduled runs alone).
 | Fri 2026-10-23 | covered | schedule, workflow_dispatch | 2 |
 | Mon 2026-10-26 | covered | workflow_dispatch | 1 |
 | Wed 2026-10-28 | covered | schedule, workflow_dispatch | 1 |
-| Fri 2026-10-30 | covered | schedule, workflow_dispatch | 0 |
+| Fri 2026-10-30 | covered | schedule, workflow_dispatch | 1 |
 
 ## Quarantine
 
