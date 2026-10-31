@@ -169,3 +169,14 @@ def test_origins_are_wednesdays_with_an_observed_first_week() -> None:
     ts = rv.origins(date(2026, 10, 26), date(2026, 11, 11))
     assert ts == [date(2026, 10, 28), date(2026, 11, 4)]
     assert rv.origins(date(2026, 10, 28), date(2026, 11, 3)) == []
+
+
+def test_runs_record_the_model_version() -> None:  # ADR 0026
+    from datetime import date
+
+    from project.model import pa
+    from project.model import run_validation as rv
+
+    assert pa.MODEL_VERSION == "1"
+    params = rv.run_params(date(2026, 10, 28), 300, 8)
+    assert params["model_version"] == pa.MODEL_VERSION and params["first"] == date(2026, 10, 28)

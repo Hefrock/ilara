@@ -62,7 +62,7 @@ Out of scope: individual-level inference, transmission-chain reconstruction, est
 | E04 | Every capture attempt, changed or not, is logged: one file per workflow run, `data/capture_log/<YYYY-MM>/<run_id>.jsonl`, one line per source (append-only, never edited). | A flat count is information about reporting. Text keeps history small; per-run files avoid merge conflicts between concurrent workflows. |
 | E05 | The capture schedule is defined once, in section 8.1. Tune the windows from `capture_log` after two weeks. | Scheduled runs drift or are dropped; DST shifts ET by an hour; exact DOH update time is unknown. |
 | E06 | Capture workflows use a `concurrency` group with `cancel-in-progress: false`, and commit with `git pull --rebase` and up to 3 retries. | Overlapping runs otherwise race on push. |
-| E07 | The weekly release for ISO week W (Monday to Sunday, America/New_York) is built Monday `30 13 * * 1` UTC and tagged `data-YYYY-Www`. | v1 had two release times. One time, after the week closes. |
+| E07 | The weekly release for ISO week W (Monday to Sunday, America/New_York) is built Monday `23 13 * * 1` UTC (was `30 13`, moved off the half hour, ADR 0026) and tagged `data-YYYY-Www`. | v1 had two release times. One time, after the week closes. |
 | E08 | Figures not taken directly from a primary government source (`T3-derived`, T3 events, secondary journal figures) live only under `data/sensitivity/` (seed files in `data/sensitivity/seed/`) as numbers plus source name and URL. Article text is never committed. Because history becomes public at G5, the owner decides H6 before the first commit of those files; if H6 is no, they stay local and gitignored. | Flipping a repository public exposes all history, and history is never rewritten (I8). |
 | E09 | CLAUDE.md, HANDOFF.md, SOURCES.md and DASHBOARD.md are sanitised for publication and committed. HUMAN_STEPS.md is not committed. | Consistency with D10 and I10. |
 | E10 | Tools: polars (tables), duckdb (SQL views), pydantic v2 (schemas), geopandas (reference and map code only), numba (simulator), pytest, hypothesis, ruff, playwright. | v1 left "polars or pandas" and "DuckDB or parquet" open. |
@@ -376,7 +376,7 @@ Paste this after placing the package files in the repository root (CLAUDE.md at 
 |---|---|---|
 | Dashboard capture | `13 19 * * 1,3,5`, `7 20 * * 1,3,5`, `53 20 * * 1,3,5`, `47 21 * * 1,3,5` and `17 13 * * 2,4,6` | Four afternoon windows plus next-morning catch-up, off the hour because scheduled runs started one to three hours late (ADR 0025; was `30 19,21`, `0 23`, `0 13`). Drop the next-morning window first if Actions minutes run short. Tuned 2026-10-15 from the report's own refresh times (DOH refreshes about 13:00 to 14:20 ET), so every window follows the update in both EDT and EST (ADR 0010; was `0 18,20,22`). A backup routine also checks at 15:40 and 18:20 ET (ADR 0006, 0010). |
 | Light HTTP sources (DOH pages, HAN, newsroom, CDC, school and Census files by hash) | `30 14 * * *` | Unchanged content is logged only. |
-| Weekly release | `30 13 * * 1` | Builds the prior ISO week (E07). |
+| Weekly release | `23 13 * * 1` | Builds the prior ISO week (E07). |
 
 A Monday, Wednesday or Friday is **covered** when at least one dashboard capture with outcome `changed` or `unchanged` is logged between 18:00 and 23:59 UTC that day. G2 and T4.2 use this definition. The next-morning window is catch-up only.
 

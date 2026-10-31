@@ -16,7 +16,7 @@ DASHBOARD_CRONS = (
     "17 13 * * 2,4,6",
 )
 LIGHT_CRONS = ("30 14 * * *",)
-RELEASE_CRONS = ("30 13 * * 1",)
+RELEASE_CRONS = ("23 13 * * 1",)  # off the half hour (ADR 0026)
 CAPTURE_DAYS = (0, 2, 4)  # Monday, Wednesday, Friday (Python weekday numbers)
 COVER_START_HOUR_UTC = 18
 SCHEDULE_START = date(2026, 10, 7)  # first scheduled dashboard window (docs/PROGRESS.md)

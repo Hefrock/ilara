@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-10-31 (50) | Release moved off the half hour (Mon 13:23 UTC); Monday backup routine also checks the week's release tag; model version 1 frozen for scoring from Nov 4; weekly Thursday fit-and-score check-in (ADR 0026) | Nov 5: first weekly check-in |
 | 2026-10-31 (49) | Dashboard slots moved earlier and off the hour (19:13, 20:07, 20:53, 21:47 UTC; catch-up 13:17): scheduled runs had started 1 to 3 hours late and the 19:30 slot never ran (ADR 0025) | Watch G2 coverage for the week of Nov 2 |
 | 2026-10-31 (48) | Data review: collection clean since Oct 22, all county snapshots consistent; G2 slips to about Nov 13 (Oct 26 covered only by a dispatched run after the browser install hung; Oct 30 corrected: a scheduled run did start, at 23:07 UTC). Browser install retried with time limits; CDC parser 1.2.0 reads the map file with a Spanish date beside its data (ADR 0024, issue 51) | Nov 4: first scored origin; G2 from two clean scheduled weeks |
 | 2026-10-29 (47) | README in plain prose. Lessons index for students (`docs/lessons.md`, nine lessons, each linked to its ADR). End-of-outbreak plan (ADR 0023): capture until DOH declares the end plus eight weeks, light captures after that, final release, final hindcast. Licence and DOI added to the G5 checklist | Nov 4: first scored origin |

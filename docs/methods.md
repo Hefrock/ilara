@@ -104,8 +104,10 @@ writes the posterior, predictive checks, forecast samples and a manifest under
 
 At weekly origins from 2026-10-28, the model is refitted on data fetched by the end of that day
 and forecasts cases newly reported in each of the next four weeks, per county and statewide,
-by continuing the accepted simulated epidemics past the origin (ADR 0021)
-([ADR 0013](adr/0013-forecast-validation-and-g4-gate.md)). Forecasts are scored with the
+by continuing the accepted simulated epidemics past the origin
+([ADR 0013](adr/0013-forecast-validation-and-g4-gate.md), ADR 0021). Each score carries the
+model version that made it; a changed model is a new version, scored only from then on
+([ADR 0026](adr/0026-release-time-release-backup-model-version.md)). Forecasts are scored with the
 weighted interval score and the coverage of their 50, 80 and 90 percent intervals, against a
 persistence baseline on the same targets. Any read of data fetched after an origin stops the
 run. Forecasts are published only if, over at least eight origins pooled across counties, the
