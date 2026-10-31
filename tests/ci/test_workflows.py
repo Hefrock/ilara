@@ -51,9 +51,11 @@ def test_schedules_match_runbook() -> None:  # T2.8
     assert crons(load("capture-light.yml")) == list(schedule.LIGHT_CRONS)
     assert crons(load("release.yml")) == list(schedule.RELEASE_CRONS)
     assert schedule.DASHBOARD_CRONS == (
-        "30 19,21 * * 1,3,5",
-        "0 23 * * 1,3,5",
-        "0 13 * * 2,4,6",
+        "13 19 * * 1,3,5",
+        "7 20 * * 1,3,5",
+        "53 20 * * 1,3,5",
+        "47 21 * * 1,3,5",
+        "17 13 * * 2,4,6",
     )
     assert schedule.LIGHT_CRONS == ("30 14 * * *",)
     assert schedule.RELEASE_CRONS == ("30 13 * * 1",)
@@ -98,3 +100,11 @@ def test_browser_install_has_a_time_limit_and_retries(name: str) -> None:  # ADR
             if "install-browser.sh" in run:
                 assert step.get("timeout-minutes", 0) >= 10, name
                 assert job["timeout-minutes"] >= step["timeout-minutes"] + 5, name
+
+
+def test_dashboard_slots_are_off_peak_and_inside_the_cover_window() -> None:  # ADR 0025
+    for line in schedule.DASHBOARD_CRONS:
+        minute, hour, _dom, _mon, dow = line.split()
+        assert int(minute) not in (0, 30), line  # the busiest minutes for the scheduler
+        if dow == "1,3,5":  # update days: inside the cover window, after DOH's usual update
+            assert schedule.COVER_START_HOUR_UTC <= int(hour) <= 22, line

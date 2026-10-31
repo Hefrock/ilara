@@ -28,7 +28,8 @@ Status: accepted (owner, 2026-10-30: "yes, do the CDC and Chromium fixes in one 
 - A slow or stuck install now costs at most a few minutes and is retried, instead of losing a
   scheduled capture. A persistent failure still fails the run, and the backup routine still
   covers the day (ADR 0006), but such a day does not count toward G2.
-- The scheduler dropping runs outright (as on 2026-10-30, when no scheduled dashboard run started)
-  is a separate problem this does not fix.
+- Scheduled runs starting late is a separate problem this does not fix (ADR 0025). Correction,
+  2026-10-31: this ADR first said no scheduled dashboard run started on 2026-10-30; one did, at
+  23:07 UTC, after the backup routine's last check.
 - A parser that requires an exact set of keys breaks on harmless additions; the CDC parser now
   checks only for what it reads.
