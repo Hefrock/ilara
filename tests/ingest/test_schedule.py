@@ -26,5 +26,5 @@ def test_next_dashboard_run() -> None:
 
 def test_next_release_run() -> None:
     assert schedule.next_run(schedule.RELEASE_CRONS, datetime(2026, 10, 7, tzinfo=UTC)) == datetime(
-        2026, 10, 12, 13, 30, tzinfo=UTC
+        2026, 10, 12, 13, 23, tzinfo=UTC
     )

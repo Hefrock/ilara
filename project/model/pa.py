@@ -55,6 +55,10 @@ DRY_TRUTH = {
     "report_delay": 3.0,
     "weekend": 0.6,
 }
+# The model that forecasts are scored with (ADR 0026). Frozen from the 2026-11-04 scoring on:
+# any change to the model, its inputs' handling or its priors is a new version, scored only on
+# origins after it is introduced, never silently re-scored on past ones.
+MODEL_VERSION = "1"
 POOL_BELOW = 10  # counties with fewer cases are fitted as one "rest" group (ADR 0021)
 FIRST_SNAPSHOT = date(2026, 10, 5)  # the first county snapshot (Gate G3 counts from here)
 
@@ -482,6 +486,7 @@ def fit_real(
         kind="calibration-pa-real",
         inputs=refs,
         params={
+            "model_version": MODEL_VERSION,
             "origin": origin.isoformat(),
             "known_at": known_at.isoformat(),
             "start": model.start.isoformat(),

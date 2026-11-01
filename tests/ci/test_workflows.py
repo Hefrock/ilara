@@ -58,7 +58,7 @@ def test_schedules_match_runbook() -> None:  # T2.8
         "17 13 * * 2,4,6",
     )
     assert schedule.LIGHT_CRONS == ("30 14 * * *",)
-    assert schedule.RELEASE_CRONS == ("30 13 * * 1",)
+    assert schedule.RELEASE_CRONS == ("23 13 * * 1",)
 
 
 def test_ci_minimal_permissions() -> None:
@@ -102,7 +102,9 @@ def test_browser_install_has_a_time_limit_and_retries(name: str) -> None:  # ADR
                 assert job["timeout-minutes"] >= step["timeout-minutes"] + 5, name
 
 
-def test_dashboard_slots_are_off_peak_and_inside_the_cover_window() -> None:  # ADR 0025
+def test_dashboard_slots_are_off_peak_and_inside_the_cover_window() -> None:  # ADR 0025, 0026
+    for line in schedule.RELEASE_CRONS:
+        assert int(line.split()[0]) not in (0, 30), line
     for line in schedule.DASHBOARD_CRONS:
         minute, hour, _dom, _mon, dow = line.split()
         assert int(minute) not in (0, 30), line  # the busiest minutes for the scheduler

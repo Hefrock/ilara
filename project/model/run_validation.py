@@ -15,6 +15,8 @@ import argparse
 from datetime import date, timedelta
 from pathlib import Path
 
+import polars as pl
+
 from project import manifest
 from project.model import pa, validate
 
@@ -31,6 +33,16 @@ def origins(first: date, last_observed: date) -> list[date]:
     return out
 
 
+def run_params(first: date, particles: int, generations: int) -> dict[str, object]:
+    """What a validation run records about itself, the model version included (ADR 0026)."""
+    return {
+        "model_version": pa.MODEL_VERSION,
+        "first": first,
+        "particles": particles,
+        "generations": generations,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m project.model.run_validation")
     ap.add_argument("--first", type=date.fromisoformat, default=date(2026, 10, 28))
@@ -45,10 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     ts = origins(a.first, last)
     fc = pa.forecaster(particles=a.particles, generations=a.generations, seed=a.seed)
     scores = validate.replay(ts, fc, observed, pa.cutoff)
+    scores = scores.with_columns(pl.lit(pa.MODEL_VERSION).alias("model_version"))  # ADR 0026
     a.out.mkdir(parents=True, exist_ok=True)
     scores.write_csv(a.out / "scores.csv")
     result = validate.gate(scores)
-    params = {"first": a.first, "particles": a.particles, "generations": a.generations}
+    params = run_params(a.first, a.particles, a.generations)
     m = manifest.write(a.out, "validation", a.seed, params, {}, extra={"gate": result.__dict__})
     print(f"validation: {len(ts)} origins, gate {result.status}; wrote {m}")
     if a.write_gate:
