@@ -1,0 +1,23 @@
+{
+  "bytes": 1004758,
+  "capture_key": "responses",
+  "compression": "gzip",
+  "content_hash": "6586828cfb1c83c0591da8dba984168044e933fc86f7cfe037645ec35520d9e6",
+  "ext": "json",
+  "extra": {
+    "capture_id": "gh-41522000885-1:01:doh_dashboard",
+    "final_url": "https://app.powerbigov.us/view?r=eyJrIjoiMjRlZmUwMzEtNDQ3Yi00YmUyLWE1ODYtZGJiZjZjMmQ4M2Q4IiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9",
+    "views_ok": 10,
+    "views_total": 10
+  },
+  "fetched_at_et": "2026-11-02T15:45:14-05:00",
+  "fetched_at_utc": "2026-11-02T20:45:14Z",
+  "http_status": 200,
+  "normaliser": "json:1",
+  "parser_hint": "doh_dashboard",
+  "raw_path": "data/raw/doh_dashboard/2026/20261102T204514Z_f822bdf391f6.json.gz",
+  "sha256": "f822bdf391f6f456222d9208f3db97034968787738b4b85471f7b744d6ee2ebf",
+  "source_id": "doh_dashboard",
+  "stored_sha256": "76bf8645971ba2648e11f6dbcf02871e708a5f1b3fc93e538f20e7a674fe1416",
+  "url": "https://app.powerbigov.us/view?r=eyJrIjoiMjRlZmUwMzEtNDQ3Yi00YmUyLWE1ODYtZGJiZjZjMmQ4M2Q4IiwidCI6IjQxOGUyODQxLTAxMjgtNGRkNS05YjZjLTQ3ZmM1YTlhMWJkZSJ9"
+}
