@@ -501,3 +501,26 @@ def test_onset_weeks_stay_off_the_dashboard_and_out_of_the_model() -> None:  # A
     for f in model.glob("*.py"):
         text = f.read_text()
         assert "onset_week" not in text and "case_demographics" not in text, f.name
+
+
+def test_snapshot_without_some_charts_still_builds(
+    site_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:  # C: the republished report has no report-month chart (2026-11-02 release failure)
+    demo = build.demographics(site_root)
+    assert demo is not None
+    for part in ("months", "ages", "hospitalization"):
+        cut = {**demo, part: []}
+        monkeypatch.setattr(build, "demographics", lambda _root, cut=cut: cut)
+        page = build.build_page(site_root, NOW)
+        assert f"snapshot of {demo['as_of_date']} does not give" in page.html
+        assert list(page.csv["demographics"].columns) == [
+            "dimension",
+            "category",
+            "cases",
+            "suppressed",
+        ]
+        assert ("chart-months" in page.data["charts"]) == (part != "months")
+        assert ("chart-ages" in page.data["charts"]) == (part != "ages")
+    monkeypatch.setattr(build, "demographics", lambda _root: {**demo, "months": [], "ages": []})
+    build.write_site(tmp_path / "site", site_root, NOW)
+    assert pl.read_csv(tmp_path / "site/data/demographics.csv").height == 0

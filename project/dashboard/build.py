@@ -613,6 +613,47 @@ def months_figure(demo: dict[str, Any]) -> go.Figure:
     )
 
 
+DEMO_SCHEMA = {
+    "dimension": pl.String,
+    "category": pl.String,
+    "cases": pl.Int64,
+    "suppressed": pl.Boolean,
+}
+
+
+def demographics_rows(demo: dict[str, Any]) -> pl.DataFrame:
+    """Rows for demographics.csv; fixed columns even when the snapshot lacks a chart."""
+    rows = [
+        {
+            "dimension": "report_month",
+            "category": r["report_month"],
+            "cases": r["cases"],
+            "suppressed": r["suppressed"],
+        }
+        for r in demo["months"]
+    ] + [
+        {
+            "dimension": "age_group",
+            "category": r["age_group"],
+            "cases": r["cases"],
+            "suppressed": r["suppressed"],
+        }
+        for r in demo["ages"]
+    ]
+    return pl.DataFrame(rows, schema=DEMO_SCHEMA)
+
+
+def _chart_html(fig: go.Figure, div_id: str) -> str:
+    return str(
+        fig.to_html(
+            include_plotlyjs=False,
+            full_html=False,
+            div_id=div_id,
+            config={"displayModeBar": False, "responsive": True},
+        )
+    )
+
+
 def ages_figure(demo: dict[str, Any]) -> go.Figure:
     rows = demo["ages"]
     y = [r["cases"] for r in rows]
@@ -1158,26 +1199,57 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
     year = school_year[0] if school_year.len() else "not yet captured"
 
     demo = demographics(root)
+    m_obj = a_obj = None
     if demo is not None:
-        m_obj = months_figure(demo)
-        m_fig = m_obj.to_html(
-            include_plotlyjs=False,
-            full_html=False,
-            div_id="chart-months",
-            config={"displayModeBar": False, "responsive": True},
-        )
-        a_obj = ages_figure(demo)
-        a_fig = a_obj.to_html(
-            include_plotlyjs=False,
-            full_html=False,
-            div_id="chart-ages",
-            config={"displayModeBar": False, "responsive": True},
-        )
-        months_df = pl.DataFrame(demo["months"])
-        ages_df = pl.DataFrame(demo["ages"])
-        hosp_df = pl.DataFrame(demo["hospitalization"])
         demo_as_of = _d(demo["as_of_date"])
         unk = demo["unknown_age"]
+
+        def missing(what: str) -> str:
+            # The dashboard drops charts when it is redesigned (ADR 0014): say so, never guess.
+            return (
+                f"<p class='muted'>The dashboard snapshot of {demo_as_of} does not give "
+                f"{html.escape(what)}.</p>"
+            )
+
+        if demo["months"]:
+            m_obj = months_figure(demo)
+            months_html = f"""{_chart_html(m_obj, "chart-months")}
+{
+                _table(
+                    pl.DataFrame(demo["months"]),
+                    {"report_month": "Month reported", "shown": "Cases"},
+                    "Cases by month of report",
+                )
+            }"""
+        else:
+            months_html = missing("cases by month of report")
+        if demo["ages"]:
+            a_obj = ages_figure(demo)
+            ages_html = f"""{_chart_html(a_obj, "chart-ages")}
+<p class="muted">Unknown age: {
+                html.escape(
+                    _shown(unk)
+                    if unk is not None
+                    else "blank on the dashboard (not stated as zero)"
+                )
+            }.</p>
+{
+                _table(
+                    pl.DataFrame(demo["ages"]),
+                    {"age_group": "Age group", "shown": "Cases"},
+                    "Cases by age group",
+                )
+            }"""
+        else:
+            ages_html = missing("cases by age")
+        if demo["hospitalization"]:
+            hosp_html = _table(
+                pl.DataFrame(demo["hospitalization"]),
+                {"age_band": "Ages", "shown": "Hospitalized of cases", "share_pct": "Percent"},
+                "Hospitalized cases by age",
+            ).replace("<details class='tableview'>", "<details class='tableview' open>")
+        else:
+            hosp_html = missing("hospitalized cases by age")
         who_html = f"""<p class="muted">As of {
             demo_as_of
         }, calendar year. Counts of 1 to 4 are shown as
@@ -1186,44 +1258,13 @@ def build_page(root: Path | None = None, now: datetime | None = None, public: bo
 <p class="muted">Month the case was reported, not when the illness began; the dashboard gives no
 onset dates. The lighter bar is the current month, still partial. "n/r": blank on the
 dashboard (not stated as zero).</p>
-{m_fig}
-{
-            _table(
-                months_df,
-                {"report_month": "Month reported", "shown": "Cases"},
-                "Cases by month of report",
-            )
-        }
+{months_html}
 <h3 style="font-size:1rem;margin:16px 0 4px">Cases by age</h3>
-{a_fig}
-<p class="muted">Unknown age: {
-            html.escape(
-                _shown(unk) if unk is not None else "blank on the dashboard (not stated as zero)"
-            )
-        }.</p>
-{_table(ages_df, {"age_group": "Age group", "shown": "Cases"}, "Cases by age group")}
+{ages_html}
 <h3 style="font-size:1rem;margin:16px 0 4px">Hospitalized</h3>
-{
-            _table(
-                hosp_df,
-                {"age_band": "Ages", "shown": "Hospitalized of cases", "share_pct": "Percent"},
-                "Hospitalized cases by age",
-            ).replace("<details class='tableview'>", "<details class='tableview' open>")
-        }
+{hosp_html}
 <a class="dl" href="data/demographics.csv">Download CSV</a>"""
-        demo_rows = months_df.select(
-            pl.lit("report_month").alias("dimension"),
-            pl.col("report_month").alias("category"),
-            "cases",
-            "suppressed",
-        ).vstack(
-            ages_df.select(
-                pl.lit("age_group").alias("dimension"),
-                pl.col("age_group").alias("category"),
-                "cases",
-                "suppressed",
-            )
-        )
+        demo_rows = demographics_rows(demo)
     else:
         who_html = "<p class='muted'>No dashboard snapshot captured yet.</p>"
         demo_rows = pl.DataFrame()
@@ -1251,11 +1292,12 @@ dashboard (not stated as zero).</p>
             "points": None,  # built in the page from the county shown
         },
     }
-    if demo is not None:
+    if m_obj is not None:
         charts["chart-months"] = {
             "label": "Bar chart of cases by month of report." + KEY_HINT,
             "points": bar_points(m_obj, "cases"),
         }
+    if a_obj is not None:
         charts["chart-ages"] = {
             "label": "Bar chart of cases by age group." + KEY_HINT,
             "points": bar_points(a_obj, "cases"),
