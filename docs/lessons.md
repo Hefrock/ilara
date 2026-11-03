@@ -74,9 +74,37 @@ moment. Otherwise the result depends on the order in which things are processed.
 *What changed:* each capture is now judged only against what was known when it was fetched.
 [ADR 0020](adr/0020-superseded-snapshots-fit-guards-vaccine-chart.md).
 
+### 6. A schedule that runs late
+
+The captures run on GitHub's free scheduler. Runs started one to three hours late, and one slot
+never ran at all. Moving the slots earlier and off the hour helped for a while. Then on 2 November
+all four Monday runs succeeded, but five to six hours late, after midnight UTC, where the rule for
+a "covered" day no longer counted them.
+
+*Why it matters:* a free scheduler promises no start time. A rule written against the clock fails
+when the clock slips, even though the data were captured.
+
+*What changed:* the rule now follows when the data actually change. The department updates only on
+Monday, Wednesday and Friday afternoons, so a capture made before 06:00 UTC the next morning still
+shows that day's update, and it counts.
+[ADR 0025](adr/0025-dashboard-slots-off-peak.md), [ADR 0027](adr/0027-g2-cover-window-to-0600-utc.md).
+
+### 7. A missing chart that stopped the release
+
+When the department republished its report, the chart of cases by month of report was gone. The
+weekly release tagged its data, then crashed while building the public dashboard, because the code
+expected that table to exist. The tag looked like a finished release; the dashboard was never
+built.
+
+*Why it matters:* a source dropping a figure is normal. A pipeline that treats it as impossible
+fails at the worst moment, and a step that succeeded first can hide the failure of the next.
+
+*What changed:* each part of the dashboard now says plainly when the latest snapshot does not give
+it, and nothing is filled in. [PR 55](https://github.com/Hefrock/ilara/pull/55).
+
 ## Reading the data
 
-### 6. The last two weeks always look like a decline
+### 8. The last two weeks always look like a decline
 
 Cases are counted by the week symptoms began, and each week's count keeps rising for about three
 weeks as reports arrive. The week of 12 October went from 22 cases to 68 over ten days. Read
@@ -87,7 +115,7 @@ naively, the latest weeks always suggest the outbreak is ending.
 *What changed:* the onset curve is kept out of the model and the public dashboard until its delays
 can be modelled. [ADR 0015](adr/0015-onset-week-series.md), [onset review](onset_review.md).
 
-### 7. Counts that go down
+### 9. Counts that go down
 
 The department sometimes revises a county's count downwards, for example when cases are reassigned
 to another county. The first real model fit met two such revisions, could not compare them, and
@@ -102,7 +130,7 @@ changed, and the fit now stops with an error instead of returning a silent non-a
 
 ## Modelling
 
-### 8. Forecasts that died out
+### 10. Forecasts that died out
 
 The model is stochastic: the same settings can produce an outbreak that fades out or one that
 takes off. The fit kept settings together with the simulated epidemic that matched the data, but
@@ -116,7 +144,7 @@ one.
 fitted as one group so they no longer outweigh the counties driving the outbreak.
 [ADR 0021](adr/0021-conditioned-forecasts-and-pooled-small-counties.md).
 
-### 9. One spark for many fires
+### 11. One spark for many fires
 
 The model started the epidemic in one county and relied on commuting to carry it elsewhere. The
 outbreak had several separate centres, so most simulations never reached the counties that were
@@ -130,8 +158,22 @@ guessing them would have been fabrication.
 for the counties first seen in that report is estimated from the data as one shared value.
 [ADR 0022](adr/0022-seed-every-county-censored-lead.md).
 
+## Judging the work
+
+### 12. Changing the rule after seeing the score
+
+Gate G2 asks for two weeks in a row in which scheduled runs covered every update day. Widening the
+window (lesson 6) and applying it to past weeks would have passed the gate at once. It was applied
+only from 2 November, so the gate has to be earned under the rule as it now stands.
+
+*Why it matters:* changing a success rule after seeing the results is one of the quietest ways to
+fool yourself. The same holds for forecasts: the model is fixed before it is scored.
+
+*What changed:* rule changes apply going forward, and the record says so.
+[ADR 0027](adr/0027-g2-cover-window-to-0600-utc.md), [ADR 0026](adr/0026-release-time-release-backup-model-version.md).
+
 ## The thread through all of them
 
 Keep what was published, exactly, with the date you saw it. Judge every step by what was known at
-the time. When something does not add up, label it and leave it out rather than fix it by hand.
-And make failures loud.
+the time, and by rules set before the results. When something does not add up, label it and leave
+it out rather than fix it by hand. And make failures loud.
