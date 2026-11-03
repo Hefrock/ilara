@@ -378,7 +378,7 @@ Paste this after placing the package files in the repository root (CLAUDE.md at 
 | Light HTTP sources (DOH pages, HAN, newsroom, CDC, school and Census files by hash) | `30 14 * * *` | Unchanged content is logged only. |
 | Weekly release | `23 13 * * 1` | Builds the prior ISO week (E07). |
 
-A Monday, Wednesday or Friday is **covered** when at least one dashboard capture with outcome `changed` or `unchanged` is logged between 18:00 and 23:59 UTC that day. G2 and T4.2 use this definition. The next-morning window is catch-up only.
+A Monday, Wednesday or Friday is **covered** when at least one dashboard capture with outcome `changed` or `unchanged` is logged from 18:00 UTC that day up to 06:00 UTC the next day (ADR 0027; before 2026-11-02 the window ended at midnight). G2 and T4.2 use this definition. Captures after 06:00 UTC and before 18:00 UTC the next day are catch-up only.
 
 ### 8.2 Failure handling
 

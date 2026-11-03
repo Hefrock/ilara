@@ -114,3 +114,23 @@ def test_dead_report_rule_holds_for_records_from_before_a_view_was_added() -> No
     # One view failing is a partial capture, not a dead report.
     one = {"source_id": "doh_dashboard", "outcome": "changed", "error": "epi_curve: TimeoutError"}
     assert capture_log.is_good(one)
+
+
+def test_late_scheduled_runs_cover_the_day_from_2026_11_02(root: Path) -> None:  # ADR 0027
+    log = CaptureLog("r1", root)
+    # Mon Oct 26: a scheduled run at 01:30 UTC the next day, before the wider window applied.
+    log.append(_rec("r1:01:doh_dashboard", "2026-10-27T01:30:00Z", trigger="schedule"))
+    # Mon Nov 2: scheduled runs about six hours late (as observed), and one after 06:00 UTC.
+    log.append(_rec("r1:02:doh_dashboard", "2026-11-03T01:32:00Z", trigger="schedule"))
+    log.append(_rec("r1:03:doh_dashboard", "2026-11-03T05:59:59Z", trigger="schedule"))
+    log.append(_rec("r1:04:doh_dashboard", "2026-11-03T06:00:00Z", trigger="schedule"))
+    # Wed Nov 4: nothing until 06:00 UTC Thursday, then a catch-up run.
+    log.append(_rec("r1:05:doh_dashboard", "2026-11-05T13:20:00Z", trigger="schedule"))
+    days = access.capture_days(datetime(2026, 11, 5, 14, tzinfo=UTC), root)
+    got = {r["day"]: (r["status"], r["captures"], r["catch_up"]) for r in days.to_dicts()}
+    assert got[date(2026, 10, 26)] == ("missed", 0, 1)  # old rule kept for past weeks
+    assert got[date(2026, 11, 2)] == ("covered", 2, 1)
+    assert got[date(2026, 11, 4)] == ("missed", 0, 1)
+    # The window stays open until 06:00 UTC: Wednesday is pending at 05:00 Thursday.
+    early = access.capture_days(datetime(2026, 11, 5, 5, tzinfo=UTC), root)
+    assert early.filter(early["day"] == date(2026, 11, 4))["status"].item() == "pending"

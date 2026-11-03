@@ -76,11 +76,10 @@ class Week:
 
 def covered_days(week: Week, log: list[dict[str, Any]]) -> dict[str, list[str]]:
     """HANDOFF 8.1: a capture day is covered by a dashboard capture with outcome changed or
-    unchanged finishing between 18:00 and 23:59 UTC that day."""
+    unchanged finishing from 18:00 UTC that day to 06:00 UTC the next (ADR 0027)."""
     out: dict[str, list[str]] = {}
     for day in week.capture_days:
-        start = datetime.combine(day, time(schedule.COVER_START_HOUR_UTC), UTC)
-        end = datetime.combine(day + timedelta(days=1), time(0), UTC)
+        start, end = schedule.cover_window(day)
         out[day.isoformat()] = sorted(
             r["capture_id"]
             for r in log
