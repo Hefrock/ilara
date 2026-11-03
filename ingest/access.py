@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -124,9 +124,10 @@ def capture_status(root: Path | None = None) -> pl.DataFrame:
 def capture_days(now: datetime, root: Path | None = None) -> pl.DataFrame:
     """Every scheduled dashboard capture day (HANDOFF 8.1) from the first scheduled window to
     ``now``. ``status`` is ``covered`` (a good dashboard capture, ``capture_log.is_good``,
-    finished between 18:00 and 23:59 UTC that day), ``missed``, or ``pending`` while that
-    window is still open. ``catch_up`` counts good captures the next morning before 18:00 UTC;
-    they do not cover the day (the data shown that afternoon may be lost) but are listed.
+    finished in ``schedule.cover_window``: 18:00 UTC to 06:00 UTC the next day, or to midnight
+    before 2026-11-02), ``missed``, or ``pending`` while that window is still open.
+    ``catch_up`` counts good captures after it, before 18:00 UTC the next day; they do not
+    cover the day (the data shown that afternoon may be lost) but are listed.
     ``by`` lists what started the covering captures (``schedule``, ``workflow_dispatch``, or
     ``unknown`` for records written before triggers were logged); ``unattended`` is true when
     a scheduled run covered the day (G2)."""
@@ -143,9 +144,8 @@ def capture_days(now: datetime, root: Path | None = None) -> pl.DataFrame:
     day = schedule.SCHEDULE_START
     while day <= now.astimezone(UTC).date():
         if day.weekday() in schedule.CAPTURE_DAYS:
-            start = datetime.combine(day, time(schedule.COVER_START_HOUR_UTC), UTC)
-            end = datetime.combine(day + timedelta(days=1), time(0), UTC)
-            catch_end = end + timedelta(hours=schedule.COVER_START_HOUR_UTC)
+            start, end = schedule.cover_window(day)
+            catch_end = start + timedelta(days=1)
             within = [trig or "unknown" for t, trig in done if start <= t < end]
             n = len(within)
             status = "covered" if n else ("pending" if now < end else "missed")

@@ -27,7 +27,7 @@ Purpose: lets a new session (or a returning owner) pick up without rereading his
 |---|---|---|
 | G0 Repo and CI | done | `ci` run 37558441571 green on the working branch; T0.1 to T0.7 |
 | G1 Dashboard access path decided | done | `docs/probe_report.md`: runners reach the dashboard (U22); path B works for page 1; path A decided; first county snapshot parsed (as of 2026-10-05, 67 counties, T3.11 values met); `docs/probe_report.md` |
-| G2 Unattended capture proven | in progress | tracker in `data/quality/quality_report.md` (`access.g2_status`, ADR 0009); 0 of 2 weeks |
+| G2 Unattended capture proven | in progress | tracker in `data/quality/quality_report.md` (`access.g2_status`, ADR 0009, window ADR 0027); 0 of 2 weeks, earliest pass week of Nov 9 |
 | G3 Modelling go | done | 10 county snapshot dates (Oct 5 to Oct 28); pre-flight 2026-10-28: gate passes, real problem builds (68 series). First real fit run (outputs private); forecast method under review with the owner |
 | G4 Forecast publication | not started | earliest decision 2026-12-30: 8 Wednesday origins from 2026-10-28, 2-week targets (ADR 0013) |
 | G5 Public flip | not started | checklist `docs/adr/0017-g5-public-flip-checklist.md` (known exception E1: public Google Maps key in Lancaster captures) |
@@ -39,6 +39,7 @@ First capture (UTC): 2026-10-07 02:27 (probe, data as of 2026-10-05). First coun
 
 | Date | Work done | Next step |
 |---|---|---|
+| 2026-11-03 (52) | G2 cover window widened to 06:00 UTC the next morning, from Nov 2 (ADR 0027): Monday's four scheduled runs all ran but 5 to 6 hours late (01:32 to 03:04 UTC Tuesday). Past weeks keep the midnight rule (owner's choice), so the week of Nov 2 is the first that can count | G2 earliest pass: week of Nov 9 (window closes 06:00 UTC Sat Nov 14) |
 | 2026-11-03 (51) | Weekly release fixed: the dashboard build crashed when the latest snapshot had no cases-by-month chart (the republished report dropped it), so the W43 and W44 release runs failed after tagging. Each part of "who is affected" now says when the snapshot does not give it; the demographics CSV keeps fixed columns. Test added; full real-data build checked, private and public | Next Monday release (Nov 9) builds the dashboard |
 | 2026-10-31 (50) | Release moved off the half hour (Mon 13:23 UTC); Monday backup routine also checks the week's release tag; model version 1 frozen for scoring from Nov 4; weekly Thursday fit-and-score check-in (ADR 0026) | Nov 5: first weekly check-in |
 | 2026-10-31 (49) | Dashboard slots moved earlier and off the hour (19:13, 20:07, 20:53, 21:47 UTC; catch-up 13:17): scheduled runs had started 1 to 3 hours late and the 19:30 slot never ran (ADR 0025) | Watch G2 coverage for the week of Nov 2 |
