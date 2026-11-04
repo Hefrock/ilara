@@ -9,8 +9,9 @@ outbreak.
 
 ## What it does
 
-Ilara collects public data about the outbreak on a fixed schedule: the Department of Health
-dashboard, CDC case counts and Census reference data. Every capture is saved exactly as received,
+Ilara collects public data about the outbreak each Monday, Wednesday and Friday, after the
+Department of Health updates its dashboard: the dashboard itself, CDC case counts and Census
+reference data. Every capture is saved exactly as received,
 with a hash, before anything else happens to it. The captures are then parsed into tables where
 each row records where it came from. A data release is tagged each week, and a small static
 dashboard shows the latest figures.
@@ -19,7 +20,8 @@ A county-level transmission model sits on top of the data. It is fitted to the r
 counts and makes forecasts one to four weeks ahead. Those forecasts stay private until they have
 proven better than a simple baseline.
 
-The project is also a way to learn Python epidemiological tooling.
+The project is also meant for teaching: what went wrong while building it, and what each problem
+taught, is written up for students of outbreak epidemiology.
 
 ## Status
 
@@ -30,13 +32,17 @@ weekly forecasts, which is no earlier than 30 December 2026.
 
 How the data and model work: [`docs/methods.md`](docs/methods.md). Progress:
 [`docs/PROGRESS.md`](docs/PROGRESS.md). Build plan: [`docs/HANDOFF.md`](docs/HANDOFF.md).
-Decisions: [`docs/adr/`](docs/adr/). What went wrong and what it taught us:
+Decisions: [`docs/adr/`](docs/adr/). Twelve lessons for students, from what went wrong:
 [`docs/lessons.md`](docs/lessons.md).
 
 ## Reading the numbers
 
 - **Counts are a floor.** Reported cases are cases known to and published by public health
   authorities, and are revised. Many infections are never reported.
+- **Dates are report dates.** The dashboard gives no onset dates, so nothing here says when people
+  fell ill. The most recent weeks always look lower than they will end up.
+- **Gaps stay gaps.** A figure the department did not publish is shown as missing, never estimated
+  or filled in.
 - **Forecasts withheld until validated.** Model output is not published until it beats a simple
   persistence baseline on held-out data.
 - Every figure traces to a raw capture (`data/raw/`) with a SHA-256 hash and a weekly release tag.
