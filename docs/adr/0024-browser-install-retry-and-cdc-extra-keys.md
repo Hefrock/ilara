@@ -33,3 +33,18 @@ Status: accepted (owner, 2026-10-30: "yes, do the CDC and Chromium fixes in one 
   23:07 UTC, after the backup routine's last check.
 - A parser that requires an exact set of keys breaks on harmless additions; the CDC parser now
   checks only for what it reads.
+
+## Addendum, 2026-11-04: wait for the package lock between attempts
+
+The retry did not work when it was needed. On 2026-11-04 (CI run 41885467595) a slow Ubuntu
+mirror made attempt 1 run past its three minutes. `timeout` stopped the Playwright command but
+not the `apt-get` it had started as root, which went on installing and held the package lock, so
+attempts 2 and 3 failed at once with "Could not get lock /var/lib/dpkg/lock-frontend".
+
+Owner, 2026-11-04: "yes, do the browser fix in a separate PR". Between attempts the script now
+waits up to three minutes for any `apt-get` or `dpkg` to finish; the next attempt then finds the
+packages installed and only fetches the browser. The worst case is three attempts of three minutes
+plus two waits of three minutes and two pauses of 15 seconds, 15.5 minutes, so the step limit
+rises from 11 to 16 minutes and the job limits from 20 to 25. A test runs the script against fake
+commands to check the wait, and another checks that every step limit covers the worst case.
+
