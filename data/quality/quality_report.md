@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-03T20:35:21Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-02 (DOH refreshed the report 2026-11-02T18:57:31Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-04T20:44:20Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-04 (DOH refreshed the report 2026-11-04T19:00:58Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -29,25 +29,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-03T20:35:08Z (0 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-03T20:35:13Z (0 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-11-03T20:34:53Z (0 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-11-03T20:34:58Z (0 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-03T20:35:03Z (0 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-11-03T20:34:48Z (0 h ago)
-- census_commuting: last outcome unchanged, last good 2026-11-03T20:34:42Z (0 h ago)
-- census_commuting_index: last outcome changed, last good 2026-11-03T20:34:48Z (0 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-11-03T20:34:37Z (0 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-11-03T20:34:32Z (0 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-03T20:08:18Z (0 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-11-03T20:34:17Z (0 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-03T20:35:08Z (24 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-03T20:35:13Z (24 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-11-03T20:34:53Z (24 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-11-03T20:34:58Z (24 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-03T20:35:03Z (24 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-11-03T20:34:48Z (24 h ago)
+- census_commuting: last outcome unchanged, last good 2026-11-03T20:34:42Z (24 h ago)
+- census_commuting_index: last outcome changed, last good 2026-11-03T20:34:48Z (24 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-11-03T20:34:37Z (24 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-11-03T20:34:32Z (24 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-04T20:44:17Z (0 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-11-03T20:34:17Z (24 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
-- doh_measles_page: last outcome unchanged, last good 2026-11-03T20:34:07Z (0 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-11-03T20:34:12Z (0 h ago)
+- doh_measles_page: last outcome unchanged, last good 2026-11-03T20:34:07Z (24 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-11-03T20:34:12Z (24 h ago)
 - doh_release: one-time backfill, last good 2026-10-07T20:06:08Z
-- doh_school_imm_county: last outcome unchanged, last good 2026-11-03T20:34:22Z (0 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-11-03T20:34:27Z (0 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-11-03T20:35:19Z (0 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-11-03T20:34:22Z (24 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-11-03T20:34:27Z (24 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-11-03T20:35:19Z (24 h ago)
 - wayback_cdx: one-time backfill, last good 2026-10-07T11:56:00Z
 
 ## Implied counts
@@ -117,6 +117,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - curated doh_dashboard 2026-10-28 (calendar_year): 67 county rows sum to 1398; curated doh_dashboard:80d76da363f0 (T1) total 1398 (consistent)
 - curated doh_dashboard 2026-10-30 (calendar_year): 67 county rows sum to 1426; curated doh_dashboard:18519334e47c (T1) total 1426 (consistent)
 - curated doh_dashboard 2026-11-02 (calendar_year): 67 county rows sum to 1433; curated doh_dashboard:34787ed48e0d (T1) total 1433 (consistent)
+- curated doh_dashboard 2026-11-04 (calendar_year): 67 county rows sum to 1467; curated doh_dashboard:f3aa4bfa69b2 (T1) total 1467 (consistent)
 - sensitivity seed_t3_county 2026-08-25 (unknown): 2 county rows sum to 214; sensitivity seed_statewide:sw-m06 (T3-derived) total 393 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-17 (unknown): 9 county rows sum to 629; sensitivity seed_statewide:sw-m07 (T3-derived) total 767 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-21 (unknown): 3 county rows sum to 514; sensitivity seed_statewide:sw-007 (T3-derived) total 792 [compared, cross-source, not flagged]
@@ -150,6 +151,8 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - dashboard 2026-10-30: since_april 1414
 - dashboard 2026-11-02: calendar_year 1433
 - dashboard 2026-11-02: since_april 1421
+- dashboard 2026-11-04: calendar_year 1467
+- dashboard 2026-11-04: since_april 1455
 
 ## Growth steps
 
@@ -165,7 +168,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - 2026-08: 379 (2026-08-21, curated sw-003, T1, unknown); 393 (2026-08-25, curated doh_release, T1, calendar_year); 460 (2026-08-28, curated doh_release, T1, calendar_year); 497 (2026-08-31, curated doh_release, T1, calendar_year); 393 (2026-08-25, sensitivity sw-m06, T3-derived, unknown)
 - 2026-09: 540 (2026-09-02, curated doh_release, T1, calendar_year); 624 (2026-09-09, curated doh_release, T1, calendar_year); 676 (2026-09-11, curated doh_release, T1, calendar_year); 676 (2026-09-11, curated sw-006, T1, unknown); 693 (2026-09-14, curated doh_release, T1, calendar_year); 731 (2026-09-16, curated doh_release, T1, calendar_year); 835 (2026-09-23, curated doh_release, T1, calendar_year); 890 (2026-09-25, curated doh_release, T1, calendar_year); 903 (2026-09-28, curated doh_release, T1, calendar_year); 943 (2026-09-30, curated doh_release, T1, calendar_year); 943 (2026-09-30, curated sw-009, T1, unknown); 767 (2026-09-17, sensitivity sw-m07, T3-derived, unknown); 792 (2026-09-21, sensitivity sw-007, T3-derived, unknown); 903 (2026-09-28, sensitivity sw-008, T3-derived, unknown)
 - 2026-10: 977 (2026-10-02, curated doh_release, T1, calendar_year); 1004 (2026-10-05, curated doh_dashboard, T1, calendar_year); 992 (2026-10-05, curated doh_dashboard, T1, since_april); 1078 (2026-10-07, curated doh_dashboard, T1, calendar_year); 1066 (2026-10-07, curated doh_dashboard, T1, since_april); 1136 (2026-10-09, curated doh_dashboard, T1, calendar_year); 1124 (2026-10-09, curated doh_dashboard, T1, since_april); 1222 (2026-10-14, curated doh_dashboard, T1, calendar_year); 1210 (2026-10-14, curated doh_dashboard, T1, since_april); 1260 (2026-10-16, curated doh_dashboard, T1, calendar_year); 1248 (2026-10-16, curated doh_dashboard, T1, since_april); 1286 (2026-10-19, curated doh_dashboard, T1, calendar_year); 1274 (2026-10-19, curated doh_dashboard, T1, since_april); 1317 (2026-10-21, curated doh_dashboard, T1, calendar_year); 1305 (2026-10-21, curated doh_dashboard, T1, since_april); 1338 (2026-10-23, curated doh_dashboard, T1, calendar_year); 1326 (2026-10-23, curated doh_dashboard, T1, since_april); 1360 (2026-10-26, curated doh_dashboard, T1, calendar_year); 1348 (2026-10-26, curated doh_dashboard, T1, since_april); 1398 (2026-10-28, curated doh_dashboard, T1, calendar_year); 1386 (2026-10-28, curated doh_dashboard, T1, since_april); 1426 (2026-10-30, curated doh_dashboard, T1, calendar_year); 1414 (2026-10-30, curated doh_dashboard, T1, since_april); 1004 (2026-10-05, sensitivity sw-010, T3-derived, unknown)
-- 2026-11: 1433 (2026-11-02, curated doh_dashboard, T1, calendar_year); 1421 (2026-11-02, curated doh_dashboard, T1, since_april)
+- 2026-11: 1433 (2026-11-02, curated doh_dashboard, T1, calendar_year); 1421 (2026-11-02, curated doh_dashboard, T1, since_april); 1467 (2026-11-04, curated doh_dashboard, T1, calendar_year); 1455 (2026-11-04, curated doh_dashboard, T1, since_april)
 
 ## Capture days and Gate G2
 
@@ -184,7 +187,8 @@ Gate G2: **not yet** (0 of 2 consecutive weeks covered by scheduled runs alone).
 | Mon 2026-10-26 | covered | workflow_dispatch | 1 |
 | Wed 2026-10-28 | covered | schedule, workflow_dispatch | 1 |
 | Fri 2026-10-30 | covered | schedule, workflow_dispatch | 2 |
-| Mon 2026-11-02 | covered | workflow_dispatch | 4 |
+| Mon 2026-11-02 | covered | schedule, workflow_dispatch | 0 |
+| Wed 2026-11-04 | covered | workflow_dispatch | 0 |
 
 ## Quarantine
 
