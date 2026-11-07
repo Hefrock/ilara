@@ -1,0 +1,21 @@
+{
+  "bytes": 711515,
+  "capture_key": null,
+  "compression": "gzip",
+  "content_hash": "fff824cfdf7abb70c6432283cfb3466938cfee6f7546a8e3ab94f58004751668",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-42403919249-1:02:doh_newsroom",
+    "content_type": "text/html;charset=utf-8"
+  },
+  "fetched_at_et": "2026-11-07T13:58:59-05:00",
+  "fetched_at_utc": "2026-11-07T18:58:59Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "doh_newsroom",
+  "raw_path": "data/raw/doh_newsroom/2026/20261107T185859Z_716dc8d45c8f.html.gz",
+  "sha256": "716dc8d45c8ff4aca1c575873fbbded61b01902e5dbae766b8b358afd1064b94",
+  "source_id": "doh_newsroom",
+  "stored_sha256": "2de3eb428ea18e23abc388397efd051d2ff1db6b6da84c66cb013f5afb9f90e9",
+  "url": "https://www.pa.gov/agencies/health/newsroom"
+}
