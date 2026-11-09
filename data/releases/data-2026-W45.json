@@ -1,0 +1,562 @@
+{
+  "capture_days": {
+    "2026-11-02": {
+      "captures": [
+        "gh-41522000885-1:01:doh_dashboard",
+        "gh-41560361497-1:01:doh_dashboard",
+        "gh-41564732691-1:01:doh_dashboard",
+        "gh-41567741411-1:01:doh_dashboard",
+        "gh-41570005080-1:01:doh_dashboard"
+      ],
+      "covered": true
+    },
+    "2026-11-04": {
+      "captures": [
+        "gh-41909162809-1:01:doh_dashboard",
+        "gh-41940596157-1:01:doh_dashboard",
+        "gh-41944448602-1:01:doh_dashboard",
+        "gh-41946416755-1:01:doh_dashboard",
+        "gh-41950962691-1:01:doh_dashboard"
+      ],
+      "covered": true
+    },
+    "2026-11-06": {
+      "captures": [
+        "gh-42290707059-1:01:doh_dashboard",
+        "gh-42315918443-1:01:doh_dashboard",
+        "gh-42318440776-1:01:doh_dashboard",
+        "gh-42322912589-1:01:doh_dashboard"
+      ],
+      "covered": true
+    }
+  },
+  "captures_in_week": {
+    "blocked": 0,
+    "changed": 37,
+    "failed": 0,
+    "unchanged": 92
+  },
+  "data_commit_sha": "45175ddc4a645adaa602b88fad01d62be56a854f",
+  "flags_raised": {},
+  "inputs": {
+    "raw_files_in_week": [
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261102T204514Z_0f425a8e7063.jpg",
+        "sha256": "0f425a8e7063226a88237f2ce4b58025b3651d29adfe1e7267f4d6bad23d981a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261102T204514Z_60868086a512.txt",
+        "sha256": "60868086a512dd104f622a40c4e29c18427686456ae29776934f724655703d1a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261102T204514Z_c38f4520a489.html.gz",
+        "sha256": "c38f4520a489ff4153406f3ccc754a86236d55cbcc47e850bfc7b114b6d922b8",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261102T204514Z_f065a0bb97e5.jpg",
+        "sha256": "f065a0bb97e53c0d4cda6f044e21fbfa9b2953739f5211b70db52ed7a5c1fa9c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261102T204514Z_f822bdf391f6.json.gz",
+        "sha256": "f822bdf391f6f456222d9208f3db97034968787738b4b85471f7b744d6ee2ebf",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261102T225136Z_99d62f5eb17b.html.gz",
+        "sha256": "99d62f5eb17b1e65d85aec8128e018f064bcc517c41a09fce89d3d1d37bab5c3",
+        "source_id": "census_commuting_index"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T013240Z_0f425a8e7063.jpg",
+        "sha256": "0f425a8e7063226a88237f2ce4b58025b3651d29adfe1e7267f4d6bad23d981a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T013240Z_7542a53f453e.html.gz",
+        "sha256": "7542a53f453ea8478d31ae3c0114d8d0a74e1712937cb8fb1c24eec3d671990e",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T013240Z_aa8b539fac90.json.gz",
+        "sha256": "aa8b539fac90bc0e7cb0f561f683db7f0224475c3bb7738312c29bf667546088",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T013240Z_f065a0bb97e5.jpg",
+        "sha256": "f065a0bb97e53c0d4cda6f044e21fbfa9b2953739f5211b70db52ed7a5c1fa9c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T021337Z_0f425a8e7063.jpg",
+        "sha256": "0f425a8e7063226a88237f2ce4b58025b3651d29adfe1e7267f4d6bad23d981a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T021337Z_59b7c1590942.html.gz",
+        "sha256": "59b7c15909425faa0ab3909edca2ec189fadedc6135256604fd8e0897c33c3de",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T021337Z_9c1e5d09f334.json.gz",
+        "sha256": "9c1e5d09f334066f72917598b88d09e59d1d9247afc7b8e03a9c67154dd0cf0c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T021337Z_f065a0bb97e5.jpg",
+        "sha256": "f065a0bb97e53c0d4cda6f044e21fbfa9b2953739f5211b70db52ed7a5c1fa9c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T024245Z_0f425a8e7063.jpg",
+        "sha256": "0f425a8e7063226a88237f2ce4b58025b3651d29adfe1e7267f4d6bad23d981a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T024245Z_1869e5341754.html.gz",
+        "sha256": "1869e534175469a57e3dce330362d8585a9f9eddaf872ed0d62ef2c67c3b67c6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T024245Z_cab6619bd093.json.gz",
+        "sha256": "cab6619bd093d905330d22af3c9d196497e798b781eafdecdf62f8c925e04210",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T024245Z_f065a0bb97e5.jpg",
+        "sha256": "f065a0bb97e53c0d4cda6f044e21fbfa9b2953739f5211b70db52ed7a5c1fa9c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T030521Z_0f425a8e7063.jpg",
+        "sha256": "0f425a8e7063226a88237f2ce4b58025b3651d29adfe1e7267f4d6bad23d981a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T030521Z_45efb0c90515.json.gz",
+        "sha256": "45efb0c90515a1e53e678a8961864f4d23810126ec846cbef7961b51e7eaf89a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T030521Z_8cea000ff7b4.html.gz",
+        "sha256": "8cea000ff7b45f8430025a7c1bdc9d1feba2c52f809a108e60652f593b01106f",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T030521Z_f065a0bb97e5.jpg",
+        "sha256": "f065a0bb97e53c0d4cda6f044e21fbfa9b2953739f5211b70db52ed7a5c1fa9c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T200702Z_0f425a8e7063.jpg",
+        "sha256": "0f425a8e7063226a88237f2ce4b58025b3651d29adfe1e7267f4d6bad23d981a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T200702Z_34787ed48e0d.json.gz",
+        "sha256": "34787ed48e0d5e7a46b714871205613df3b15f55dea3c4af8bdb0b3750ca1069",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T200702Z_e3bff448158e.html.gz",
+        "sha256": "e3bff448158eb6f1dc92b7f952941dd23464800c6e1a3850ec22722e4b70bfb6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261103T200702Z_f065a0bb97e5.jpg",
+        "sha256": "f065a0bb97e53c0d4cda6f044e21fbfa9b2953739f5211b70db52ed7a5c1fa9c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261103T203442Z_4cf9f4110f60.html.gz",
+        "sha256": "4cf9f4110f60c9ae5a14fd199a5e61e1a8302e9abc57af8e684dab57b2e96629",
+        "source_id": "census_commuting_index"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261104T204301Z_2be702c01bb2.html.gz",
+        "sha256": "2be702c01bb2efa316e2a9d908d012fa6868f1e6cdcf4a61149926ed0ef6414d",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261104T204301Z_384ae98a2e77.jpg",
+        "sha256": "384ae98a2e772316db4fe0c0d279cde2aaa7753754bf7dbbb7a54d46c9513aff",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261104T204301Z_9a212058003d.jpg",
+        "sha256": "9a212058003d3c77591b9ce5c52fb2131087e18a43efcb76ed78a59ce78b49a6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261104T204301Z_a66bacf9f172.txt",
+        "sha256": "a66bacf9f1723c47a413874f9f4f4fb68956a3a95dc60d7119850e6eeb97c71f",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261104T204301Z_f3aa4bfa69b2.json.gz",
+        "sha256": "f3aa4bfa69b246ef3e9923a2a1348bb096db81a5bc02af6208ee0d1bd1d1df11",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261104T205410Z_831dafa61b33.html.gz",
+        "sha256": "831dafa61b33d7ad853e901f133ea6276b42a33ae6c5083bfdc81f336e2a8875",
+        "source_id": "census_commuting_index"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T002051Z_384ae98a2e77.jpg",
+        "sha256": "384ae98a2e772316db4fe0c0d279cde2aaa7753754bf7dbbb7a54d46c9513aff",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T002051Z_41c749477e28.html.gz",
+        "sha256": "41c749477e28da596c60c4d75e48c45ed72d34dee391ee84d9ad1cd521202b41",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T002051Z_53f6ef6e0051.json.gz",
+        "sha256": "53f6ef6e00510931287ee2f797b13a702e288b6d64ed6af73f212b039868f68a",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T002051Z_9a212058003d.jpg",
+        "sha256": "9a212058003d3c77591b9ce5c52fb2131087e18a43efcb76ed78a59ce78b49a6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T005208Z_384ae98a2e77.jpg",
+        "sha256": "384ae98a2e772316db4fe0c0d279cde2aaa7753754bf7dbbb7a54d46c9513aff",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T005208Z_9a212058003d.jpg",
+        "sha256": "9a212058003d3c77591b9ce5c52fb2131087e18a43efcb76ed78a59ce78b49a6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T005208Z_bd162f0f180f.json.gz",
+        "sha256": "bd162f0f180fb7cc8de0bbc9892f57f6398615db4d56ce979f8eb1fb6b023cb4",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T005208Z_f7bb406c5ef3.html.gz",
+        "sha256": "f7bb406c5ef348ba56cb74a6b28da171852147dc14472cb084458769cf2cdc4e",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T010843Z_384ae98a2e77.jpg",
+        "sha256": "384ae98a2e772316db4fe0c0d279cde2aaa7753754bf7dbbb7a54d46c9513aff",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T010843Z_9a212058003d.jpg",
+        "sha256": "9a212058003d3c77591b9ce5c52fb2131087e18a43efcb76ed78a59ce78b49a6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T010843Z_c29ec5b7fb29.json.gz",
+        "sha256": "c29ec5b7fb29356e6b489f112072f14347ca6a160c34d42c2c3328cb4a689fc5",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T010843Z_f3b3cbc1fb09.html.gz",
+        "sha256": "f3b3cbc1fb09f75b8fc7d5d72dfc04f79a109bf15dfa37bf3e136d5de68484e5",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T015319Z_384ae98a2e77.jpg",
+        "sha256": "384ae98a2e772316db4fe0c0d279cde2aaa7753754bf7dbbb7a54d46c9513aff",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T015319Z_9a212058003d.jpg",
+        "sha256": "9a212058003d3c77591b9ce5c52fb2131087e18a43efcb76ed78a59ce78b49a6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T015319Z_f9d49701328a.html.gz",
+        "sha256": "f9d49701328ab08ae1a519810b19c75fac614abbdcf9dad63a47742f54a04431",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T015319Z_fb2e83273b01.json.gz",
+        "sha256": "fb2e83273b01076708c35f5181c176960d95c2ddb4cc68614ae94b76f9d4fc26",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T203925Z_380fa1123068.html.gz",
+        "sha256": "380fa112306855ce846610fb6ff9634f3b9fe40cc89b8c9c1e1178ef3721a814",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T203925Z_384ae98a2e77.jpg",
+        "sha256": "384ae98a2e772316db4fe0c0d279cde2aaa7753754bf7dbbb7a54d46c9513aff",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T203925Z_9a212058003d.jpg",
+        "sha256": "9a212058003d3c77591b9ce5c52fb2131087e18a43efcb76ed78a59ce78b49a6",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261105T203925Z_fd95ada62df6.json.gz",
+        "sha256": "fd95ada62df63e0139cfa74bad5703caba1cca6a7af55a8d70ef2de5808e0287",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_measles_page/2026/20261105T211016Z_633d49e7b72b.html.gz",
+        "sha256": "633d49e7b72b1c30561ed57d1e3220feab650e38f7dbcd1f0a5aaf2847625dc8",
+        "source_id": "doh_measles_page"
+      },
+      {
+        "raw_path": "data/raw/doh_newsroom/2026/20261105T211021Z_24d4f96ed0db.html.gz",
+        "sha256": "24d4f96ed0db72e0a5f588f128f859e1dabfbef6ffad11018896a960502d81b4",
+        "source_id": "doh_newsroom"
+      },
+      {
+        "raw_path": "data/raw/doh_han_index/2026/20261105T211026Z_cd8fa729d5b3.html.gz",
+        "sha256": "cd8fa729d5b3128618a93b5dca8234fa602eabda314d6fc01f2e0d3666ab434f",
+        "source_id": "doh_han_index"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261105T211056Z_f59e217bc6f4.html.gz",
+        "sha256": "f59e217bc6f4567b0f777107dc3bf89f7e1725c91ee8745452c962440d89d025",
+        "source_id": "census_commuting_index"
+      },
+      {
+        "raw_path": "data/raw/cdc_measles_national/2026/20261105T211102Z_eecfdb265c30.html",
+        "sha256": "eecfdb265c304340a68b01c424c85d9b8fa516c2becc3e54473e3472bcd335b6",
+        "source_id": "cdc_measles_national"
+      },
+      {
+        "raw_path": "data/raw/doh_measles_page/2026/20261106T203008Z_4f583f27856b.html.gz",
+        "sha256": "4f583f27856b2953a8b0fd6ec09e3645f0211fa53e33dc3861f4c908144e190d",
+        "source_id": "doh_measles_page"
+      },
+      {
+        "raw_path": "data/raw/doh_newsroom/2026/20261106T203013Z_882646309f05.html.gz",
+        "sha256": "882646309f05ee7e7eac7171e595ddcf6b16dafaecc21da211a4b8202ac78780",
+        "source_id": "doh_newsroom"
+      },
+      {
+        "raw_path": "data/raw/doh_han_index/2026/20261106T203018Z_2337cb2dd67f.html.gz",
+        "sha256": "2337cb2dd67f050ba62b2786469627cca644c3d9934ec1877d398a98cd53027f",
+        "source_id": "doh_han_index"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261106T203049Z_d4c593e782d8.html.gz",
+        "sha256": "d4c593e782d8e15df138ae6e1fc79c030690a9fe14a3d8cdbc9b3d4d75e9f33d",
+        "source_id": "census_commuting_index"
+      },
+      {
+        "raw_path": "data/raw/cdc_measles_national/2026/20261106T203055Z_7bf86668b9a7.html",
+        "sha256": "7bf86668b9a7d88ac4b709fa00dc8c88f8f82bb109d652fb71f64eb8285be1d4",
+        "source_id": "cdc_measles_national"
+      },
+      {
+        "raw_path": "data/raw/cdc_measles_cases_map/2026/20261106T203110Z_459a1448eb01.json",
+        "sha256": "459a1448eb011f32cd4cfa2376db50f71bea5b7b34d048ecf01c8af595eab564",
+        "source_id": "cdc_measles_cases_map"
+      },
+      {
+        "raw_path": "data/raw/cdc_measles_cases_weekly/2026/20261106T203115Z_db763ec19eef.json",
+        "sha256": "db763ec19eefa6b9ca82f1a25e600034a115a9b42bc2b07c0dfcee63c5512127",
+        "source_id": "cdc_measles_cases_weekly"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261106T204342Z_24ad30b3112d.jpg",
+        "sha256": "24ad30b3112d794656d4ffa3256d1208f7faf142612f67bdf0e16e80aa96ed73",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261106T204342Z_3193a9d7593a.jpg",
+        "sha256": "3193a9d7593a86da5ec3802c90441871fecf880dc0f4e87a2054971001ca0cce",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261106T204342Z_eb3b34daac63.html.gz",
+        "sha256": "eb3b34daac63d3250ab39e809d52c249ae01a22729a54c6eaf40112c87f601ad",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261106T204342Z_f3e7d6a9df28.txt",
+        "sha256": "f3e7d6a9df288bfaff53fd5d1405a6f54bcf1ed4b75109db35ec10c4999da577",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261106T204342Z_fbab1ea80058.json.gz",
+        "sha256": "fbab1ea8005840613bc8a209145a4f94bd14b6ca1b84c6cc12ac4bb47f8d565c",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T000439Z_24ad30b3112d.jpg",
+        "sha256": "24ad30b3112d794656d4ffa3256d1208f7faf142612f67bdf0e16e80aa96ed73",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T000439Z_3193a9d7593a.jpg",
+        "sha256": "3193a9d7593a86da5ec3802c90441871fecf880dc0f4e87a2054971001ca0cce",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T000439Z_44d4f55cb480.json.gz",
+        "sha256": "44d4f55cb480b132f2c23526d6d035083b967128fdda7a8c561540fe94a6c731",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T000439Z_a11c61b78157.html.gz",
+        "sha256": "a11c61b78157a65101e9096b81a9507349ff7745d62a8464646fa5879e2a32be",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T002900Z_146581398664.json.gz",
+        "sha256": "146581398664df842c0fa98e115c122d124db49f2394826d962c8d6512928ca5",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T002900Z_24ad30b3112d.jpg",
+        "sha256": "24ad30b3112d794656d4ffa3256d1208f7faf142612f67bdf0e16e80aa96ed73",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T002900Z_3193a9d7593a.jpg",
+        "sha256": "3193a9d7593a86da5ec3802c90441871fecf880dc0f4e87a2054971001ca0cce",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T002900Z_f5f320302c2c.html.gz",
+        "sha256": "f5f320302c2ccc4acbe286adebb312c23a8dc89266ab7abf644c59f78032eb39",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T011417Z_24ad30b3112d.jpg",
+        "sha256": "24ad30b3112d794656d4ffa3256d1208f7faf142612f67bdf0e16e80aa96ed73",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T011417Z_3193a9d7593a.jpg",
+        "sha256": "3193a9d7593a86da5ec3802c90441871fecf880dc0f4e87a2054971001ca0cce",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T011417Z_3e72951ef430.html.gz",
+        "sha256": "3e72951ef430c5727508d6db747ddd08cffdd3571c1098da8849d2eaba1f5d20",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T011417Z_8659d91ad123.json.gz",
+        "sha256": "8659d91ad12363b75eb9774b23b8578e2a488f233fc65745d623f9570708b8b9",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T180200Z_24ad30b3112d.jpg",
+        "sha256": "24ad30b3112d794656d4ffa3256d1208f7faf142612f67bdf0e16e80aa96ed73",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T180200Z_3193a9d7593a.jpg",
+        "sha256": "3193a9d7593a86da5ec3802c90441871fecf880dc0f4e87a2054971001ca0cce",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T180200Z_b227ed2ea022.json.gz",
+        "sha256": "b227ed2ea02280bec67979c8962cd0ed701d00414b183d656559d35207ca9fa4",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_dashboard/2026/20261107T180200Z_dbe1c16c5fb3.html.gz",
+        "sha256": "dbe1c16c5fb30f2defbf222ea0b156b435cb6efe0a34a79d938dc63db80e3f4e",
+        "source_id": "doh_dashboard"
+      },
+      {
+        "raw_path": "data/raw/doh_measles_page/2026/20261107T185854Z_c19bc8da1613.html.gz",
+        "sha256": "c19bc8da1613cc6dddb4e5bc8dcb7a1ad0904e60d1a576d352d98868aa020318",
+        "source_id": "doh_measles_page"
+      },
+      {
+        "raw_path": "data/raw/doh_newsroom/2026/20261107T185859Z_716dc8d45c8f.html.gz",
+        "sha256": "716dc8d45c8ff4aca1c575873fbbded61b01902e5dbae766b8b358afd1064b94",
+        "source_id": "doh_newsroom"
+      },
+      {
+        "raw_path": "data/raw/doh_han_index/2026/20261107T185904Z_8329c966567f.html.gz",
+        "sha256": "8329c966567f721b2a69a85271da28981559814ec65e03b747fd5b99149a0d37",
+        "source_id": "doh_han_index"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261107T185934Z_0149097bfcfc.html.gz",
+        "sha256": "0149097bfcfc819cfca4a05a7c5063c93b48693e9ac2b521806aadb5bc92cdcc",
+        "source_id": "census_commuting_index"
+      },
+      {
+        "raw_path": "data/raw/census_commuting_index/2026/20261108T185823Z_afc62601ca41.html.gz",
+        "sha256": "afc62601ca411796554f91785353ea306788df89c056b0ae789290d0b849e985",
+        "source_id": "census_commuting_index"
+      }
+    ],
+    "raw_files_total": 400,
+    "raw_sha256_digest": "0eebd78e6ffef0fb7ee8ceb6352e394f18517592b4e29b3a05adc62528ddd689"
+  },
+  "interpolated_values": 0,
+  "latest_dashboard": {
+    "calendar_year": {
+      "as_of_date": "2026-11-06",
+      "counties_with_cases": 45,
+      "cum_cases": 1487,
+      "deaths": 6,
+      "hospitalizations": 287,
+      "new_7day": 70
+    },
+    "since_april": {
+      "as_of_date": "2026-11-06",
+      "counties_with_cases": null,
+      "cum_cases": 1475,
+      "deaths": 6,
+      "hospitalizations": 286,
+      "new_7day": 70
+    }
+  },
+  "notes": "Counts are a floor. Missed capture days are listed, never filled.",
+  "release": "data-2026-W45",
+  "release_version": "1.0.0",
+  "tables": {
+    "case_county": {
+      "count_definitions_new": [
+        "calendar_year"
+      ],
+      "latest_as_of_date": {
+        "doh_dashboard|calendar_year": "2026-11-06",
+        "doh_dashboard|unknown": "2026-10-16"
+      },
+      "rows_known": 1005,
+      "rows_new": 201
+    },
+    "case_state": {
+      "count_definitions_new": [
+        "calendar_year",
+        "since_april"
+      ],
+      "latest_as_of_date": {
+        "cdc_measles_cases_map|calendar_year": "2026-11-05",
+        "doh_dashboard|calendar_year": "2026-11-06",
+        "doh_dashboard|since_april": "2026-11-06",
+        "doh_release|calendar_year": "2026-10-02",
+        "seed_statewide|calendar_year": "2026-01-30",
+        "seed_statewide|unknown": "2026-09-30"
+      },
+      "rows_known": 54,
+      "rows_new": 7
+    },
+    "event": {
+      "rows_known": 15,
+      "rows_new": 0
+    }
+  },
+  "timezone": "America/New_York",
+  "uncovered_days": [],
+  "week": "2026-W45",
+  "week_end_utc": "2026-11-09T05:00:00Z",
+  "week_start_utc": "2026-11-02T05:00:00Z"
+}
