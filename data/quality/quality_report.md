@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-10T03:04:04Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-09 (DOH refreshed the report 2026-11-09T18:58:26Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-10T03:55:08Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-09 (DOH refreshed the report 2026-11-09T18:58:26Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -39,7 +39,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - census_commuting_index: last outcome changed, last good 2026-11-09T23:30:59Z (4 h ago)
 - census_popest_agesex: last outcome unchanged, last good 2026-11-09T23:30:48Z (4 h ago)
 - census_popest_totals: last outcome unchanged, last good 2026-11-09T23:30:43Z (4 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-10T03:04:01Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-10T03:55:05Z (0 h ago)
 - doh_han_index: last outcome unchanged, last good 2026-11-09T23:30:28Z (4 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
 - doh_measles_page: last outcome unchanged, last good 2026-11-09T23:30:18Z (4 h ago)
@@ -119,7 +119,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - curated doh_dashboard 2026-11-02 (calendar_year): 67 county rows sum to 1433; curated doh_dashboard:34787ed48e0d (T1) total 1433 (consistent)
 - curated doh_dashboard 2026-11-04 (calendar_year): 67 county rows sum to 1467; curated doh_dashboard:fd95ada62df6 (T1) total 1467 (consistent)
 - curated doh_dashboard 2026-11-06 (calendar_year): 67 county rows sum to 1487; curated doh_dashboard:b227ed2ea022 (T1) total 1487 (consistent)
-- curated doh_dashboard 2026-11-09 (calendar_year): 67 county rows sum to 1505; curated doh_dashboard:da1b1433aca1 (T1) total 1505 (consistent)
+- curated doh_dashboard 2026-11-09 (calendar_year): 67 county rows sum to 1505; curated doh_dashboard:d9689a43e784 (T1) total 1505 (consistent)
 - sensitivity seed_t3_county 2026-08-25 (unknown): 2 county rows sum to 214; sensitivity seed_statewide:sw-m06 (T3-derived) total 393 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-17 (unknown): 9 county rows sum to 629; sensitivity seed_statewide:sw-m07 (T3-derived) total 767 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-21 (unknown): 3 county rows sum to 514; sensitivity seed_statewide:sw-007 (T3-derived) total 792 [compared, cross-source, not flagged]
