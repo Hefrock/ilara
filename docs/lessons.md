@@ -172,6 +172,21 @@ fool yourself. The same holds for forecasts: the model is fixed before it is sco
 *What changed:* rule changes apply going forward, and the record says so.
 [ADR 0027](adr/0027-g2-cover-window-to-0600-utc.md), [ADR 0026](adr/0026-release-time-release-backup-model-version.md).
 
+### 13. A holiday is not a gap
+
+On Wednesday 11 November, a state holiday, the department did not update its dashboard. Our
+captures ran and recorded the unchanged report, so nothing was missed. But the forecast scoring
+expected a snapshot dated on every Wednesday, and without one it could not score several
+forecasts, including every forecast made that day.
+
+*Why it matters:* "no new data" and "data not collected" look the same in a table of dates. Only
+a record of what was looked at, and when, tells them apart. And a scoring rule that assumes the
+source never skips a day will break on the first holiday.
+
+*What changed:* a review of the methods found this and other weaknesses in the scoring rules, and
+revised rules were proposed for the owner's decision.
+[Methods review](methods_review_2026-11.md), [ADR 0028](adr/0028-scoring-rules-proposed.md).
+
 ## The thread through all of them
 
 Keep what was published, exactly, with the date you saw it. Judge every step by what was known at
