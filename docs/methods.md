@@ -1,7 +1,8 @@
 # Methods
 
-How the data are collected and curated, and how the model is built, fitted and validated. This
-covers the parts that are settled as of 2026-10-15. Decisions and their reasons are in the ADRs
+How the data are collected and curated, and how the model is built, fitted and validated, as of
+2026-11-11. A [review](methods_review_2026-11.md) of these methods lists known weaknesses.
+Decisions and their reasons are in the ADRs
 under [adr/](adr/), sources in [sources.md](sources.md), table layouts in
 [schemas.md](schemas.md), and the build plan in [HANDOFF.md](HANDOFF.md). Every number below
 that comes from a run cites its ADR; nothing here is a forecast.
@@ -20,7 +21,13 @@ and Friday publishing days, after its refresh at about 13:00 to 14:20 ET
 capture clicks only the visible report tabs and refuses any response with case or record
 identifiers. Every outcome is logged, and changed content is saved raw with a hash before
 anything else is done with it. A capture that reaches a dead or unavailable report counts as
-failed ([ADR 0009](adr/0009-dead-dashboard-link-and-g2-tracker.md)).
+failed ([ADR 0009](adr/0009-dead-dashboard-link-and-g2-tracker.md)). GitHub starts scheduled runs
+late, so a backup routine starts a capture when the day's update has not been captured
+([ADR 0006](adr/0006-dashboard-capture-backup-trigger.md)), and a publishing day counts as covered
+by a good capture from 18:00 UTC that day to 06:00 UTC the next
+([ADR 0027](adr/0027-g2-cover-window-to-0600-utc.md)). When the department skips an update, as on
+the 2026-11-11 holiday, the capture records the unchanged report and no snapshot carries that
+date.
 
 **Curation.** Parsers turn raw files into append-only curated tables; every row carries its
 source, tier, as-of date, fetch time, raw hash and parser version. Revisions are new rows. The
@@ -53,7 +60,9 @@ A stochastic chain-binomial county SEIR model for all 67 counties
   generation time of about 12 days ([ADR 0005](adr/0005-county-seir-simulator.md); literature in
   [references](references/README.md));
 - R0 prior 9.9 to 18.1 ([ADR 0007](adr/0007-r0-prior.md));
-- seeding from the earliest county with stated case evidence, `lead_days` before it is known;
+- seeding in every county with a known case, `lead_days` before its first known date; counties
+  first seen only at the first county snapshot share one fitted lead before it
+  ([ADR 0022](adr/0022-seed-every-county-censored-lead.md));
 - intervention and health-alert events reduce transmission in their counties after a lag, by
   factors that are fitted, not assumed;
 - post-outbreak vaccination moves people out of the susceptible pool. DOH reports doses
@@ -81,7 +90,7 @@ a known case is seeded before its first known date; counties first seen only at 
 snapshot share one calibrated lead before it
 ([ADR 0022](adr/0022-seed-every-county-censored-lead.md)).
 
-Checks so far, on synthetic data only:
+Checks on synthetic data:
 
 - recovery across 20 three-county datasets: every parameter's 90 percent interval held the
   truth in at least 16 of 20 (T6.10);
@@ -90,7 +99,11 @@ Checks so far, on synthetic data only:
   reporting delay stayed wide
   ([ADR 0012](adr/0012-pennsylvania-calibration-problem.md)).
 
-Real county data are not fitted before Gate G3 (ten county snapshot dates).
+Real county data are not fitted before Gate G3 (ten county snapshot dates), which passed on
+2026-10-28. Real fits have run at weekly origins since then, as model version 1; their outputs
+are private before Gate G4. The fitted R0 reflects growth given nearly uniform county
+susceptibility and is not an estimate of measles R0 ([review](methods_review_2026-11.md),
+finding 4).
 
 Running it. `python -m project.model.preflight --origin <date>` runs the real path up to the
 gate without fitting: it counts the snapshot dates, builds the inputs, checks the gate, and times
@@ -112,13 +125,20 @@ weighted interval score and the coverage of their 50, 80 and 90 percent interval
 persistence baseline on the same targets. Any read of data fetched after an origin stops the
 run. Forecasts are published only if, over at least eight origins pooled across counties, the
 80 percent interval covers 70 to 90 percent of outcomes and the score beats persistence at one
-and two weeks (Gate G4). The earliest that decision can be made is 2026-12-30.
+and two weeks (Gate G4). The earliest that decision could be made was 2026-12-30; a skipped
+update on 2026-11-11 leaves targets unscored under the current rules, and the coverage and
+baseline tests have known flaws ([review](methods_review_2026-11.md), findings 1 to 3). Revised
+scoring rules are proposed in [ADR 0028](adr/0028-scoring-rules-proposed.md) and are not in
+force.
 
 ## 6. Limitations
 
 - Counts are a floor: they are cases known to and published by DOH.
-- The dashboard keeps no history; the series exists only from our captures (from 2026-10-05)
-  and dated DOH releases before that.
+- The dashboard keeps no history. It launched on 2026-07-14; the series exists only from our
+  captures (from 2026-10-05) and dated DOH releases before that, so about 36 updates were never
+  archived ([ADR 0023](adr/0023-end-of-outbreak-plan.md), item 6).
+- County susceptibility is nearly uniform and each county mixes evenly, so concentrated
+  under-vaccinated communities are not represented.
 - With no line list or onset dates, ascertainment, reporting delay and seeding time are weakly
   identified.
 - Commuting flows are from 2016-2020 and describe workers, not the community most affected.
