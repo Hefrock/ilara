@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-14T19:24:53Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-13 (DOH refreshed the report 2026-11-13T19:11:15Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-15T19:55:27Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-13 (DOH refreshed the report 2026-11-13T19:11:15Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -29,25 +29,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-14T19:24:40Z (0 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-14T19:24:45Z (0 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-11-14T19:24:25Z (0 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-11-14T19:24:30Z (0 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-14T19:24:35Z (0 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-11-14T19:24:20Z (0 h ago)
-- census_commuting: last outcome unchanged, last good 2026-11-14T19:24:14Z (0 h ago)
-- census_commuting_index: last outcome changed, last good 2026-11-14T19:24:20Z (0 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-11-14T19:24:09Z (0 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-11-14T19:24:04Z (0 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-14T18:45:38Z (1 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-11-14T19:23:49Z (0 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-15T19:55:14Z (0 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-15T19:55:19Z (0 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-11-15T19:54:59Z (0 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-11-15T19:55:04Z (0 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-15T19:55:09Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-11-15T19:54:54Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-11-15T19:54:48Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-11-15T19:54:54Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-11-15T19:54:43Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-11-15T19:54:38Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-14T18:45:38Z (25 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-11-15T19:54:23Z (0 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
-- doh_measles_page: last outcome unchanged, last good 2026-11-14T19:23:39Z (0 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-11-14T19:23:44Z (0 h ago)
+- doh_measles_page: last outcome unchanged, last good 2026-11-15T19:54:13Z (0 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-11-15T19:54:17Z (0 h ago)
 - doh_release: one-time backfill, last good 2026-10-07T20:06:08Z
-- doh_school_imm_county: last outcome unchanged, last good 2026-11-14T19:23:54Z (0 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-11-14T19:23:59Z (0 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-11-14T19:24:51Z (0 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-11-15T19:54:27Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-11-15T19:54:32Z (0 h ago)
+- local_hd_lancaster: last outcome changed, last good 2026-11-15T19:55:25Z (0 h ago)
 - wayback_cdx: one-time backfill, last good 2026-10-07T11:56:00Z
 
 ## Implied counts
@@ -96,7 +96,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Source conflicts
 
-- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 28 (ab7b6de37998); cum_cases 393, counties_with_cases 29 (ccf7dcb81392)
+- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
 
 ## Non-monotonic series
 
