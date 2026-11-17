@@ -1,0 +1,21 @@
+{
+  "bytes": 91193,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "448cd7603496189a7879b88ea3b0c8fcaaf643c50d64f1f9eb4b20784ba36d5e",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-44191174241-1:16:local_hd_lancaster",
+    "content_type": "text/html; charset=utf-8"
+  },
+  "fetched_at_et": "2026-11-17T17:34:47-05:00",
+  "fetched_at_utc": "2026-11-17T22:34:47Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "local_hd_lancaster",
+  "raw_path": "data/raw/local_hd_lancaster/2026/20261117T223447Z_6de4821b8cc3.html",
+  "sha256": "6de4821b8cc3fa1c614633446fbb77c980f22d2ccd5adee0d26c27628e1c31e0",
+  "source_id": "local_hd_lancaster",
+  "stored_sha256": "6de4821b8cc3fa1c614633446fbb77c980f22d2ccd5adee0d26c27628e1c31e0",
+  "url": "https://www.lancastercountypa.gov/2983/Measles"
+}
