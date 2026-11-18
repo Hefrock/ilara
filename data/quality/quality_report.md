@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-18T20:43:21Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-18 (DOH refreshed the report 2026-11-18T19:00:22Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-18T22:14:48Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-18 (DOH refreshed the report 2026-11-18T19:00:22Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -29,25 +29,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-17T22:34:42Z (22 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-17T22:34:47Z (22 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-11-17T22:34:27Z (22 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-11-17T22:34:32Z (22 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-17T22:34:37Z (22 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-11-17T22:34:22Z (22 h ago)
-- census_commuting: last outcome unchanged, last good 2026-11-17T22:34:15Z (22 h ago)
-- census_commuting_index: last outcome changed, last good 2026-11-17T22:34:21Z (22 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-11-17T22:34:10Z (22 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-11-17T22:34:05Z (22 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-18T20:43:18Z (0 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-11-17T22:33:51Z (22 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-18T22:14:35Z (0 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-18T22:14:40Z (0 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-11-18T22:14:20Z (0 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-11-18T22:14:25Z (0 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-18T22:14:30Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-11-18T22:14:15Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-11-18T22:14:09Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-11-18T22:14:15Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-11-18T22:14:04Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-11-18T22:13:59Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-18T20:43:18Z (2 h ago)
+- doh_han_index: last outcome changed, last good 2026-11-18T22:13:44Z (0 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
-- doh_measles_page: last outcome changed, last good 2026-11-17T22:33:41Z (22 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-11-17T22:33:45Z (22 h ago)
+- doh_measles_page: last outcome changed, last good 2026-11-18T22:13:34Z (0 h ago)
+- doh_newsroom: last outcome changed, last good 2026-11-18T22:13:39Z (0 h ago)
 - doh_release: one-time backfill, last good 2026-10-07T20:06:08Z
-- doh_school_imm_county: last outcome unchanged, last good 2026-11-17T22:33:55Z (22 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-11-17T22:34:00Z (22 h ago)
-- local_hd_lancaster: last outcome changed, last good 2026-11-17T22:34:52Z (22 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-11-18T22:13:49Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-11-18T22:13:54Z (0 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-11-18T22:14:46Z (0 h ago)
 - wayback_cdx: one-time backfill, last good 2026-10-07T11:56:00Z
 
 ## Implied counts
