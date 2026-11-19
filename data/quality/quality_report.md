@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-19T02:52:57Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-18 (DOH refreshed the report 2026-11-18T19:00:22Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-19T21:31:12Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-18 (DOH refreshed the report 2026-11-18T19:00:22Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -29,25 +29,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-18T22:14:35Z (5 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-18T22:14:40Z (5 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-11-18T22:14:20Z (5 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-11-18T22:14:25Z (5 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-18T22:14:30Z (5 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-11-18T22:14:15Z (5 h ago)
-- census_commuting: last outcome unchanged, last good 2026-11-18T22:14:09Z (5 h ago)
-- census_commuting_index: last outcome changed, last good 2026-11-18T22:14:15Z (5 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-11-18T22:14:04Z (5 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-11-18T22:13:59Z (5 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-19T02:52:55Z (0 h ago)
-- doh_han_index: last outcome changed, last good 2026-11-18T22:13:44Z (5 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-18T22:14:35Z (23 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-18T22:14:40Z (23 h ago)
+- cdc_measles_national: last outcome unchanged, last good 2026-11-18T22:14:20Z (23 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-11-18T22:14:25Z (23 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-18T22:14:30Z (23 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-11-18T22:14:15Z (23 h ago)
+- census_commuting: last outcome unchanged, last good 2026-11-18T22:14:09Z (23 h ago)
+- census_commuting_index: last outcome changed, last good 2026-11-18T22:14:15Z (23 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-11-18T22:14:04Z (23 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-11-18T22:13:59Z (23 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-19T21:31:09Z (0 h ago)
+- doh_han_index: last outcome changed, last good 2026-11-18T22:13:44Z (23 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
-- doh_measles_page: last outcome changed, last good 2026-11-18T22:13:34Z (5 h ago)
-- doh_newsroom: last outcome changed, last good 2026-11-18T22:13:39Z (5 h ago)
+- doh_measles_page: last outcome changed, last good 2026-11-18T22:13:34Z (23 h ago)
+- doh_newsroom: last outcome changed, last good 2026-11-18T22:13:39Z (23 h ago)
 - doh_release: one-time backfill, last good 2026-10-07T20:06:08Z
-- doh_school_imm_county: last outcome unchanged, last good 2026-11-18T22:13:49Z (5 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-11-18T22:13:54Z (5 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-11-18T22:14:46Z (5 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-11-18T22:13:49Z (23 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-11-18T22:13:54Z (23 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-11-18T22:14:46Z (23 h ago)
 - wayback_cdx: one-time backfill, last good 2026-10-07T11:56:00Z
 
 ## Implied counts
@@ -122,7 +122,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - curated doh_dashboard 2026-11-09 (calendar_year): 67 county rows sum to 1505; curated doh_dashboard:df12de9b7e4b (T1) total 1505 (consistent)
 - curated doh_dashboard 2026-11-13 (calendar_year): 67 county rows sum to 1542; curated doh_dashboard:e883b82dd57a (T1) total 1542 (consistent)
 - curated doh_dashboard 2026-11-16 (calendar_year): 67 county rows sum to 1561; curated doh_dashboard:4c637fa822e5 (T1) total 1561 (consistent)
-- curated doh_dashboard 2026-11-18 (calendar_year): 67 county rows sum to 1589; curated doh_dashboard:5e15f9be484a (T1) total 1589 (consistent)
+- curated doh_dashboard 2026-11-18 (calendar_year): 67 county rows sum to 1589; curated doh_dashboard:2a09ab3a8527 (T1) total 1589 (consistent)
 - sensitivity seed_t3_county 2026-08-25 (unknown): 2 county rows sum to 214; sensitivity seed_statewide:sw-m06 (T3-derived) total 393 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-17 (unknown): 9 county rows sum to 629; sensitivity seed_statewide:sw-m07 (T3-derived) total 767 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-21 (unknown): 3 county rows sum to 514; sensitivity seed_statewide:sw-007 (T3-derived) total 792 [compared, cross-source, not flagged]
