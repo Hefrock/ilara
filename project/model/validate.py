@@ -12,9 +12,16 @@ next 1 to 4 weeks per county and statewide, and is scored against what was later
 - Baseline: persistence. Median = the last observed weekly increase; quantiles from that value
   plus the spread of past week-on-week changes in the same geography (both signs), floored at
   zero; Poisson around it when fewer than three past changes exist. Same origins and targets.
-- Gate G4 (HANDOFF): at least 8 weekly origins; pooled over counties and weeks, the 80 percent
-  interval covers 70 to 90 percent of held-out values, and pooled WIS is lower than persistence
-  at the 1-week and 2-week horizons. ``write_gate`` records ``pass`` only then (T6.15).
+- Groups (ADR 0028 item 3): at each origin the county forecasts are also summed, draw by draw,
+  into Lancaster County, the other counties with ``LARGE_AT`` or more cases at the origin, and
+  the remaining counties, each scored on its own weekly total against persistence on the same
+  total. These rows have ``kind`` "group"; the statewide forecast has ``kind`` "state".
+- Gate G4 (HANDOFF, ADR 0028 items 2 and 3): at least 8 weekly origins; over county targets
+  where the outcome or the forecast's upper 80 percent bound is at least 1, the 80 percent
+  interval covers 70 to 90 percent of outcomes; and at the 1-week and 2-week horizons the model
+  has the lower mean WIS in at least 3 of the 4 groups (Lancaster, larger counties, the rest,
+  the state). ``write_gate`` records ``pass`` only then (T6.15). Coverage over all county
+  targets and the pooled per-county WIS are still reported.
 
 Model outputs stay in ``project/outputs/`` (gitignored) until the gate passes (I10, I11).
 """
@@ -24,7 +31,7 @@ from __future__ import annotations
 import json
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -41,6 +48,10 @@ HORIZONS = (1, 2, 3, 4)
 GATE_ORIGINS = 8
 GATE_COVERAGE_80 = (0.70, 0.90)
 GATE_HORIZONS = (1, 2)
+LANCASTER = "42071"
+LARGE_AT = 10  # cases at the origin; the same threshold as pa.POOL_BELOW (ADR 0021)
+GROUPS = ("group:lancaster", "group:larger", "group:rest", "state")
+GATE_GROUP_WINS = 3  # of the 4 groups in GROUPS, at each gate horizon (ADR 0028 item 3)
 
 Quantiles = dict[str, float]  # "median", "low_50", "high_50", "low_80", ...
 Geo = str  # county FIPS or "state"
@@ -124,6 +135,62 @@ def _poisson_interval(lam: float, alpha: float) -> tuple[float, float]:
     return float(lo or 0), float(hi)
 
 
+def _known_value(cum: Mapping[date, int], t: date) -> int | None:
+    known = [d for d in cum if d <= t]
+    return cum[max(known)] if known else None
+
+
+def groups_at(origin: date, observed: Series, counties: Sequence[Geo]) -> dict[str, list[Geo]]:
+    """County groups at an origin (ADR 0028 item 3): Lancaster; the other counties with
+    ``LARGE_AT`` or more cases known at the origin; the rest. A county with no count known at
+    the origin is in the rest."""
+    larger: list[Geo] = []
+    rest: list[Geo] = []
+    for c in counties:
+        if c == LANCASTER:
+            continue
+        v = _known_value(observed.get(c, {}), origin)
+        (larger if v is not None and v >= LARGE_AT else rest).append(c)
+    out = {"group:larger": larger, "group:rest": rest}
+    if LANCASTER in counties:
+        out["group:lancaster"] = [LANCASTER]
+    return {k: v for k, v in out.items() if v}
+
+
+def _summed(series: Series, members: Sequence[Geo]) -> dict[date, int]:
+    """Members' cumulative counts summed on the days all of them have a value (a gap stays a
+    gap)."""
+    days = set.intersection(*(set(series.get(m, {})) for m in members)) if members else set()
+    return {d: sum(series[m][d] for m in members) for d in days}
+
+
+def with_groups(
+    origins: Sequence[date],
+    forecasts: Mapping[date, Mapping[Geo, Mapping[int, np.ndarray]]],
+    observed: Series,
+) -> tuple[dict[date, dict[Geo, dict[int, np.ndarray]]], dict[Geo, dict[date, int]]]:
+    """Forecasts and observed series with the county groups added at each origin. Group
+    forecasts sum the members' samples draw by draw, so each draw is one simulated epidemic."""
+    fc: dict[date, dict[Geo, dict[int, np.ndarray]]] = {}
+    obs: dict[Geo, dict[date, int]] = {g: dict(v) for g, v in observed.items()}
+    for t in origins:
+        by_geo = {g: dict(h) for g, h in forecasts.get(t, {}).items()}
+        counties = [g for g in by_geo if g != "state" and not str(g).startswith("group:")]
+        for name, members in groups_at(t, observed, counties).items():
+            hs = set.intersection(*(set(by_geo[m]) for m in members))
+            by_geo[name] = {
+                h: np.sum([np.asarray(by_geo[m][h], dtype=float) for m in members], axis=0)
+                for h in hs
+            }
+            obs[f"{name}@{t.isoformat()}"] = _summed(observed, members)
+        fc[t] = by_geo
+    return fc, obs
+
+
+def _kind(geo: Geo) -> str:
+    return "state" if geo == "state" else "group" if str(geo).startswith("group:") else "county"
+
+
 def score(
     origins: Sequence[date],
     forecasts: Mapping[date, Mapping[Geo, Mapping[int, np.ndarray]]],
@@ -131,11 +198,14 @@ def score(
     horizons: Sequence[int] = HORIZONS,
 ) -> pl.DataFrame:
     """One row per origin, geography and horizon with an observed target: model and persistence
-    WIS and interval coverage."""
+    WIS and interval coverage. County groups are added at each origin (``with_groups``); their
+    rows have ``kind`` "group"."""
+    forecasts, observed = with_groups(origins, forecasts, observed)
     rows: list[dict[str, Any]] = []
     for t in origins:
         for geo, by_h in forecasts.get(t, {}).items():
-            cum = observed.get(geo, {})
+            key = f"{geo}@{t.isoformat()}" if _kind(geo) == "group" else geo
+            cum = observed.get(key, {})
             base = persistence(cum, t)
             for h in horizons:
                 if h not in by_h:
@@ -147,9 +217,11 @@ def score(
                 row: dict[str, Any] = {
                     "origin": t,
                     "geography": geo,
+                    "kind": _kind(geo),
                     "horizon": h,
                     "observed": y,
                     "median": q["median"],
+                    "high_80": q["high_80"],
                     "wis": wis(y, q),
                     "wis_persistence": wis(y, base),
                 }
@@ -161,9 +233,11 @@ def score(
     schema = {
         "origin": pl.Date,
         "geography": pl.Utf8,
+        "kind": pl.Utf8,
         "horizon": pl.Int64,
         "observed": pl.Int64,
         "median": pl.Float64,
+        "high_80": pl.Float64,
         "wis": pl.Float64,
         "wis_persistence": pl.Float64,
         **{
@@ -179,36 +253,64 @@ def score(
 class GateResult:
     status: str  # "pass" or "fail"
     origins: int
-    coverage_80: float | None
-    wis: dict[int, float]
+    coverage_80: float | None  # over county targets with a case observed or forecast (item 2)
+    wis: dict[int, float]  # pooled per-county mean, reported
     wis_persistence: dict[int, float]
     reasons: list[str]
+    coverage_80_all: float | None = None  # over all county targets, reported
+    groups: dict[int, dict[str, dict[str, float]]] = field(default_factory=dict)
+
+
+def _county_rows(scores: pl.DataFrame) -> pl.DataFrame:
+    if "kind" in scores.columns:
+        return scores.filter(pl.col("kind") == "county")
+    return scores.filter(pl.col("geography") != "state")
 
 
 def gate(scores: pl.DataFrame) -> GateResult:
-    """The G4 decision from scored forecasts (HANDOFF section 5, G4): pooled over counties and
-    weeks, so statewide rows are scored and reported but do not enter the decision."""
-    reasons = []
-    if scores.height:
-        scores = scores.filter(pl.col("geography") != "state")
+    """The G4 decision from scored forecasts (HANDOFF section 6, G4; ADR 0028 items 2 and 3)."""
+    reasons: list[str] = []
+    all_rows = scores
+    scores = _county_rows(scores) if scores.height else scores
     origins = scores["origin"].n_unique() if scores.height else 0
     if origins < GATE_ORIGINS:
         reasons.append(f"{origins} weekly origins scored; G4 needs {GATE_ORIGINS}")
-    cov = float(scores["covered_80"].mean()) if scores.height else None  # type: ignore[arg-type]
+    cov_all = float(scores["covered_80"].mean()) if scores.height else None  # type: ignore[arg-type]
+    if scores.height and "high_80" in scores.columns:
+        relevant = scores.filter((pl.col("observed") >= 1) | (pl.col("high_80") >= 1))
+    else:
+        relevant = scores
+    cov = float(relevant["covered_80"].mean()) if relevant.height else None  # type: ignore[arg-type]
     lo, hi = GATE_COVERAGE_80
     if cov is None or not lo <= cov <= hi:
-        reasons.append(f"80 percent coverage {cov} outside {lo} to {hi}")
+        reasons.append(f"80 percent coverage {cov} outside {lo} to {hi} (targets with a case)")
     w: dict[int, float] = {}
     wp: dict[int, float] = {}
+    grp: dict[int, dict[str, dict[str, float]]] = {}
     for h in GATE_HORIZONS:
         sh = scores.filter(pl.col("horizon") == h) if scores.height else scores
-        if not sh.height:
-            reasons.append(f"no scored targets at horizon {h}")
-            continue
-        w[h], wp[h] = float(sh["wis"].mean()), float(sh["wis_persistence"].mean())  # type: ignore[arg-type]
-        if not w[h] < wp[h]:
-            reasons.append(f"horizon {h}: WIS {w[h]:.3f} not below persistence {wp[h]:.3f}")
-    return GateResult("fail" if reasons else "pass", origins, cov, w, wp, reasons)
+        if sh.height:
+            w[h], wp[h] = float(sh["wis"].mean()), float(sh["wis_persistence"].mean())  # type: ignore[arg-type]
+        gh = (
+            all_rows.filter((pl.col("horizon") == h) & pl.col("geography").is_in(list(GROUPS)))
+            if all_rows.height and "geography" in all_rows.columns
+            else pl.DataFrame()
+        )
+        grp[h] = {
+            g: {
+                "wis": float(d["wis"].mean()),  # type: ignore[arg-type]
+                "wis_persistence": float(d["wis_persistence"].mean()),  # type: ignore[arg-type]
+            }
+            for g in GROUPS
+            if (d := gh.filter(pl.col("geography") == g) if gh.height else gh).height
+        }
+        wins = sum(v["wis"] < v["wis_persistence"] for v in grp[h].values())
+        if wins < GATE_GROUP_WINS:
+            reasons.append(
+                f"horizon {h}: model better in {wins} of {len(grp[h])} groups; "
+                f"G4 needs {GATE_GROUP_WINS} of {len(GROUPS)}"
+            )
+    return GateResult("fail" if reasons else "pass", origins, cov, w, wp, reasons, cov_all, grp)
 
 
 def write_gate(
@@ -221,10 +323,16 @@ def write_gate(
         "criteria": {
             "min_origins": GATE_ORIGINS,
             "coverage_80": list(GATE_COVERAGE_80),
-            "wis_below_persistence_at_horizons": list(GATE_HORIZONS),
+            "coverage_targets": "county targets with an observed case or an upper 80% bound >= 1",
+            "groups": list(GROUPS),
+            "group_wins_needed": GATE_GROUP_WINS,
+            "horizons": list(GATE_HORIZONS),
+            "rules": "ADR 0028 items 1 to 3",
         },
         "origins": result.origins,
         "coverage_80": result.coverage_80,
+        "coverage_80_all": result.coverage_80_all,
+        "groups": {str(k): v for k, v in result.groups.items()},
         "wis": {str(k): v for k, v in result.wis.items()},
         "wis_persistence": {str(k): v for k, v in result.wis_persistence.items()},
         "reasons": result.reasons,

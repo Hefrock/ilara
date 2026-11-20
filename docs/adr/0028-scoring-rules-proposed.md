@@ -1,8 +1,9 @@
 # ADR 0028: scoring rules that survive skipped updates and quiet counties
 
 Status: item 1 **accepted** and implemented (owner, 2026-11-19: "accept ADR 0028 item 1 and
-implement it"); items 2 to 5 **proposed**, nothing in the code changes for them until the owner
-decides each one.
+implement it"); items 2 and 3 **accepted** and implemented (owner, 2026-11-20: "accept ADR 0028
+items 2 and 3 and implement them"); items 4 and 5 **proposed**, nothing in the code changes for
+them until the owner decides.
 
 ## Context
 
@@ -58,6 +59,15 @@ Each item is separate; the owner may accept, change or reject any of them.
 
    Open: the number of groups and the three-of-four rule are choices. An alternative is one
    scaled score (each target's score divided by the persistence score plus one).
+
+   **As implemented (2026-11-20), items 2 and 3.** Scores gain `kind` (county, group, state)
+   and `high_80`. Coverage for the gate uses county targets with an outcome or upper 80 percent
+   bound of at least 1; coverage over all county targets is still reported. Group forecasts
+   sum the member counties' samples draw by draw, so each draw stays one simulated epidemic;
+   group outcomes sum the members' published totals on days all members have one. Membership
+   is set at each origin from counts known then (threshold `validate.LARGE_AT`, equal to
+   `pa.POOL_BELOW`, tested). HANDOFF section 6 (G4) and ADR 0013 are amended to match. Code:
+   `validate.groups_at`, `with_groups`, `gate`.
 
 4. **Frozen outcomes.** Each outcome is read as known 14 days after its target day and recorded
    with that date; later revisions do not change a score. Open: the length of the lag.

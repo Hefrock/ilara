@@ -29,7 +29,9 @@ tested now so that the first origin can be the day G3 passes.
   geography, mirrored to both signs, floored at zero; Poisson around the last value while fewer
   than three past changes exist (the first origins). This follows the forecast hubs' baseline.
 - **Gate:** pooled over counties and weeks, as G4 states; statewide rows are scored and
-  reported but do not decide. `write_gate` records `pass` only when every criterion holds
+  reported but do not decide. *Amended 2026-11-20 by [ADR 0028](0028-scoring-rules-proposed.md)
+  items 1 to 3: outcomes by capture day, coverage over targets with a case, and a comparison
+  with persistence in four groups, the state among them.* `write_gate` records `pass` only when every criterion holds
   (T6.15), and stores summary metrics and the run reference only, never forecasts (I10).
 - **Leak guard (T6.13):** every read made with a cutoff (`calibrate`, `pa`, `inputs`,
   `estimate`) passes through `project/leak.py:check_known`, which raises `LeakError` if any row
