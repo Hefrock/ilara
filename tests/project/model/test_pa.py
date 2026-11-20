@@ -13,7 +13,7 @@ import pytest
 
 from ingest.curate import store
 from project.model import calibrate as cal
-from project.model import pa
+from project.model import pa, validate
 
 from conftest import REPO
 
@@ -213,3 +213,19 @@ def test_observed_series_from_repo_data() -> None:
     obs = pa.observed_series(REPO)
     assert obs["state"][date(2026, 10, 14)] == 1222
     assert obs["42071"][date(2026, 10, 5)] > 0 and "EXTERNAL" not in obs
+
+
+def test_a_day_without_an_update_takes_the_published_total() -> None:  # ADR 0028 item 1
+    obs = pa.observed_series(REPO, now=datetime(2026, 11, 19, tzinfo=UTC))
+    st = obs["state"]
+    # 2026-11-11 (holiday): good captures, dashboard unchanged since 2026-11-09.
+    assert st[date(2026, 11, 11)] == st[date(2026, 11, 9)] == 1505
+    assert obs["42071"][date(2026, 11, 11)] == obs["42071"][date(2026, 11, 9)]
+    # 2026-10-12: covered, no update that day (ADR 0010): the 2026-10-09 total.
+    assert st[date(2026, 10, 12)] == st[date(2026, 10, 9)]
+    # Snapshots the department dated keep their own value; days with neither stay gaps.
+    assert st[date(2026, 10, 14)] == 1222 and st[date(2026, 11, 13)] == 1542
+    assert date(2026, 11, 10) not in st and date(2026, 11, 19) not in st
+    # The Nov 4 and Nov 11 origins become scoreable at one week.
+    assert validate.weekly_increase(st, date(2026, 11, 11)) == 1505 - 1467
+    assert validate.weekly_increase(st, date(2026, 11, 18)) == 1589 - 1505

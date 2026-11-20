@@ -126,10 +126,11 @@ persistence baseline on the same targets. Any read of data fetched after an orig
 run. Forecasts are published only if, over at least eight origins pooled across counties, the
 80 percent interval covers 70 to 90 percent of outcomes and the score beats persistence at one
 and two weeks (Gate G4). The earliest that decision could be made was 2026-12-30; a skipped
-update on 2026-11-11 leaves targets unscored under the current rules, and the coverage and
-baseline tests have known flaws ([review](methods_review_2026-11.md), findings 1 to 3). Revised
-scoring rules are proposed in [ADR 0028](adr/0028-scoring-rules-proposed.md) and are not in
-force.
+update on 2026-11-11 left targets unscored, so since 2026-11-19 a week's outcome is the change in
+the published total between two capture days: a day the department did not update takes the
+total its captures show ([ADR 0028](adr/0028-scoring-rules-proposed.md), item 1). The coverage
+and baseline tests have known flaws ([review](methods_review_2026-11.md), findings 2 and 3); the
+rules proposed for them in ADR 0028 are not in force.
 
 ## 6. Limitations
 

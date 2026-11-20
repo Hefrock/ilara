@@ -209,6 +209,65 @@ def g2_status(now: datetime, root: Path | None = None) -> dict[str, Any]:
 CROSSCHECK_SOURCES = frozenset({"cdc_measles_cases_map"})
 
 
+DASHBOARD = "doh_dashboard"
+
+
+def _dashboard_snapshots(table: str, t: datetime, root: Path | None) -> pl.DataFrame:
+    """T1 calendar-year dashboard rows of ``table`` as known at ``t`` (latest revision then)."""
+    df = as_known_at(table, t, root=root)
+    if df.height == 0:
+        return df
+    return df.filter(
+        (pl.col("source_id") == DASHBOARD)
+        & (pl.col("source_tier") == "T1")
+        & (pl.col("count_definition") == "calendar_year")
+        & pl.col("cum_cases").is_not_null()
+    )
+
+
+def published_on_capture_days(
+    now: datetime | None = None, root: Path | None = None
+) -> dict[str, dict[Any, int]]:
+    """The published cumulative counts by day, statewide (``"state"``) and by county FIPS, for
+    scoring forecasts (ADR 0028 item 1).
+
+    A day keeps the dashboard snapshot the department dated on it (latest revision), as
+    before. A covered Monday, Wednesday or Friday with no snapshot of its own date (the
+    department did not update, for example on a holiday) takes the newest snapshot dated before
+    it, as known at the end of that day's cover window: the good captures that day are the
+    evidence that this was the published total. A day with neither stays a gap (I5).
+    """
+    now = now or datetime.now(UTC)
+    out: dict[str, dict[Any, int]] = {}
+    county = _dashboard_snapshots("case_county", now, root)
+    county = county.filter(~pl.col("source_id").is_in(list(CROSSCHECK_SOURCES)))
+    for fips, d, cum in county.select("county_fips", "as_of_date", "cum_cases").rows():
+        out.setdefault(fips, {})[d] = int(cum)
+    state = _dashboard_snapshots("case_state", now, root)
+    out["state"] = {d: int(c) for d, c in state.select("as_of_date", "cum_cases").rows()}
+    for row in capture_days(now, root).to_dicts():
+        day = row["day"]
+        if row["status"] != "covered" or day in out["state"]:
+            continue
+        _start, end = schedule.cover_window(day)
+        known = min(end, now)
+        st = _dashboard_snapshots("case_state", known, root).filter(pl.col("as_of_date") < day)
+        if st.height == 0:
+            continue
+        snap = st["as_of_date"].max()
+        totals = set(st.filter(pl.col("as_of_date") == snap)["cum_cases"].to_list())
+        if len(totals) != 1:
+            continue  # conflicting totals for one snapshot: a gap, never a choice (I5)
+        out["state"][day] = int(totals.pop())
+        ct = _dashboard_snapshots("case_county", known, root)
+        if ct.height:
+            for fips, cum in (
+                ct.filter(pl.col("as_of_date") == snap).select("county_fips", "cum_cases").rows()
+            ):
+                out.setdefault(fips, {})[day] = int(cum)
+    return out
+
+
 # ---------------------------------------------------------------- reference data (WP1)
 
 _REF_SCHEMA = {
