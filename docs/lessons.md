@@ -183,8 +183,9 @@ forecasts, including every forecast made that day.
 a record of what was looked at, and when, tells them apart. And a scoring rule that assumes the
 source never skips a day will break on the first holiday.
 
-*What changed:* a review of the methods found this and other weaknesses in the scoring rules, and
-revised rules were proposed for the owner's decision.
+*What changed:* a review of the methods found this and other weaknesses in the scoring rules. The
+owner accepted the first fix: a week's outcome is now what the dashboard showed on each capture
+day, so a day without an update takes the total the captures recorded.
 [Methods review](methods_review_2026-11.md), [ADR 0028](adr/0028-scoring-rules-proposed.md).
 
 ## The thread through all of them

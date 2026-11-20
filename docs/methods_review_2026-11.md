@@ -24,6 +24,9 @@ Gate G4 needs eight scored origins, so its earliest date of 2026-12-30 no longer
 further holiday Wednesdays may add gaps. This is a gap in the scoring design, not in the data:
 the captures show what the department had published by that day.
 
+*Resolved 2026-11-19:* ADR 0028 item 1 accepted and implemented; the 2026-11-04 and 2026-11-11
+origins are scoreable again.
+
 ### 2. The coverage test in Gate G4 cannot be passed as written
 
 G4 asks that 80 percent intervals hold 70 to 90 percent of outcomes, pooled over all 67 counties.

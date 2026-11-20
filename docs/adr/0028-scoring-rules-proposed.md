@@ -1,7 +1,8 @@
 # ADR 0028: scoring rules that survive skipped updates and quiet counties
 
-Status: **proposed** (drafted 2026-11-11 at the owner's request; not accepted, nothing in the
-code changes until the owner decides each item).
+Status: item 1 **accepted** and implemented (owner, 2026-11-19: "accept ADR 0028 item 1 and
+implement it"); items 2 to 5 **proposed**, nothing in the code changes for them until the owner
+decides each one.
 
 ## Context
 
@@ -36,6 +37,14 @@ Each item is separate; the owner may accept, change or reject any of them.
 
    Consequence: a skipped update gives a low week followed by a high one. The model has no
    holiday effect and will score worse in such weeks; persistence faces the same targets.
+
+   **As implemented (2026-11-19).** The rule is additive, so no value used before is lost. A
+   snapshot the department dated on day D is used as before (latest revision). Only a covered
+   capture day with no snapshot of its own date takes the newest snapshot dated before it, as
+   known at the end of that day's cover window. On the data to 2026-11-18 this fills two days,
+   2026-10-12 and 2026-11-11, both days the department did not update. 2026-10-14 keeps its
+   dated snapshot although its only capture came the next morning. Code:
+   `access.published_on_capture_days`, used by `pa.observed_series`.
 
 2. **Coverage where there is something to cover.** The G4 coverage band is computed over targets
    where the outcome, or the forecast's upper 80 percent bound, is at least 1. Coverage over all

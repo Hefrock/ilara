@@ -597,30 +597,14 @@ def forecaster(
     return run
 
 
-def observed_series(root: Path | None = None) -> dict[str, dict[date, int]]:
-    """What was later reported: T1 calendar-year county snapshots and the dashboard's statewide
-    total, by snapshot date (latest revision). Missing counts are absent, not zero (I5)."""
-    out: dict[str, dict[date, int]] = {}
-    county = access.current("case_county", root=root)
-    if county.height:
-        county = county.filter(
-            ~pl.col("source_id").is_in(list(access.CROSSCHECK_SOURCES))
-            & (pl.col("source_tier") == "T1")
-            & (pl.col("count_definition") == "calendar_year")
-            & pl.col("cum_cases").is_not_null()
-        )
-        for f, d, c in county.select("county_fips", "as_of_date", "cum_cases").rows():
-            out.setdefault(f, {})[d] = c
-    state = access.current("case_state", root=root)
-    if state.height:
-        state = state.filter(
-            (pl.col("source_id") == "doh_dashboard")
-            & (pl.col("source_tier") == "T1")
-            & (pl.col("count_definition") == "calendar_year")
-            & pl.col("cum_cases").is_not_null()
-        )
-        out["state"] = dict(state.select("as_of_date", "cum_cases").rows())  # type: ignore[arg-type]
-    return out
+def observed_series(
+    root: Path | None = None, now: datetime | None = None
+) -> dict[str, dict[date, int]]:
+    """What the dashboard showed on each covered capture day, statewide and by county
+    (ADR 0028 item 1): a forecast week's outcome is the change in the published total between
+    two capture days, so a day the department did not update still has a value, and a day with
+    no good capture stays a gap (I5)."""
+    return access.published_on_capture_days(now, root)
 
 
 if __name__ == "__main__":
