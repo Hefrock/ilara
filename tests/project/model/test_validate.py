@@ -69,20 +69,45 @@ def test_score_uses_the_same_targets_for_model_and_baseline_and_skips_gaps() -> 
     assert row["wis_persistence"] == pytest.approx(v.wis(row["observed"], v.persistence(CUM, t)))  # type: ignore[arg-type]
 
 
-def _scores(n_origins: int, cover: float, model_better: tuple[bool, bool]) -> pl.DataFrame:
+def _scores(
+    n_origins: int,
+    cover: float,
+    model_better: tuple[bool, bool],
+    group_wins: tuple[int, int] = (4, 4),
+    observed: int = 5,
+) -> pl.DataFrame:
     rows = []
     for i in range(n_origins):
+        t = MON + timedelta(days=7 * i)
         for h in (1, 2, 3):
             for j in range(10):
                 better = model_better[h - 1] if h <= 2 else False
                 rows.append(
                     {
-                        "origin": MON + timedelta(days=7 * i),
+                        "origin": t,
                         "geography": "42071",
+                        "kind": "county",
                         "horizon": h,
+                        "observed": observed,
+                        "high_80": 9.0,
                         "wis": 1.0 if better else 3.0,
                         "wis_persistence": 2.0,
                         "covered_80": j < round(10 * cover),
+                    }
+                )
+            for k, g in enumerate(v.GROUPS):
+                wins = group_wins[h - 1] if h <= 2 else 0
+                rows.append(
+                    {
+                        "origin": t,
+                        "geography": g,
+                        "kind": "state" if g == "state" else "group",
+                        "horizon": h,
+                        "observed": 50,
+                        "high_80": 90.0,
+                        "wis": 1.0 if k < wins else 3.0,
+                        "wis_persistence": 2.0,
+                        "covered_80": True,
                     }
                 )
     return pl.DataFrame(rows)
@@ -94,13 +119,52 @@ def test_gate_passes_only_when_all_g4_criteria_hold(tmp_path: Path) -> None:  # 
     assert v.gate(_scores(7, 0.8, (True, True))).status == "fail"  # too few origins
     assert v.gate(_scores(8, 0.6, (True, True))).status == "fail"  # under-covers
     assert v.gate(_scores(8, 1.0, (True, True))).status == "fail"  # over-covers
-    assert v.gate(_scores(8, 0.8, (True, False))).status == "fail"  # loses at 2 weeks
     assert v.gate(pl.DataFrame()).status == "fail"
-    state_only = _scores(8, 0.8, (True, True)).with_columns(pl.lit("state").alias("geography"))
-    assert v.gate(state_only).status == "fail"  # pooled over counties: statewide rows excluded
     path = v.write_gate(v.gate(_scores(8, 0.6, (True, True))), tmp_path / "g.json", {"sha": "x"})
     body = json.loads(path.read_text())
     assert body["status"] == "fail" and body["reasons"] and body["run"] == {"sha": "x"}
+    assert body["criteria"]["groups"] == list(v.GROUPS)
+
+
+def test_gate_coverage_counts_only_targets_with_a_case() -> None:  # ADR 0028 item 2
+    s = _scores(8, 0.8, (True, True))
+    quiet = s.filter(pl.col("kind") == "county").with_columns(
+        pl.lit("42001").alias("geography"),
+        pl.lit(0, dtype=pl.Int64).alias("observed"),
+        pl.lit(0.0).alias("high_80"),
+        pl.lit(True).alias("covered_80"),
+    )
+    r = v.gate(pl.concat([s, quiet, quiet, quiet]))
+    assert r.status == "pass" and r.coverage_80 == pytest.approx(0.8)  # zeros left out
+    assert r.coverage_80_all is not None and r.coverage_80_all > 0.9  # still reported
+
+
+def test_gate_needs_three_of_four_groups_at_each_horizon() -> None:  # ADR 0028 item 3
+    assert v.gate(_scores(8, 0.8, (False, False), group_wins=(3, 3))).status == "pass"
+    lost = v.gate(_scores(8, 0.8, (True, True), group_wins=(3, 2)))
+    assert lost.status == "fail" and any("horizon 2" in r for r in lost.reasons)
+    assert (
+        lost.groups[1]["group:lancaster"]["wis"]
+        < lost.groups[1]["group:lancaster"]["wis_persistence"]
+    )
+
+
+def test_groups_sum_county_forecasts_draw_by_draw() -> None:  # ADR 0028 item 3
+    t = MON + timedelta(days=28)
+    big = {d: 5 * c for d, c in CUM.items()}
+    small = {d: 1 for d in CUM}
+    obs = {"state": CUM, "42071": CUM, "42043": big, "42001": small, "42003": small}
+    assert v.groups_at(t, obs, ["42071", "42043", "42001", "42003"]) == {
+        "group:larger": ["42043"],
+        "group:rest": ["42001", "42003"],
+        "group:lancaster": ["42071"],
+    }
+    fc = {t: {g: {1: np.arange(4.0)} for g in obs}}
+    s = v.score([t], fc, obs, horizons=(1,))
+    rest = s.filter(pl.col("geography") == "group:rest").row(0, named=True)
+    assert rest["kind"] == "group" and rest["observed"] == 0  # 1 + 1, unchanged
+    assert rest["median"] == pytest.approx(3.0)  # draws 0,2,4,6: summed per draw, median 3
+    assert set(s["kind"]) == {"county", "group", "state"}
 
 
 def _row(d: date, fetched: datetime, cum: int) -> pl.DataFrame:

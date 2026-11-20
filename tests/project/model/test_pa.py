@@ -229,3 +229,7 @@ def test_a_day_without_an_update_takes_the_published_total() -> None:  # ADR 002
     # The Nov 4 and Nov 11 origins become scoreable at one week.
     assert validate.weekly_increase(st, date(2026, 11, 11)) == 1505 - 1467
     assert validate.weekly_increase(st, date(2026, 11, 18)) == 1589 - 1505
+
+
+def test_g4_groups_use_the_pooling_threshold() -> None:  # ADR 0028 item 3, ADR 0021
+    assert validate.LARGE_AT == pa.POOL_BELOW

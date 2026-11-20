@@ -40,6 +40,8 @@ Where a county reports nothing week after week, persistence scores exactly zero 
 with any uncertainty can score lower. The pooled mean of an unscaled score is also driven by the
 few counties with many cases. The statewide forecast is scored but does not enter the gate.
 
+*Findings 2 and 3 resolved 2026-11-20:* ADR 0028 items 2 and 3 accepted and implemented.
+
 ### 4. Susceptibility is nearly uniform, so the fitted R0 is a growth rate
 
 County susceptible fractions (200 draws) average 6.0 to 9.0 percent across the 67 counties, and
