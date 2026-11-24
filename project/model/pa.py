@@ -210,6 +210,7 @@ def build(
             grades=list(cp["proxy"]["grades"]),
             threshold_pct=float(cp["proxy"]["threshold_pct"]),
             prior_weight=float(cp["proxy"]["prior_weight"]),
+            above_state_only=bool(cp["proxy"].get("above_state_only", False)),
         )
         model.s_community = community.community_susceptible(mp, sp)
         model.exposed_by_county = seed_sizes(known, county, int(cp["seed_max"]))
@@ -320,8 +321,10 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
                 days=model.days,
                 seed=seed,
                 mult=np.hstack([mult, mult]),
-                seeds=community.to_patches(seeds, s_g, s_m, into_community=True),
-                vaccination=community.to_patches(model.vaccination, s_g, s_m, into_community=False),
+                seeds=community.to_patches(
+                    seeds, s_g, s_m, into=str(model.params["community"]["seed_into"])
+                ),
+                vaccination=community.to_patches(model.vaccination, s_g, s_m, into="susceptible"),
             ).incidence
             return inc[:, : len(n)] + inc[:, len(n) :]
         return simulator.simulate(

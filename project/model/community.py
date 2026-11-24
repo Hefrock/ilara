@@ -17,7 +17,9 @@ the run is delegated to version 1's path, so version 2 with a zero scale *is* ve
 
 Community size: ``share_i = min(scale * proxy_i, MAX_SHARE)``, with ``scale`` fitted and
 ``proxy_i`` the share of kindergarten and grade 7 enrolment in schools reporting MMR below 90
-percent, shrunk toward the statewide value (ADR 0029, D1). The community's susceptible
+percent, shrunk toward the statewide value (ADR 0029, D1). Only counties whose proxy exceeds the
+statewide value have a community (round 2); elsewhere the proxy is set to zero. Seeds go into
+the general population (round 2). The community's susceptible
 fraction uses the coverage of the ``under_covered`` scenario named in ``params.yml``.
 """
 
@@ -39,11 +41,13 @@ def school_proxy(
     grades: Sequence[str],
     threshold_pct: float,
     prior_weight: float,
+    above_state_only: bool = False,
 ) -> np.ndarray:
     """The county proxy fixed in ADR 0029 (D1): share of ``grades`` enrolment in schools
     reporting MMR coverage below ``threshold_pct``, shrunk toward the statewide share with
     ``prior_weight`` pupils; a county with no usable row takes the statewide share. Suppressed
-    rows are left out of numerator and denominator."""
+    rows are left out of numerator and denominator. With ``above_state_only``, counties at or
+    below the statewide share get zero (ADR 0029, round 2)."""
     if schools.height == 0:
         raise ValueError("no school immunization rows: the proxy cannot be computed")
     use = schools.filter(
@@ -61,7 +65,8 @@ def school_proxy(
         raise ValueError("no enrolment in usable school rows: the proxy cannot be computed")
     p = float(by["low"].sum()) / tot_enr
     vals = {f: (float(lo) + prior_weight * p) / (float(e) + prior_weight) for f, e, lo in by.rows()}
-    return np.array([vals.get(f, p) for f in fips])
+    out = np.array([vals.get(f, p) for f in fips])
+    return np.where(out > p, out, 0.0) if above_state_only else out
 
 
 def shares(proxy: np.ndarray, scale: float) -> np.ndarray:
@@ -108,15 +113,22 @@ def split(
     return n_g, n_m, s_g, s_m
 
 
-def to_patches(
-    arr: np.ndarray, s_g: np.ndarray, s_m: np.ndarray, *, into_community: bool
-) -> np.ndarray:
-    """Spread a (days, c) array over the 2c patches: wholly into each county's community
-    (seeds, when it has susceptible members) or in proportion to susceptibles (vaccination)."""
+INTO = ("general", "community", "susceptible")
+
+
+def to_patches(arr: np.ndarray, s_g: np.ndarray, s_m: np.ndarray, *, into: str) -> np.ndarray:
+    """Spread a (days, c) array over the 2c patches: wholly into each county's general
+    population (seeds, round 2), wholly into its community when it has susceptible members
+    (seeds, round 1), or in proportion to susceptibles (vaccination)."""
+    if into not in INTO:
+        raise ValueError(f"into must be one of {INTO}")
     arr = np.asarray(arr)
     c = arr.shape[1]
     out = np.zeros((arr.shape[0], 2 * c), dtype=arr.dtype)
-    if into_community:
+    if into == "general":
+        out[:, :c] = arr
+        return out
+    if into == "community":
         has = s_m > 0
         out[:, :c] = np.where(has[None, :], 0, arr)
         out[:, c:] = np.where(has[None, :], arr, 0)
