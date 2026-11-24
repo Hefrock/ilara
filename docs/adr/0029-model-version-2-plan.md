@@ -217,6 +217,34 @@ the 90 percent interval as a share of the prior's width on its own scale.
 
 Version 2 thus adds one fitted parameter to version 1.
 
+## Diagnostic hindcast result (2026-11-24): version 2 not ready
+
+Version 2 was refitted at origins 2026-10-28, 11-04 and 11-11 as a diagnostic that does not
+count towards G4. Outputs stay private before G4 (I10), so only the pattern is recorded:
+
+- In Lancaster and in the counties with few cases, version 2 scores worse than version 1, and
+  both lose to persistence there. Lancaster's median forecast is still about zero.
+- In the larger counties and statewide, version 2 is close to version 1.
+- 80 percent coverage on targets with a case improves and falls inside the 70 to 90 percent band.
+
+A version 2 fit at 2026-11-18 shows why. The fitted community scale is near the bottom of its
+prior, so each community is a tiny share of its county, and Lancaster's simulated outbreak
+peaks early in the year and dies out. A larger community would sustain Lancaster, but under the
+shrunken proxy every county has a community and seeds go into it, so a larger community also
+starts outbreaks in small counties that the data reject. Two design choices made here defeat
+the mechanism:
+
+1. shrinkage gives every county a community;
+2. seeds go into the community.
+
+**Version 2 is not frozen on 2026-12-02.** Proposed next step, for the owner's decision:
+
+- one more round with these two choices changed, fixed before running: seed into the general
+  population; a community only where the county's proxy exceeds the statewide value;
+- the recovery test and the hindcast again;
+- if version 2 still does not beat version 1 on the hindcast, version 2 is paused and version 1
+  stays the scored model.
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and
