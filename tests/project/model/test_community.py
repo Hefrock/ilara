@@ -135,7 +135,10 @@ def test_version_2_with_no_community_is_version_1(models: dict[str, pa.PAModel])
 
 def test_version_2_inputs(models: dict[str, pa.PAModel]) -> None:
     v2 = models["2"]
-    assert v2.proxy is not None and v2.proxy.shape == (67,) and (v2.proxy > 0).all()
+    assert v2.proxy is not None and v2.proxy.shape == (67,)
+    # Round 2 (ADR 0029): only counties above the statewide share have a community.
+    assert 0 < (v2.proxy > 0).sum() < 67 and v2.proxy[v2.fips.index("42071")] > 0
+    assert v2.params["community"]["seed_into"] == "general"
     assert v2.s_community == pytest.approx(1 - 0.3 * 0.97)
     assert set(v2.exposed_by_county.values()) <= {1, 2, 3, 4, 5} and v2.exposed_by_county
     names = [p.name for p in pa.priors(v2)]
