@@ -126,7 +126,9 @@ def test_version_2_inputs(models: dict[str, pa.PAModel]) -> None:
     assert v2.s_community == pytest.approx(1 - 0.3 * 0.97)
     assert set(v2.exposed_by_county.values()) <= {1, 2, 3, 4, 5} and v2.exposed_by_county
     names = [p.name for p in pa.priors(v2)]
-    assert "community_scale" in names and "community_within" in names
+    # community_within failed the recovery test (ADR 0029): fixed, not fitted.
+    assert "community_scale" in names and "community_within" not in names
+    assert v2.params["community"]["within"]["value"] == pytest.approx(0.725)
     assert models["1"].proxy is None and "community_scale" not in [
         p.name for p in pa.priors(models["1"])
     ]

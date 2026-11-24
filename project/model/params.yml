@@ -73,8 +73,10 @@ community:
   # Log-uniform: at the middle of a uniform 0 to 0.6 range a run infected about 900,000 people
   # (2026-11-24 smoke test), so small communities need the prior weight.
   scale: {low: 0.001, high: 0.3, log: true, status: ASSUMPTION, note: "shrunk proxy values run 0.015 to 0.46"}
-  # Share of community contacts made within the community; fitted.
-  within: {low: 0.5, high: 0.95, status: ASSUMPTION}
+  # Share of community contacts made within the community. Not fitted: the recovery test
+  # (ADR 0029, 2026-11-24) left its posterior almost as wide as the prior, so it is fixed at
+  # the prior's centre and varied over [low, high] as a sensitivity check.
+  within: {value: 0.725, low: 0.5, high: 0.95, fitted: false, status: ASSUMPTION}
   # Community coverage held at this under_covered scenario (project/susceptibility/params.yml).
   coverage_scenario: mid
   proxy:

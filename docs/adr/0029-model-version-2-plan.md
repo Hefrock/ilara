@@ -199,6 +199,24 @@ A parameter that fails is fixed at its prior's centre on that scale and varied a
 sensitivity check (ADR 0029 revisions). Cross-county community coupling (D2) is not attempted
 unless both pass.
 
+## Recovery result (2026-11-24)
+
+Three 67-county synthetic fits, 300 particles, eight generations, as set out above. Width is
+the 90 percent interval as a share of the prior's width on its own scale.
+
+| Dataset | `community_scale` truth, 90% interval, width | `community_within` truth, 90% interval, width |
+|---|---|---|
+| A | 0.005, 0.0021 to 0.0158, 0.36 | 0.80, 0.52 to 0.93, 0.93 |
+| B | 0.02, 0.0045 to 0.0366, 0.37 | 0.65, 0.52 to 0.93, 0.93 |
+| C | 0.08, 0.0262 to 0.1451, 0.30 | 0.90, 0.53 to 0.92, 0.87 |
+
+- `community_scale` **passes** in all three: fitted.
+- `community_within` **fails** (its posterior is almost the prior): fixed at 0.725, the centre of
+  its prior, and varied from 0.5 to 0.95 as a sensitivity check.
+- Cross-county community coupling (D2) is therefore **not attempted** in version 2.
+
+Version 2 thus adds one fitted parameter to version 1.
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and

@@ -256,9 +256,9 @@ def priors(model: PAModel) -> list[cal.Prior]:
                 "community_scale", float(sc["low"]), float(sc["high"]), log=bool(sc.get("log"))
             )
         )
-        out.append(
-            cal.Prior("community_within", float(cp["within"]["low"]), float(cp["within"]["high"]))
-        )
+        wi = cp["within"]
+        if wi.get("fitted", True):
+            out.append(cal.Prior("community_within", float(wi["low"]), float(wi["high"])))
     return out + list(cal.OBSERVATION_PRIORS)
 
 
@@ -302,7 +302,10 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
         )
         if (share > 0).any():
             n_g, n_m, s_g, s_m = community.split(n, frac, share, model.s_community)
-            k2 = community.patch_coupling(model.coupling, n_g, n_m, theta["community_within"])
+            within = theta.get(
+                "community_within", float(model.params["community"]["within"]["value"])
+            )
+            k2 = community.patch_coupling(model.coupling, n_g, n_m, within)
             inc = simulator.simulate(
                 np.concatenate([n_g, n_m]),
                 np.concatenate([s_g, s_m]),
