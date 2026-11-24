@@ -176,6 +176,29 @@ Timeline, if accepted by 2026-11-24:
 - **Uncertainty in the reports.** Group comparisons in the weekly report carry a range from
   resampling origins. The gate rule itself is unchanged.
 
+## Recovery rule (fixed 2026-11-24, before the recovery runs)
+
+The two new parameters, `community_scale` and `community_within`, are fitted in version 2 only
+if the synthetic recovery test passes for each. The test uses three 67-county synthetic datasets
+made from version 2, on the real observation design (ten snapshot dates, statewide release
+dates), with these truths and the version 1 dry-run values for all other parameters:
+
+| Dataset | `community_scale` | `community_within` |
+|---|---|---|
+| A | 0.005 | 0.80 |
+| B | 0.02 | 0.65 |
+| C | 0.08 | 0.90 |
+
+A parameter passes when, in all three datasets, both hold:
+
+- the 90 percent posterior interval contains the truth;
+- the interval is narrower than 0.6 of the prior's width on the prior's own scale (log for
+  `community_scale`), so the data and not the prior decide it.
+
+A parameter that fails is fixed at its prior's centre on that scale and varied as a
+sensitivity check (ADR 0029 revisions). Cross-county community coupling (D2) is not attempted
+unless both pass.
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and

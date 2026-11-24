@@ -55,6 +55,8 @@ DRY_TRUTH = {
     "report_delay": 3.0,
     "weekend": 0.6,
 }
+# Version 2 synthetic truth (ADR 0029): a community group about 0.5 percent of Lancaster.
+DRY_TRUTH_V2 = {**DRY_TRUTH, "community_scale": 0.02, "community_within": 0.8}
 # The model that forecasts are scored with (ADR 0026). Frozen from the 2026-11-04 scoring on:
 # any change to the model, its inputs' handling or its priors is a new version, scored only on
 # origins after it is introduced, never silently re-scored on past ones.
@@ -429,20 +431,23 @@ def dry_run(
     min_cases: int = 500,
     seed: int = 20261015,
     now: datetime | None = None,
+    version: str = MODEL_VERSION,
+    truth: dict[str, float] | None = None,
 ) -> Path:
     """Fit the 67-county problem to one synthetic dataset made from the model at ``DRY_TRUTH``
     on ten snapshot dates. The dataset is the first simulation seed whose statewide count over
     the observed window reaches ``min_cases``: an outbreak the size of the real one, not a
     fade-out (the real data are conditioned on a large outbreak too). Writes the posterior,
     predictive checks and a manifest under ``project/outputs/`` (gitignored, I10)."""
+    truth = truth or (DRY_TRUTH_V2 if version == "2" else DRY_TRUTH)
     dates = snapshot_dates()
-    model = build(dates[-1] + timedelta(days=35), root, seed=seed)
+    model = build(dates[-1] + timedelta(days=35), root, seed=seed, version=version)
     snaps = [(d - model.start).days for d in dates]
     # Statewide counts on the dates the real fit has them (DOH releases), simulated values.
     state = [(d - model.start).days for d in statewide_dates(dates[0], model.start, root)]
     data_seed, obs = None, None
     for s in range(seed, seed + 200):
-        obs = synthetic(model, DRY_TRUTH, snaps, s, state)
+        obs = synthetic(model, truth, snaps, s, state)
         if obs.series["state"][1][-1] >= min_cases:
             data_seed = s
             break
@@ -454,15 +459,16 @@ def dry_run(
     t0 = time.monotonic()
     result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
     secs = time.monotonic() - t0
-    check = forecast_check(model, result, dates[-1], DRY_TRUTH, data_seed, full)
+    check = forecast_check(model, result, dates[-1], truth, data_seed, full)
     path = cal.write(
         prob,
         result,
-        out_dir or OUTPUTS / "synthetic",
+        out_dir or OUTPUTS / ("synthetic" if version == "1" else f"synthetic_v{version}"),
         kind="calibration-pa-synthetic",
         inputs=model.refs,
         params={
-            "truth": DRY_TRUTH,
+            "model_version": version,
+            "truth": truth,
             "data_seed": data_seed,
             "snapshot_days": snaps,
             "statewide_days": state,
