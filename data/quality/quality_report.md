@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-24T23:01:57Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-23 (DOH refreshed the report 2026-11-23T18:59:13Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-24T23:36:42Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-23 (DOH refreshed the report 2026-11-23T18:59:13Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -29,25 +29,25 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Capture freshness
 
-- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-24T01:48:25Z (21 h ago)
-- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-24T01:48:30Z (21 h ago)
-- cdc_measles_national: last outcome unchanged, last good 2026-11-24T01:48:10Z (21 h ago)
-- cdc_measles_states_config: last outcome unchanged, last good 2026-11-24T01:48:15Z (21 h ago)
-- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-24T01:48:20Z (21 h ago)
-- census_cartographic: last outcome unchanged, last good 2026-11-24T01:48:05Z (21 h ago)
-- census_commuting: last outcome unchanged, last good 2026-11-24T01:47:59Z (21 h ago)
-- census_commuting_index: last outcome changed, last good 2026-11-24T01:48:05Z (21 h ago)
-- census_popest_agesex: last outcome unchanged, last good 2026-11-24T01:47:54Z (21 h ago)
-- census_popest_totals: last outcome unchanged, last good 2026-11-24T01:47:49Z (21 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-24T23:01:54Z (0 h ago)
-- doh_han_index: last outcome unchanged, last good 2026-11-24T01:47:34Z (21 h ago)
+- cdc_measles_cases_map: last outcome unchanged, last good 2026-11-24T23:36:29Z (0 h ago)
+- cdc_measles_cases_weekly: last outcome unchanged, last good 2026-11-24T23:36:34Z (0 h ago)
+- cdc_measles_national: last outcome changed, last good 2026-11-24T23:36:14Z (0 h ago)
+- cdc_measles_states_config: last outcome unchanged, last good 2026-11-24T23:36:19Z (0 h ago)
+- cdc_measles_weekly_config: last outcome unchanged, last good 2026-11-24T23:36:24Z (0 h ago)
+- census_cartographic: last outcome unchanged, last good 2026-11-24T23:36:09Z (0 h ago)
+- census_commuting: last outcome unchanged, last good 2026-11-24T23:36:03Z (0 h ago)
+- census_commuting_index: last outcome changed, last good 2026-11-24T23:36:09Z (0 h ago)
+- census_popest_agesex: last outcome unchanged, last good 2026-11-24T23:35:58Z (0 h ago)
+- census_popest_totals: last outcome unchanged, last good 2026-11-24T23:35:53Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-24T23:01:54Z (1 h ago)
+- doh_han_index: last outcome unchanged, last good 2026-11-24T23:35:38Z (0 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
-- doh_measles_page: last outcome unchanged, last good 2026-11-24T01:47:24Z (21 h ago)
-- doh_newsroom: last outcome unchanged, last good 2026-11-24T01:47:29Z (21 h ago)
+- doh_measles_page: last outcome changed, last good 2026-11-24T23:35:28Z (0 h ago)
+- doh_newsroom: last outcome unchanged, last good 2026-11-24T23:35:33Z (0 h ago)
 - doh_release: one-time backfill, last good 2026-10-07T20:06:08Z
-- doh_school_imm_county: last outcome unchanged, last good 2026-11-24T01:47:39Z (21 h ago)
-- doh_school_imm_school: last outcome unchanged, last good 2026-11-24T01:47:44Z (21 h ago)
-- local_hd_lancaster: last outcome unchanged, last good 2026-11-24T01:48:36Z (21 h ago)
+- doh_school_imm_county: last outcome unchanged, last good 2026-11-24T23:35:43Z (0 h ago)
+- doh_school_imm_school: last outcome unchanged, last good 2026-11-24T23:35:48Z (0 h ago)
+- local_hd_lancaster: last outcome unchanged, last good 2026-11-24T23:36:40Z (0 h ago)
 - wayback_cdx: one-time backfill, last good 2026-10-07T11:56:00Z
 
 ## Implied counts
