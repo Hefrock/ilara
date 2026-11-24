@@ -542,17 +542,19 @@ def fit_real(
     generations: int = 8,
     draws: int = 200,
     seed: int = 20261015,
+    version: str = MODEL_VERSION,
 ) -> Path:
     """The real fit at a forecast origin on the data known at its cutoff, and its 1 to 4 week
     forecast samples. Refuses before Gate G3 (``GateError``). Writes under
     ``project/outputs/calibration_pa/real/<origin>/`` (gitignored; nothing public before G4)."""
     known_at = cutoff(origin)
-    model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
+    model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed, version=version)
     prob, refs = curated_problem(model, root, known_at)
     t0 = time.monotonic()
     result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
     secs = time.monotonic() - t0
-    out = out_dir or OUTPUTS / "real" / origin.isoformat()
+    sub = "real" if version == "1" else f"real_v{version}"
+    out = out_dir or OUTPUTS / sub / origin.isoformat()
     samples = forecast_samples(model, result, origin, all_geographies(model), draws=draws)
     rows = [
         {"geography": g, "horizon_weeks": h, "draw": i, "new_cases": float(v)}
@@ -569,7 +571,7 @@ def fit_real(
         kind="calibration-pa-real",
         inputs=refs,
         params={
-            "model_version": MODEL_VERSION,
+            "model_version": version,
             "origin": origin.isoformat(),
             "known_at": known_at.isoformat(),
             "start": model.start.isoformat(),
@@ -593,10 +595,16 @@ def main(argv: list[str] | None = None) -> int:
         type=date.fromisoformat,
         help="fit the real data known at this origin (refuses before Gate G3)",
     )
+    ap.add_argument("--version", default=MODEL_VERSION, choices=list(VERSIONS))
     a = ap.parse_args(argv)
     if a.origin is not None:
         path = fit_real(
-            a.origin, a.out, particles=a.particles, generations=a.generations, seed=a.seed
+            a.origin,
+            a.out,
+            particles=a.particles,
+            generations=a.generations,
+            seed=a.seed,
+            version=a.version,
         )
         print(f"real fit at origin {a.origin}: wrote {path}")
         return 0
@@ -667,12 +675,15 @@ def forecaster(
     generations: int = 8,
     draws: int = 200,
     seed: int = 20261015,
+    version: str = MODEL_VERSION,
 ) -> validate.Forecaster:
     """Fit at each origin with data known at its cutoff, then forecast 1 to 4 weeks ahead.
     Refuses (``GateError``) at origins with fewer than ten county snapshot dates."""
 
     def run(origin: date, known_at: datetime) -> dict[str, dict[int, np.ndarray]]:
-        model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
+        model = build(
+            origin + timedelta(days=35), root, known_at=known_at, seed=seed, version=version
+        )
         prob, _ = curated_problem(model, root, known_at)
         result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
         return forecast_samples(model, result, origin, all_geographies(model), draws=draws)

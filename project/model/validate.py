@@ -313,6 +313,42 @@ def gate(scores: pl.DataFrame) -> GateResult:
     return GateResult("fail" if reasons else "pass", origins, cov, w, wp, reasons, cov_all, grp)
 
 
+def group_uncertainty(
+    scores: pl.DataFrame, n_boot: int = 2000, seed: int = 7
+) -> dict[int, dict[str, dict[str, float]]]:
+    """Reported, not gated (ADR 0029 revisions): for each gate horizon and group, the mean of
+    model WIS minus persistence WIS, with a 90 percent interval from resampling origins with
+    replacement. Few origins make these intervals wide; that is the point of showing them."""
+    rng = np.random.default_rng(seed)
+    out: dict[int, dict[str, dict[str, float]]] = {}
+    if not scores.height or "geography" not in scores.columns:
+        return out
+    for h in GATE_HORIZONS:
+        out[h] = {}
+        for g in GROUPS:
+            d = scores.filter((pl.col("horizon") == h) & (pl.col("geography") == g))
+            if not d.height:
+                continue
+            by_origin = (
+                d.group_by("origin")
+                .agg((pl.col("wis") - pl.col("wis_persistence")).mean().alias("diff"))
+                .sort("origin")["diff"]
+                .to_numpy()
+            )
+            boots = [
+                float(np.mean(rng.choice(by_origin, size=len(by_origin), replace=True)))
+                for _ in range(n_boot)
+            ]
+            lo, hi = np.quantile(boots, [0.05, 0.95])
+            out[h][g] = {
+                "diff": float(np.mean(by_origin)),
+                "low": float(lo),
+                "high": float(hi),
+                "origins": len(by_origin),
+            }
+    return out
+
+
 def write_gate(
     result: GateResult, path: Path, manifest: Mapping[str, Any], now: datetime | None = None
 ) -> Path:
