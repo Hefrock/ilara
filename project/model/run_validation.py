@@ -18,7 +18,7 @@ from pathlib import Path
 import polars as pl
 
 from project import manifest
-from project.model import pa, validate
+from project.model import pa, statistical, validate
 
 OUTPUTS = Path(__file__).resolve().parents[1] / "outputs" / "validation"
 
@@ -33,10 +33,12 @@ def origins(first: date, last_observed: date) -> list[date]:
     return out
 
 
-def run_params(first: date, particles: int, generations: int) -> dict[str, object]:
+def run_params(
+    first: date, particles: int, generations: int, version: str = pa.MODEL_VERSION
+) -> dict[str, object]:
     """What a validation run records about itself, the model version included (ADR 0026)."""
     return {
-        "model_version": pa.MODEL_VERSION,
+        "model_version": version,
         "first": first,
         "particles": particles,
         "generations": generations,
@@ -51,19 +53,36 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--seed", type=int, default=20261015)
     ap.add_argument("--out", type=Path, default=OUTPUTS)
     ap.add_argument("--write-gate", action="store_true")
+    ap.add_argument(
+        "--model",
+        default=pa.MODEL_VERSION,
+        choices=[*pa.VERSIONS, statistical.VERSION],
+        help="model version to score (ADR 0026, 0029); s1 is the statistical comparator",
+    )
     a = ap.parse_args(argv)
+    if a.write_gate and a.model != pa.MODEL_VERSION:
+        raise SystemExit("--write-gate only for the frozen model version (ADR 0026)")
     observed = pa.observed_series()
     last = max(observed.get("state", {}), default=a.first)
     ts = origins(a.first, last)
-    fc = pa.forecaster(particles=a.particles, generations=a.generations, seed=a.seed)
+    if a.model == statistical.VERSION:
+        fc = statistical.forecaster()
+    else:
+        fc = pa.forecaster(
+            particles=a.particles, generations=a.generations, seed=a.seed, version=a.model
+        )
     scores = validate.replay(ts, fc, observed, pa.cutoff)
-    scores = scores.with_columns(pl.lit(pa.MODEL_VERSION).alias("model_version"))  # ADR 0026
-    a.out.mkdir(parents=True, exist_ok=True)
-    scores.write_csv(a.out / "scores.csv")
+    scores = scores.with_columns(pl.lit(a.model).alias("model_version"))  # ADR 0026
+    out = a.out if a.model == pa.MODEL_VERSION else a.out.parent / f"validation_{a.model}"
+    out.mkdir(parents=True, exist_ok=True)
+    scores.write_csv(out / "scores.csv")
     result = validate.gate(scores)
-    params = run_params(a.first, a.particles, a.generations)
-    m = manifest.write(a.out, "validation", a.seed, params, {}, extra={"gate": result.__dict__})
-    print(f"validation: {len(ts)} origins, gate {result.status}; wrote {m}")
+    spread = validate.group_uncertainty(scores)
+    params = run_params(a.first, a.particles, a.generations, a.model)
+    m = manifest.write(
+        out, "validation", a.seed, params, {}, extra={"gate": result.__dict__, "spread": spread}
+    )
+    print(f"validation ({a.model}): {len(ts)} origins, gate {result.status}; wrote {m}")
     if a.write_gate:
         root = Path(__file__).resolve().parents[2]
         run = {"manifest": str(m.relative_to(root)), "seed": a.seed, **params}

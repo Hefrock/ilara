@@ -38,7 +38,7 @@ import polars as pl
 from ingest import access
 from project.leak import check_known
 from project.model import calibrate as cal
-from project.model import inputs, sensitivity, simulator, validate
+from project.model import community, inputs, sensitivity, simulator, validate
 from project.susceptibility import estimate
 
 MARGIN_DAYS = 7
@@ -55,10 +55,13 @@ DRY_TRUTH = {
     "report_delay": 3.0,
     "weekend": 0.6,
 }
+# Version 2 synthetic truth (ADR 0029): a community group about 0.5 percent of Lancaster.
+DRY_TRUTH_V2 = {**DRY_TRUTH, "community_scale": 0.02, "community_within": 0.8}
 # The model that forecasts are scored with (ADR 0026). Frozen from the 2026-11-04 scoring on:
 # any change to the model, its inputs' handling or its priors is a new version, scored only on
 # origins after it is introduced, never silently re-scored on past ones.
 MODEL_VERSION = "1"
+VERSIONS = ("1", "2")  # "2": community group inside counties (ADR 0029), not yet frozen
 POOL_BELOW = 10  # counties with fewer cases are fitted as one "rest" group (ADR 0021)
 FIRST_SNAPSHOT = date(2026, 10, 5)  # the first county snapshot (Gate G3 counts from here)
 
@@ -78,6 +81,10 @@ class PAModel:
     params: dict[str, Any]
     refs: dict[str, list[str]] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
+    version: str = "1"  # model version (ADR 0026); "2" adds the community group (ADR 0029)
+    proxy: np.ndarray | None = None  # version 2: school-coverage proxy per county
+    s_community: float = 0.0  # version 2: susceptible fraction in the community
+    exposed_by_county: dict[str, int] = field(default_factory=dict)  # version 2 seed sizes
 
 
 def _read(table: str, root: Path | None, known_at: datetime | None) -> pl.DataFrame:
@@ -122,7 +129,10 @@ def build(
     n_draws: int = 200,
     seed: int = 20261015,
     scenario: str | None = None,
+    version: str = MODEL_VERSION,
 ) -> PAModel:
+    if version not in VERSIONS:
+        raise ValueError(f"unknown model version {version!r}; known: {sorted(VERSIONS)}")
     mp = simulator.load_params()
     sp = estimate.load_params()
     base = sensitivity.build(root, mp)
@@ -175,7 +185,7 @@ def build(
         "case_county": [r for r in county["raw_sha256"].to_list() if r] if county.height else [],
         "vaccine_doses": doses["raw_sha256"].drop_nulls().to_list() if doses.height else [],
     }
-    return PAModel(
+    model = PAModel(
         base.fips,
         base.population,
         base.coupling,
@@ -189,7 +199,38 @@ def build(
         mp,
         refs,
         notes,
+        version,
     )
+    if version == "2":
+        cp = mp["community"]
+        schools = _read("immunization_school", root, known_at)
+        model.proxy = community.school_proxy(
+            schools,
+            base.fips,
+            grades=list(cp["proxy"]["grades"]),
+            threshold_pct=float(cp["proxy"]["threshold_pct"]),
+            prior_weight=float(cp["proxy"]["prior_weight"]),
+        )
+        model.s_community = community.community_susceptible(mp, sp)
+        model.exposed_by_county = seed_sizes(known, county, int(cp["seed_max"]))
+        refs["immunization_school"] = sorted(set(schools["raw_sha256"].drop_nulls().to_list()))
+    return model
+
+
+def seed_sizes(known: pl.DataFrame, county: pl.DataFrame, cap: int) -> dict[str, int]:
+    """Version 2 seed sizes (ADR 0029, item 3): a county first known from a snapshot is
+    seeded with the cases that snapshot showed, between 1 and ``cap``; a county first known
+    from an event keeps the default."""
+    if not county.height:
+        return {}
+    snap = known.filter(pl.col("basis").is_in(["snapshot", "snapshot_first"]))
+    cum = county.select("county_fips", "as_of_date", "cum_cases").drop_nulls()
+    out: dict[str, int] = {}
+    for f, d in snap.select("county_fips", "known_by").rows():
+        v = cum.filter((pl.col("county_fips") == f) & (pl.col("as_of_date") == d))["cum_cases"]
+        if v.len():
+            out[f] = int(min(max(int(v.max()), 1), cap))  # type: ignore[arg-type]
+    return out
 
 
 def priors(model: PAModel) -> list[cal.Prior]:
@@ -207,6 +248,17 @@ def priors(model: PAModel) -> list[cal.Prior]:
         out.append(cal.Prior("censored_lead_days", float(c["low"]), float(c["high"])))
     for etype, v in model.params["interventions"].items():
         out.append(cal.Prior(f"factor_{etype}", float(v["low"]), 1.0))
+    if model.version == "2":
+        cp = model.params["community"]
+        sc = cp["scale"]
+        out.append(
+            cal.Prior(
+                "community_scale", float(sc["low"]), float(sc["high"]), log=bool(sc.get("log"))
+            )
+        )
+        wi = cp["within"]
+        if wi.get("fitted", True):
+            out.append(cal.Prior("community_within", float(wi["low"]), float(wi["high"])))
     return out + list(cal.OBSERVATION_PRIORS)
 
 
@@ -231,6 +283,7 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
             censored_lead_days=(
                 int(round(theta["censored_lead_days"])) if "censored_lead_days" in theta else None
             ),
+            exposed_by_county=model.exposed_by_county or None,
         )
         effects = {t: {"factor": theta[f"factor_{t}"], "lag_days": lag} for t, lag in lags.items()}
         mult, _ = inputs.intervention_mult(
@@ -242,6 +295,35 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
             effects,
             model.first_known,
         )
+        share = (
+            community.shares(model.proxy, theta["community_scale"])
+            if model.version == "2" and model.proxy is not None
+            else np.zeros(len(n))
+        )
+        if (share > 0).any():
+            n_g, n_m, s_g, s_m = community.split(n, frac, share, model.s_community)
+            within = theta.get(
+                "community_within", float(model.params["community"]["within"]["value"])
+            )
+            k2 = community.patch_coupling(model.coupling, n_g, n_m, within)
+            inc = simulator.simulate(
+                np.concatenate([n_g, n_m]),
+                np.concatenate([s_g, s_m]),
+                np.zeros(2 * len(n), np.int64),
+                np.zeros(2 * len(n), np.int64),
+                r0=theta["r0"],
+                latent_days=d["latent_days"]["value"],
+                infectious_days=d["infectious_days"]["value"],
+                latent_stages=d["latent_days"]["stages"],
+                infectious_stages=d["infectious_days"]["stages"],
+                coupling=k2,
+                days=model.days,
+                seed=seed,
+                mult=np.hstack([mult, mult]),
+                seeds=community.to_patches(seeds, s_g, s_m, into_community=True),
+                vaccination=community.to_patches(model.vaccination, s_g, s_m, into_community=False),
+            ).incidence
+            return inc[:, : len(n)] + inc[:, len(n) :]
         return simulator.simulate(
             n,
             s0,
@@ -352,20 +434,23 @@ def dry_run(
     min_cases: int = 500,
     seed: int = 20261015,
     now: datetime | None = None,
+    version: str = MODEL_VERSION,
+    truth: dict[str, float] | None = None,
 ) -> Path:
     """Fit the 67-county problem to one synthetic dataset made from the model at ``DRY_TRUTH``
     on ten snapshot dates. The dataset is the first simulation seed whose statewide count over
     the observed window reaches ``min_cases``: an outbreak the size of the real one, not a
     fade-out (the real data are conditioned on a large outbreak too). Writes the posterior,
     predictive checks and a manifest under ``project/outputs/`` (gitignored, I10)."""
+    truth = truth or (DRY_TRUTH_V2 if version == "2" else DRY_TRUTH)
     dates = snapshot_dates()
-    model = build(dates[-1] + timedelta(days=35), root, seed=seed)
+    model = build(dates[-1] + timedelta(days=35), root, seed=seed, version=version)
     snaps = [(d - model.start).days for d in dates]
     # Statewide counts on the dates the real fit has them (DOH releases), simulated values.
     state = [(d - model.start).days for d in statewide_dates(dates[0], model.start, root)]
     data_seed, obs = None, None
     for s in range(seed, seed + 200):
-        obs = synthetic(model, DRY_TRUTH, snaps, s, state)
+        obs = synthetic(model, truth, snaps, s, state)
         if obs.series["state"][1][-1] >= min_cases:
             data_seed = s
             break
@@ -377,15 +462,16 @@ def dry_run(
     t0 = time.monotonic()
     result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
     secs = time.monotonic() - t0
-    check = forecast_check(model, result, dates[-1], DRY_TRUTH, data_seed, full)
+    check = forecast_check(model, result, dates[-1], truth, data_seed, full)
     path = cal.write(
         prob,
         result,
-        out_dir or OUTPUTS / "synthetic",
+        out_dir or OUTPUTS / ("synthetic" if version == "1" else f"synthetic_v{version}"),
         kind="calibration-pa-synthetic",
         inputs=model.refs,
         params={
-            "truth": DRY_TRUTH,
+            "model_version": version,
+            "truth": truth,
             "data_seed": data_seed,
             "snapshot_days": snaps,
             "statewide_days": state,
@@ -459,17 +545,19 @@ def fit_real(
     generations: int = 8,
     draws: int = 200,
     seed: int = 20261015,
+    version: str = MODEL_VERSION,
 ) -> Path:
     """The real fit at a forecast origin on the data known at its cutoff, and its 1 to 4 week
     forecast samples. Refuses before Gate G3 (``GateError``). Writes under
     ``project/outputs/calibration_pa/real/<origin>/`` (gitignored; nothing public before G4)."""
     known_at = cutoff(origin)
-    model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
+    model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed, version=version)
     prob, refs = curated_problem(model, root, known_at)
     t0 = time.monotonic()
     result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
     secs = time.monotonic() - t0
-    out = out_dir or OUTPUTS / "real" / origin.isoformat()
+    sub = "real" if version == "1" else f"real_v{version}"
+    out = out_dir or OUTPUTS / sub / origin.isoformat()
     samples = forecast_samples(model, result, origin, all_geographies(model), draws=draws)
     rows = [
         {"geography": g, "horizon_weeks": h, "draw": i, "new_cases": float(v)}
@@ -486,7 +574,7 @@ def fit_real(
         kind="calibration-pa-real",
         inputs=refs,
         params={
-            "model_version": MODEL_VERSION,
+            "model_version": version,
             "origin": origin.isoformat(),
             "known_at": known_at.isoformat(),
             "start": model.start.isoformat(),
@@ -510,10 +598,16 @@ def main(argv: list[str] | None = None) -> int:
         type=date.fromisoformat,
         help="fit the real data known at this origin (refuses before Gate G3)",
     )
+    ap.add_argument("--version", default=MODEL_VERSION, choices=list(VERSIONS))
     a = ap.parse_args(argv)
     if a.origin is not None:
         path = fit_real(
-            a.origin, a.out, particles=a.particles, generations=a.generations, seed=a.seed
+            a.origin,
+            a.out,
+            particles=a.particles,
+            generations=a.generations,
+            seed=a.seed,
+            version=a.version,
         )
         print(f"real fit at origin {a.origin}: wrote {path}")
         return 0
@@ -584,12 +678,15 @@ def forecaster(
     generations: int = 8,
     draws: int = 200,
     seed: int = 20261015,
+    version: str = MODEL_VERSION,
 ) -> validate.Forecaster:
     """Fit at each origin with data known at its cutoff, then forecast 1 to 4 weeks ahead.
     Refuses (``GateError``) at origins with fewer than ten county snapshot dates."""
 
     def run(origin: date, known_at: datetime) -> dict[str, dict[int, np.ndarray]]:
-        model = build(origin + timedelta(days=35), root, known_at=known_at, seed=seed)
+        model = build(
+            origin + timedelta(days=35), root, known_at=known_at, seed=seed, version=version
+        )
         prob, _ = curated_problem(model, root, known_at)
         result = cal.fit(prob, particles=particles, generations=generations, seed=seed)
         return forecast_samples(model, result, origin, all_geographies(model), draws=draws)

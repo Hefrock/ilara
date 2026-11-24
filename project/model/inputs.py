@@ -186,11 +186,13 @@ def seeding(
     exposed: int,
     lead_days: int,
     censored_lead_days: int | None = None,
+    exposed_by_county: dict[str, int] | None = None,
 ) -> tuple[np.ndarray, list[str]]:
     """Fixed exposures ``lead_days`` before each county's first known date: every county with a
     known case (``all``) or the earliest county only (``first``, a sensitivity variant). A county
     first known only from the first snapshot (censored) is seeded ``censored_lead_days`` before
-    it when that is given (ADR 0022), else ``lead_days``."""
+    it when that is given (ADR 0022), else ``lead_days``. ``exposed_by_county`` overrides
+    ``exposed`` for the counties it names (model version 2, ADR 0029)."""
     if mode not in ("first", "all"):
         raise ValueError("seeding mode must be 'first' or 'all'")
     seeds = np.zeros((days, len(fips)), dtype=np.int64)
@@ -208,7 +210,8 @@ def seeding(
             continue
         if censored and censored_lead_days is None:
             notes.append(f"{f}: first known only from the first snapshot ({d}), so seeding is late")
-        seeds[t, fips.index(f)] += exposed
+        n = exposed_by_county.get(f, exposed) if exposed_by_county else exposed
+        seeds[t, fips.index(f)] += n
     if not rows.height:
         notes.append("no county has a known first case: nothing seeded")
     return seeds, notes
