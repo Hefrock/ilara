@@ -1,8 +1,9 @@
 # ADR 0029: plan for model version 2
 
-Status: **proposed** (drafted 2026-11-20 at the owner's request: "yes, draft a plan for model
-version 2"). Nothing in the model changes until the owner accepts this plan, and the decisions
-listed at the end are the owner's.
+Status: **accepted** with the revisions in "Decisions" below (owner, 2026-11-24: "your
+recommendations are reasonable. proceed"). Drafted 2026-11-20 at the owner's request. The
+revisions come from a review of this plan made on 2026-11-20 (epidemiological and statistical
+soundness), and they replace the first draft where the two differ.
 
 ## Context
 
@@ -109,21 +110,57 @@ Timeline, if accepted by 2026-11-24:
 | Freeze version 2; first scored origin | Wednesday 2026-12-02 |
 | Eighth origin; earliest G4 decision for version 2 | origin 2027-01-20, decided once its two-week target is in (2027-02-03) |
 
-## Decisions for the owner
+## Decisions (accepted 2026-11-24)
 
-- **D1.** Community group the same in every county, or fitted only where the data need it?
-  Recommended: the same share everywhere, with coverage and mixing fitted. It infers nothing
-  about where communities live.
-- **D2.** Whether to fit cross-county community coupling (item 2) in version 2, or leave it for
-  later. Recommended: include it; Lancaster's neighbours are where spread would show it.
-- **D3.** Whether the existing U19 scenarios are retired once item 1 replaces them, or kept as a
-  sensitivity check. Recommended: kept as a sensitivity check, unchanged.
-- **D4.** Whether version 1 keeps running after version 2 is frozen. Recommended: yes, until G4
-  is decided for version 2.
-- **D5.** The freeze date. Recommended: 2026-12-02, or the first Wednesday after the
-  synthetic checks pass if that is later.
+- **D1. Where the community group is: guided by school coverage data.** A uniform share would
+  give every county a self-sustaining pocket and worsen the small-county over-forecast. Each
+  county's community size is instead a fitted scale times a county proxy, fixed now, before its
+  relation to case counts is examined:
 
-## Consequences if accepted
+  > **Proxy:** the share of the county's kindergarten and grade 7 enrolment, in schools listed
+  > in the DOH school-level immunization file for 2025-2026 (`immunization_school`, T1), that is
+  > in schools reporting MMR coverage below 90 percent. Suppressed school rows are left out of
+  > both numerator and denominator.
+
+  Two rules, also fixed now:
+
+  - **Small counties are shrunk toward the statewide value.** The proxy is computed as
+    (low + 500 p) / (enrolled + 500), where p is the statewide share, so a county with few listed
+    pupils is not ranked on a handful of schools.
+  - **A county with no unsuppressed rows takes the statewide value.**
+
+  Computed on 2026-11-24 before any comparison with cases: 66 of 67 counties have rows.
+  Unshrunk, the values run from 0 to 0.58, with a median of 0.09; the two highest are counties
+  with 65 and 298 listed pupils, which is why shrinkage is needed.
+
+  The file omits many small private and one-room schools (U19), so the proxy is imperfect. It
+  only orders counties and sets relative sizes. If it proves uninformative in the synthetic and
+  diagnostic checks, the fallback is partial pooling: county sizes vary around a common value.
+
+- **D2. Cross-county community coupling only if it can be estimated.** It is included only if
+  the synthetic recovery test recovers it; otherwise it stays out of version 2.
+
+- **D3.** The U19 scenarios are kept unchanged, as a sensitivity check.
+
+- **D4.** Version 1 keeps running beside version 2 until G4 is decided for version 2.
+
+- **D5.** Freeze on Wednesday 2026-12-02, or the first Wednesday after the synthetic checks pass
+  if that is later.
+
+**Revisions from the review, also accepted:**
+
+- **Fewer parameters.** Community share and coverage enter through one combined quantity, the
+  effective community size (the fitted scale above), with coverage held at the U19 `mid`
+  scenario value. The share of the community's contacts made within it is a second fitted
+  parameter. Any parameter the recovery test does not recover is fixed and varied as a
+  sensitivity check instead of fitted.
+- **A statistical comparator.** A simple county growth-rate model (negative binomial counts,
+  with a growth rate estimated from recent weeks) is frozen on the same day as version 2 and
+  scored the same way, to test whether the mechanism adds forecasting value.
+- **Uncertainty in the reports.** Group comparisons in the weekly report carry a range from
+  resampling origins. The gate rule itself is unchanged.
+
+## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and
   `project/susceptibility/params.yml` with status ASSUMPTION and their priors.
