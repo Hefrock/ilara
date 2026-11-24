@@ -69,6 +69,22 @@ failure; 3 to 5 address the others.
    follows the evidence: for example, fewer seeded cases where only one case is known, or a
    start lead that varies with county size.
 
+   **Result (2026-11-24).** 120 posterior draws from the 2026-11-18 fit, fresh simulations, no
+   refit. Medians of simulated weekly new reported cases over the three weeks to the origin, for
+   the 43 counties under 10 cases other than Lancaster, against what was reported:
+
+   | | 15 counties first seen 2026-10-05 | 28 others |
+   |---|---|---|
+   | Reported | 2, 2, 0 | 2, 4, 6 |
+   | Version 1 (5 exposed seeded per county) | 8.6, 7.4, 6.5 | 9.3, 9.2, 9.1 |
+   | 1 exposed seeded in these counties | 3.7, 3.8, 3.2 | 2.8, 2.8, 2.9 |
+   | Censored counties seeded with the short lead | 14.3, 12.7, 10.5 | 9.0, 9.7, 9.2 |
+
+   The seed size drives the excess; the shared censored lead does not. **Rule for version 2,
+   fixed now:** each county is seeded with as many exposed people as the cases known on its
+   first known date, at least 1 and at most 5 (version 1 seeds 5 everywhere). This uses only
+   what was known on that date.
+
 4. **Tighter fit.** The ABC fit stops at a loose match (methods review, finding 5).
 
    - Proposed: more particles and generations, and a stopping rule on the tolerance rather
