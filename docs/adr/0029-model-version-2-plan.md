@@ -277,6 +277,17 @@ all three hold; otherwise it is paused and version 1 stays the scored model:
 
 Results are recorded here as a pattern only (outputs stay private before G4, I10).
 
+**Recovery result, round 2 (2026-11-24).** Synthetic data, so values are shown:
+
+| Dataset | `community_scale` truth | 90% interval | Width (share of prior log width) |
+|---|---|---|---|
+| A | 0.005 | 0.0014 to 0.0359 | 0.56 |
+| B | 0.02 | 0.0067 to 0.0658 | 0.40 |
+| C | 0.08 | 0.0342 to 0.1957 | 0.31 |
+
+`community_scale` **passes** in all three, though dataset A is close to the 0.6 limit: a small
+community is only loosely identified. The diagnostic hindcast follows.
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and
