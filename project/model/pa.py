@@ -38,7 +38,7 @@ import polars as pl
 from ingest import access
 from project.leak import check_known
 from project.model import calibrate as cal
-from project.model import inputs, sensitivity, simulator, validate
+from project.model import community, inputs, sensitivity, simulator, validate
 from project.susceptibility import estimate
 
 MARGIN_DAYS = 7
@@ -59,6 +59,7 @@ DRY_TRUTH = {
 # any change to the model, its inputs' handling or its priors is a new version, scored only on
 # origins after it is introduced, never silently re-scored on past ones.
 MODEL_VERSION = "1"
+VERSIONS = ("1", "2")  # "2": community group inside counties (ADR 0029), not yet frozen
 POOL_BELOW = 10  # counties with fewer cases are fitted as one "rest" group (ADR 0021)
 FIRST_SNAPSHOT = date(2026, 10, 5)  # the first county snapshot (Gate G3 counts from here)
 
@@ -78,6 +79,10 @@ class PAModel:
     params: dict[str, Any]
     refs: dict[str, list[str]] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
+    version: str = "1"  # model version (ADR 0026); "2" adds the community group (ADR 0029)
+    proxy: np.ndarray | None = None  # version 2: school-coverage proxy per county
+    s_community: float = 0.0  # version 2: susceptible fraction in the community
+    exposed_by_county: dict[str, int] = field(default_factory=dict)  # version 2 seed sizes
 
 
 def _read(table: str, root: Path | None, known_at: datetime | None) -> pl.DataFrame:
@@ -122,7 +127,10 @@ def build(
     n_draws: int = 200,
     seed: int = 20261015,
     scenario: str | None = None,
+    version: str = MODEL_VERSION,
 ) -> PAModel:
+    if version not in VERSIONS:
+        raise ValueError(f"unknown model version {version!r}; known: {sorted(VERSIONS)}")
     mp = simulator.load_params()
     sp = estimate.load_params()
     base = sensitivity.build(root, mp)
@@ -175,7 +183,7 @@ def build(
         "case_county": [r for r in county["raw_sha256"].to_list() if r] if county.height else [],
         "vaccine_doses": doses["raw_sha256"].drop_nulls().to_list() if doses.height else [],
     }
-    return PAModel(
+    model = PAModel(
         base.fips,
         base.population,
         base.coupling,
@@ -189,7 +197,38 @@ def build(
         mp,
         refs,
         notes,
+        version,
     )
+    if version == "2":
+        cp = mp["community"]
+        schools = _read("immunization_school", root, known_at)
+        model.proxy = community.school_proxy(
+            schools,
+            base.fips,
+            grades=list(cp["proxy"]["grades"]),
+            threshold_pct=float(cp["proxy"]["threshold_pct"]),
+            prior_weight=float(cp["proxy"]["prior_weight"]),
+        )
+        model.s_community = community.community_susceptible(mp, sp)
+        model.exposed_by_county = seed_sizes(known, county, int(cp["seed_max"]))
+        refs["immunization_school"] = sorted(set(schools["raw_sha256"].drop_nulls().to_list()))
+    return model
+
+
+def seed_sizes(known: pl.DataFrame, county: pl.DataFrame, cap: int) -> dict[str, int]:
+    """Version 2 seed sizes (ADR 0029, item 3): a county first known from a snapshot is
+    seeded with the cases that snapshot showed, between 1 and ``cap``; a county first known
+    from an event keeps the default."""
+    if not county.height:
+        return {}
+    snap = known.filter(pl.col("basis").is_in(["snapshot", "snapshot_first"]))
+    cum = county.select("county_fips", "as_of_date", "cum_cases").drop_nulls()
+    out: dict[str, int] = {}
+    for f, d in snap.select("county_fips", "known_by").rows():
+        v = cum.filter((pl.col("county_fips") == f) & (pl.col("as_of_date") == d))["cum_cases"]
+        if v.len():
+            out[f] = int(min(max(int(v.max()), 1), cap))  # type: ignore[arg-type]
+    return out
 
 
 def priors(model: PAModel) -> list[cal.Prior]:
@@ -207,6 +246,17 @@ def priors(model: PAModel) -> list[cal.Prior]:
         out.append(cal.Prior("censored_lead_days", float(c["low"]), float(c["high"])))
     for etype, v in model.params["interventions"].items():
         out.append(cal.Prior(f"factor_{etype}", float(v["low"]), 1.0))
+    if model.version == "2":
+        cp = model.params["community"]
+        sc = cp["scale"]
+        out.append(
+            cal.Prior(
+                "community_scale", float(sc["low"]), float(sc["high"]), log=bool(sc.get("log"))
+            )
+        )
+        out.append(
+            cal.Prior("community_within", float(cp["within"]["low"]), float(cp["within"]["high"]))
+        )
     return out + list(cal.OBSERVATION_PRIORS)
 
 
@@ -231,6 +281,7 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
             censored_lead_days=(
                 int(round(theta["censored_lead_days"])) if "censored_lead_days" in theta else None
             ),
+            exposed_by_county=model.exposed_by_county or None,
         )
         effects = {t: {"factor": theta[f"factor_{t}"], "lag_days": lag} for t, lag in lags.items()}
         mult, _ = inputs.intervention_mult(
@@ -242,6 +293,32 @@ def simulate_fn(model: PAModel) -> cal.Simulate:
             effects,
             model.first_known,
         )
+        share = (
+            community.shares(model.proxy, theta["community_scale"])
+            if model.version == "2" and model.proxy is not None
+            else np.zeros(len(n))
+        )
+        if (share > 0).any():
+            n_g, n_m, s_g, s_m = community.split(n, frac, share, model.s_community)
+            k2 = community.patch_coupling(model.coupling, n_g, n_m, theta["community_within"])
+            inc = simulator.simulate(
+                np.concatenate([n_g, n_m]),
+                np.concatenate([s_g, s_m]),
+                np.zeros(2 * len(n), np.int64),
+                np.zeros(2 * len(n), np.int64),
+                r0=theta["r0"],
+                latent_days=d["latent_days"]["value"],
+                infectious_days=d["infectious_days"]["value"],
+                latent_stages=d["latent_days"]["stages"],
+                infectious_stages=d["infectious_days"]["stages"],
+                coupling=k2,
+                days=model.days,
+                seed=seed,
+                mult=np.hstack([mult, mult]),
+                seeds=community.to_patches(seeds, s_g, s_m, into_community=True),
+                vaccination=community.to_patches(model.vaccination, s_g, s_m, into_community=False),
+            ).incidence
+            return inc[:, : len(n)] + inc[:, len(n) :]
         return simulator.simulate(
             n,
             s0,
