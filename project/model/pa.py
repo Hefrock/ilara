@@ -61,7 +61,7 @@ DRY_TRUTH_V2 = {**DRY_TRUTH, "community_scale": 0.02, "community_within": 0.8}
 # any change to the model, its inputs' handling or its priors is a new version, scored only on
 # origins after it is introduced, never silently re-scored on past ones.
 MODEL_VERSION = "1"
-VERSIONS = ("1", "2")  # "2": community group inside counties (ADR 0029), not yet frozen
+VERSIONS = ("1", "2")  # "2": community group inside counties (ADR 0029): paused, never frozen
 POOL_BELOW = 10  # counties with fewer cases are fitted as one "rest" group (ADR 0021)
 FIRST_SNAPSHOT = date(2026, 10, 5)  # the first county snapshot (Gate G3 counts from here)
 

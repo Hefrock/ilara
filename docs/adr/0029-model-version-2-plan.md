@@ -288,6 +288,28 @@ Results are recorded here as a pattern only (outputs stay private before G4, I10
 `community_scale` **passes** in all three, though dataset A is close to the 0.6 limit: a small
 community is only loosely identified. The diagnostic hindcast follows.
 
+**Hindcast result, round 2 (2026-11-24): version 2 paused.** Against the decision rule above,
+as a pattern only (outputs private, I10):
+
+- Lancaster: version 2 scores better than version 1 at both horizons (**met**). But its median
+  forecast is still about zero to one case a week while 10 to 31 are reported, so the
+  community does not yet carry Lancaster's outbreak; the gain comes from wider intervals.
+- Other groups: the remaining counties improve a lot. The larger counties and the state are
+  worse than version 1 by more than 10 percent at two weeks (**not met**).
+- 80 percent coverage on targets with a case is above 90 percent, as for version 1
+  (**not met**).
+
+By the rule fixed before the run, **version 2 is paused** and version 1 stays the scored model.
+Version 2 stays in the code, unfrozen, with version 1 the default. Nothing here is changed to
+make it pass. What was learned, for any later attempt:
+
+- seeding into the general population and limiting communities to high-proxy counties fixes
+  most of the small-county over-forecast;
+- a community sized by the school proxy still does not sustain Lancaster at its observed
+  level. The likely missing piece is information on when Lancaster's outbreak took off and
+  how fast it grew, which the county counts for July to October requested under ADR 0023
+  would give.
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and
