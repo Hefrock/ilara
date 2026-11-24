@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-24T04:23:06Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-23 (DOH refreshed the report 2026-11-23T18:59:13Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
+Generated 2026-11-24T04:44:19Z by `measles quality` (engine 1.0.0). Latest dashboard data as of 2026-11-23 (DOH refreshed the report 2026-11-23T18:59:13Z). Regenerated on every capture run; flags are the durable record (`data_quality_flag`).
 
 Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows from the sensitivity store (news-derived, secondary) are labelled with their tier and are never used in default views.
 
@@ -39,7 +39,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - census_commuting_index: last outcome changed, last good 2026-11-24T01:48:05Z (3 h ago)
 - census_popest_agesex: last outcome unchanged, last good 2026-11-24T01:47:54Z (3 h ago)
 - census_popest_totals: last outcome unchanged, last good 2026-11-24T01:47:49Z (3 h ago)
-- doh_dashboard: last outcome changed, last good 2026-11-24T04:23:04Z (0 h ago)
+- doh_dashboard: last outcome changed, last good 2026-11-24T04:44:16Z (0 h ago)
 - doh_han_index: last outcome unchanged, last good 2026-11-24T01:47:34Z (3 h ago)
 - doh_han_pdf: one-time backfill, last good 2026-10-07T11:55:46Z
 - doh_measles_page: last outcome unchanged, last good 2026-11-24T01:47:24Z (3 h ago)
@@ -96,7 +96,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 
 ## Source conflicts
 
-- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 28 (ab7b6de37998); cum_cases 393, counties_with_cases 29 (ccf7dcb81392)
+- curated case_state 2026-08-25|doh_release|calendar_year: cum_cases 393, counties_with_cases 29 (ccf7dcb81392); cum_cases 393, counties_with_cases 28 (ab7b6de37998)
 
 ## Non-monotonic series
 
@@ -124,7 +124,7 @@ Reported counts are a floor. Conflicts below are shown, not resolved (I5). Rows 
 - curated doh_dashboard 2026-11-16 (calendar_year): 67 county rows sum to 1561; curated doh_dashboard:4c637fa822e5 (T1) total 1561 (consistent)
 - curated doh_dashboard 2026-11-18 (calendar_year): 67 county rows sum to 1589; curated doh_dashboard:2a09ab3a8527 (T1) total 1589 (consistent)
 - curated doh_dashboard 2026-11-20 (calendar_year): 67 county rows sum to 1631; curated doh_dashboard:9e726bf3ef45 (T1) total 1631 (consistent)
-- curated doh_dashboard 2026-11-23 (calendar_year): 67 county rows sum to 1638; curated doh_dashboard:0590532d4c3b (T1) total 1638 (consistent)
+- curated doh_dashboard 2026-11-23 (calendar_year): 67 county rows sum to 1638; curated doh_dashboard:8ae5e5f8ed48 (T1) total 1638 (consistent)
 - sensitivity seed_t3_county 2026-08-25 (unknown): 2 county rows sum to 214; sensitivity seed_statewide:sw-m06 (T3-derived) total 393 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-17 (unknown): 9 county rows sum to 629; sensitivity seed_statewide:sw-m07 (T3-derived) total 767 [compared, cross-source, not flagged]
 - sensitivity seed_t3_county 2026-09-21 (unknown): 3 county rows sum to 514; sensitivity seed_statewide:sw-007 (T3-derived) total 792 [compared, cross-source, not flagged]
