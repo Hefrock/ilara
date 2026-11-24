@@ -245,6 +245,38 @@ the mechanism:
 - if version 2 still does not beat version 1 on the hindcast, version 2 is paused and version 1
   stays the scored model.
 
+## Round 2 (owner chose option A, 2026-11-24; fixed before any run)
+
+Version 2 has never been frozen or scored, so it is redefined in place; the round 1 definition
+is kept in git history. Two changes, and nothing else:
+
+1. **Seeds go into the general population.** Each county's seeded exposures are placed wholly
+   in its general patch (round 1: wholly in the community). Vaccination stays split in
+   proportion to susceptibles.
+2. **A community only above the statewide value.** A county's community share is
+   `min(scale * proxy, 0.5)` where its shrunken proxy exceeds the statewide share `p`, and zero
+   otherwise. The proxy itself (D1, shrinkage included) is unchanged; a county with no rows
+   takes `p` and so has no community.
+
+`community_within` stays fixed at 0.725; the seed-size rule (item 3) and the priors are
+unchanged.
+
+**Recovery test, round 2.** As in the recovery rule above, except that the three datasets keep
+`community_scale` at 0.005, 0.02 and 0.08 and all use `community_within` = 0.725, since it is no
+longer fitted. `community_scale` must again pass in all three (truth inside the 90 percent
+interval, width below 0.6 of the prior's log width). If it fails, version 2 is paused.
+
+**Decision rule on the diagnostic hindcast** (origins 2026-10-28, 11-04 and 11-11, the same as
+round 1; diagnostic, not counted towards G4). Version 2 is frozen on the next Wednesday only if
+all three hold; otherwise it is paused and version 1 stays the scored model:
+
+- lower mean WIS than version 1 in Lancaster at both horizons 1 and 2;
+- in each other group (larger counties, remaining counties, state), mean WIS at most 10
+  percent above version 1's at both horizons;
+- 80 percent coverage on targets with a case inside 70 to 90 percent.
+
+Results are recorded here as a pattern only (outputs stay private before G4, I10).
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and
