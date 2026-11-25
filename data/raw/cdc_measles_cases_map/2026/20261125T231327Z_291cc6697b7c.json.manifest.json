@@ -1,0 +1,21 @@
+{
+  "bytes": 26454,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "4a50bd4bc754d339592e0ab349c71682e65a6e9432d8d588fb77a0d2355b6d8c",
+  "ext": "json",
+  "extra": {
+    "capture_id": "gh-45719495904-1:14:cdc_measles_cases_map",
+    "content_type": "application/json"
+  },
+  "fetched_at_et": "2026-11-25T18:13:27-05:00",
+  "fetched_at_utc": "2026-11-25T23:13:27Z",
+  "http_status": 200,
+  "normaliser": "json:1",
+  "parser_hint": "cdc_measles_cases_map",
+  "raw_path": "data/raw/cdc_measles_cases_map/2026/20261125T231327Z_291cc6697b7c.json",
+  "sha256": "291cc6697b7cb9a8852d3807616eab907f4c54d4c69236aa23d70a0c1f28742c",
+  "source_id": "cdc_measles_cases_map",
+  "stored_sha256": "291cc6697b7cb9a8852d3807616eab907f4c54d4c69236aa23d70a0c1f28742c",
+  "url": "https://www.cdc.gov/wcms/vizdata/measles/MeaslesCasesMap.json"
+}

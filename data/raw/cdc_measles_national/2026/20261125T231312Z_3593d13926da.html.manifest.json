@@ -1,0 +1,21 @@
+{
+  "bytes": 107206,
+  "capture_key": null,
+  "compression": null,
+  "content_hash": "f46ed0195d26c2bf14f7e7ed93af13cf6b72691e684e4289569814e0519b5512",
+  "ext": "html",
+  "extra": {
+    "capture_id": "gh-45719495904-1:11:cdc_measles_national",
+    "content_type": "text/html"
+  },
+  "fetched_at_et": "2026-11-25T18:13:12-05:00",
+  "fetched_at_utc": "2026-11-25T23:13:12Z",
+  "http_status": 200,
+  "normaliser": "generic_text:1",
+  "parser_hint": "cdc_measles_national",
+  "raw_path": "data/raw/cdc_measles_national/2026/20261125T231312Z_3593d13926da.html",
+  "sha256": "3593d13926da1bd121be8e81e840abdac8042df52c7c8996f6845e537e9cfb62",
+  "source_id": "cdc_measles_national",
+  "stored_sha256": "3593d13926da1bd121be8e81e840abdac8042df52c7c8996f6845e537e9cfb62",
+  "url": "https://www.cdc.gov/measles/data-research/index.html"
+}
