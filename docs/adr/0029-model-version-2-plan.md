@@ -245,6 +245,71 @@ the mechanism:
 - if version 2 still does not beat version 1 on the hindcast, version 2 is paused and version 1
   stays the scored model.
 
+## Round 2 (owner chose option A, 2026-11-24; fixed before any run)
+
+Version 2 has never been frozen or scored, so it is redefined in place; the round 1 definition
+is kept in git history. Two changes, and nothing else:
+
+1. **Seeds go into the general population.** Each county's seeded exposures are placed wholly
+   in its general patch (round 1: wholly in the community). Vaccination stays split in
+   proportion to susceptibles.
+2. **A community only above the statewide value.** A county's community share is
+   `min(scale * proxy, 0.5)` where its shrunken proxy exceeds the statewide share `p`, and zero
+   otherwise. The proxy itself (D1, shrinkage included) is unchanged; a county with no rows
+   takes `p` and so has no community.
+
+`community_within` stays fixed at 0.725; the seed-size rule (item 3) and the priors are
+unchanged.
+
+**Recovery test, round 2.** As in the recovery rule above, except that the three datasets keep
+`community_scale` at 0.005, 0.02 and 0.08 and all use `community_within` = 0.725, since it is no
+longer fitted. `community_scale` must again pass in all three (truth inside the 90 percent
+interval, width below 0.6 of the prior's log width). If it fails, version 2 is paused.
+
+**Decision rule on the diagnostic hindcast** (origins 2026-10-28, 11-04 and 11-11, the same as
+round 1; diagnostic, not counted towards G4). Version 2 is frozen on the next Wednesday only if
+all three hold; otherwise it is paused and version 1 stays the scored model:
+
+- lower mean WIS than version 1 in Lancaster at both horizons 1 and 2;
+- in each other group (larger counties, remaining counties, state), mean WIS at most 10
+  percent above version 1's at both horizons;
+- 80 percent coverage on targets with a case inside 70 to 90 percent.
+
+Results are recorded here as a pattern only (outputs stay private before G4, I10).
+
+**Recovery result, round 2 (2026-11-24).** Synthetic data, so values are shown:
+
+| Dataset | `community_scale` truth | 90% interval | Width (share of prior log width) |
+|---|---|---|---|
+| A | 0.005 | 0.0014 to 0.0359 | 0.56 |
+| B | 0.02 | 0.0067 to 0.0658 | 0.40 |
+| C | 0.08 | 0.0342 to 0.1957 | 0.31 |
+
+`community_scale` **passes** in all three, though dataset A is close to the 0.6 limit: a small
+community is only loosely identified. The diagnostic hindcast follows.
+
+**Hindcast result, round 2 (2026-11-24): version 2 paused.** Against the decision rule above,
+as a pattern only (outputs private, I10):
+
+- Lancaster: version 2 scores better than version 1 at both horizons (**met**). But its median
+  forecast is still about zero to one case a week while 10 to 31 are reported, so the
+  community does not yet carry Lancaster's outbreak; the gain comes from wider intervals.
+- Other groups: the remaining counties improve a lot. The larger counties and the state are
+  worse than version 1 by more than 10 percent at two weeks (**not met**).
+- 80 percent coverage on targets with a case is above 90 percent, as for version 1
+  (**not met**).
+
+By the rule fixed before the run, **version 2 is paused** and version 1 stays the scored model.
+Version 2 stays in the code, unfrozen, with version 1 the default. Nothing here is changed to
+make it pass. What was learned, for any later attempt:
+
+- seeding into the general population and limiting communities to high-proxy counties fixes
+  most of the small-county over-forecast;
+- a community sized by the school proxy still does not sustain Lancaster at its observed
+  level. The likely missing piece is information on when Lancaster's outbreak took off and
+  how fast it grew, which the county counts for July to October requested under ADR 0023
+  would give.
+
 ## Consequences
 
 - New parameters are recorded in `project/model/params.yml` and

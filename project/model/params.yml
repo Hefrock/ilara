@@ -83,5 +83,10 @@ community:
     grades: [kindergarten, grade_7]
     threshold_pct: 90
     prior_weight: 500  # pupils: shrinks counties with few listed pupils toward the state value
+    # Round 2 (ADR 0029): only counties whose shrunken proxy exceeds the statewide share have a
+    # community; round 1 gave every county one, so a large community over-seeded small counties.
+    above_state_only: true
+  # Round 2 (ADR 0029): seeded exposures go into the general population (round 1: community).
+  seed_into: general
   # Seed size per county (ADR 0029 item 3): the cases known on its first known date, 1 to this.
   seed_max: 5

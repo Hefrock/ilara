@@ -41,6 +41,16 @@ def test_school_proxy_shrinks_small_counties_and_fills_missing() -> None:
     assert p[1] == pytest.approx((10 + 500 * state) / (10 + 500))  # pulled toward the state
     assert abs(p[1] - state) < abs(1.0 - state)
     assert p[2] == pytest.approx(state) and p[3] == pytest.approx(state)  # no usable rows
+    above = community.school_proxy(
+        s,
+        ["A", "B", "C", "D"],
+        grades=["kindergarten", "grade_7"],
+        threshold_pct=90,
+        prior_weight=500,
+        above_state_only=True,
+    )
+    assert p[0] < state and p[1] > state  # A is mostly high-coverage pupils, B is not
+    assert above.tolist() == [0.0, p[1], 0.0, 0.0]  # at or below the state value: none
 
 
 def test_patch_coupling_rows_sum_to_one_and_closed_community_keeps_to_itself() -> None:
@@ -54,13 +64,16 @@ def test_patch_coupling_rows_sum_to_one_and_closed_community_keeps_to_itself() -
         community.patch_coupling(k, np.array([1, 1]), np.array([1, 1]), within=1.5)
 
 
-def test_seeds_go_to_the_community_and_doses_follow_susceptibles() -> None:
+def test_seed_and_dose_allocation() -> None:
     arr = np.array([[5, 3]])
     s_g, s_m = np.array([100, 100]), np.array([100, 0])
-    seeded = community.to_patches(arr, s_g, s_m, into_community=True)
+    assert community.to_patches(arr, s_g, s_m, into="general").tolist() == [[5, 3, 0, 0]]
+    seeded = community.to_patches(arr, s_g, s_m, into="community")
     assert seeded.tolist() == [[0, 3, 5, 0]]  # county 2 has no community: general
-    doses = community.to_patches(arr.astype(float), s_g, s_m, into_community=False)
+    doses = community.to_patches(arr.astype(float), s_g, s_m, into="susceptible")
     assert doses.tolist() == [[2.5, 3.0, 2.5, 0.0]]
+    with pytest.raises(ValueError):
+        community.to_patches(arr, s_g, s_m, into="elsewhere")
 
 
 def test_a_closed_community_can_sustain_an_outbreak_the_county_average_cannot() -> None:
@@ -97,7 +110,7 @@ def test_a_closed_community_can_sustain_an_outbreak_the_county_average_cannot() 
         np.zeros(2, np.int64),
         coupling=k2,
         seed=1,
-        seeds=community.to_patches(seeds, s_g, s_m, into_community=True),
+        seeds=community.to_patches(seeds, s_g, s_m, into="community"),
         **common,
     ).incidence.sum()
     assert flat < 1000 and grouped > 2000  # the community (3,500 susceptible) mostly burns
@@ -122,7 +135,10 @@ def test_version_2_with_no_community_is_version_1(models: dict[str, pa.PAModel])
 
 def test_version_2_inputs(models: dict[str, pa.PAModel]) -> None:
     v2 = models["2"]
-    assert v2.proxy is not None and v2.proxy.shape == (67,) and (v2.proxy > 0).all()
+    assert v2.proxy is not None and v2.proxy.shape == (67,)
+    # Round 2 (ADR 0029): only counties above the statewide share have a community.
+    assert 0 < (v2.proxy > 0).sum() < 67 and v2.proxy[v2.fips.index("42071")] > 0
+    assert v2.params["community"]["seed_into"] == "general"
     assert v2.s_community == pytest.approx(1 - 0.3 * 0.97)
     assert set(v2.exposed_by_county.values()) <= {1, 2, 3, 4, 5} and v2.exposed_by_county
     names = [p.name for p in pa.priors(v2)]
