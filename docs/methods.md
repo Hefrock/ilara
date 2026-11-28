@@ -152,3 +152,6 @@ origin from 2026-10-28, with model version 1 unchanged (item 5).
 - Commuting flows are from 2016-2020 and describe workers, not the community most affected.
 - School coverage is a December 2025 baseline; coverage in the most affected community is not
   measured directly (U19).
+- Forecasts are published only if Gate G4 passes (decided after 2027-01-13). If it fails, the
+  forecasts stay withheld, model work stops, and this section will state the negative result and
+  its reasons ([ADR 0030](adr/0030-archive-only-if-g4-fails.md)).
