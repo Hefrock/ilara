@@ -133,6 +133,11 @@ total its captures show ([ADR 0028](adr/0028-scoring-rules-proposed.md), item 1)
 comparison with persistence is made on four groups, each on its own weekly total: Lancaster
 County, the other counties with 10 or more cases at the origin, the remaining counties, and the
 state; the model must win in at least three at one and two weeks (ADR 0028 items 2 and 3).
+Since 2026-11-28 each week's outcome is read as known 14 days after the week ends, so a later
+revision does not change a past score; a more recent week is scored provisionally and does not
+count towards the gate (ADR 0028 item 4). The earliest G4 decision is therefore after
+2027-01-13. These rules were set after the first scored weeks had been seen and apply to every
+origin from 2026-10-28, with model version 1 unchanged (item 5).
 
 ## 6. Limitations
 
