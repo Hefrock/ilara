@@ -22,6 +22,10 @@ next 1 to 4 weeks per county and statewide, and is scored against what was later
   has the lower mean WIS in at least 3 of the 4 groups (Lancaster, larger counties, the rest,
   the state). ``write_gate`` records ``pass`` only then (T6.15). Coverage over all county
   targets and the pooled per-county WIS are still reported.
+- Frozen outcomes (ADR 0028 item 4): each week's outcome is read as known ``FREEZE_DAYS`` after
+  the week ends (``freeze_time``), so later revisions do not change a score. A target whose
+  freeze time has not passed is scored on the data known now and marked ``frozen`` False
+  (provisional); the gate counts only frozen targets.
 
 Model outputs stay in ``project/outputs/`` (gitignored) until the gate passes (I10, I11).
 """
@@ -33,8 +37,10 @@ import math
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from datetime import time as dt_time
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import polars as pl
@@ -52,11 +58,23 @@ LANCASTER = "42071"
 LARGE_AT = 10  # cases at the origin; the same threshold as pa.POOL_BELOW (ADR 0021)
 GROUPS = ("group:lancaster", "group:larger", "group:rest", "state")
 GATE_GROUP_WINS = 3  # of the 4 groups in GROUPS, at each gate horizon (ADR 0028 item 3)
+FREEZE_DAYS = 14  # an outcome is read as known this many days after its week ends (item 4)
+ET = ZoneInfo("America/New_York")
 
 Quantiles = dict[str, float]  # "median", "low_50", "high_50", "low_80", ...
 Geo = str  # county FIPS or "state"
 Series = Mapping[Geo, Mapping[date, int]]  # cumulative counts by snapshot date
 Forecaster = Callable[[date, datetime], Mapping[Geo, Mapping[int, np.ndarray]]]
+# target day -> (series to read that target's outcome from, whether that series is frozen)
+Outcomes = Callable[[date], tuple[Series, bool]]
+
+
+def freeze_time(target: date) -> datetime:
+    """When a week's outcome is frozen (ADR 0028 item 4): the end of the day ``FREEZE_DAYS``
+    after the week ends, ET."""
+    return datetime.combine(
+        target + timedelta(days=FREEZE_DAYS), dt_time(23, 59, 59), ET
+    ).astimezone(UTC)
 
 
 def interval_score(y: float, low: float, high: float, alpha: float) -> float:
@@ -196,21 +214,36 @@ def score(
     forecasts: Mapping[date, Mapping[Geo, Mapping[int, np.ndarray]]],
     observed: Series,
     horizons: Sequence[int] = HORIZONS,
+    outcomes: Outcomes | None = None,
 ) -> pl.DataFrame:
     """One row per origin, geography and horizon with an observed target: model and persistence
     WIS and interval coverage. County groups are added at each origin (``with_groups``); their
-    rows have ``kind`` "group"."""
-    forecasts, observed = with_groups(origins, forecasts, observed)
+    rows have ``kind`` "group". With ``outcomes``, each target is read from the series it
+    returns for the target day (frozen outcomes, ADR 0028 item 4); without, from ``observed``."""
+    raw_forecasts = forecasts
+    forecasts, grouped = with_groups(origins, forecasts, observed)
     rows: list[dict[str, Any]] = []
     for t in origins:
+        counties = [g for g in raw_forecasts.get(t, {}) if _kind(g) == "county"]
+        members = groups_at(t, observed, counties)
         for geo, by_h in forecasts.get(t, {}).items():
             key = f"{geo}@{t.isoformat()}" if _kind(geo) == "group" else geo
-            cum = observed.get(key, {})
+            cum = grouped.get(key, {})
             base = persistence(cum, t)
             for h in horizons:
                 if h not in by_h:
                     continue
-                y = weekly_increase(cum, t + timedelta(days=7 * h))
+                end = t + timedelta(days=7 * h)
+                frozen = True
+                target = cum
+                if outcomes is not None:
+                    series, frozen = outcomes(end)
+                    target = (
+                        _summed(series, members[geo])
+                        if _kind(geo) == "group"
+                        else dict(series.get(geo, {}))
+                    )
+                y = weekly_increase(target, end)
                 if y is None or base is None:
                     continue  # unscored: a gap stays a gap (I5)
                 q = quantiles(np.asarray(by_h[h], dtype=float))
@@ -224,6 +257,7 @@ def score(
                     "high_80": q["high_80"],
                     "wis": wis(y, q),
                     "wis_persistence": wis(y, base),
+                    "frozen": frozen,
                 }
                 for a in ALPHAS:
                     lvl = round(100 * (1 - a))
@@ -240,6 +274,7 @@ def score(
         "high_80": pl.Float64,
         "wis": pl.Float64,
         "wis_persistence": pl.Float64,
+        "frozen": pl.Boolean,
         **{
             f"covered_{round(100 * (1 - a))}{s}": pl.Boolean
             for a in ALPHAS
@@ -259,6 +294,7 @@ class GateResult:
     reasons: list[str]
     coverage_80_all: float | None = None  # over all county targets, reported
     groups: dict[int, dict[str, dict[str, float]]] = field(default_factory=dict)
+    provisional: int = 0  # targets left out because their outcome is not yet frozen (item 4)
 
 
 def _county_rows(scores: pl.DataFrame) -> pl.DataFrame:
@@ -270,6 +306,10 @@ def _county_rows(scores: pl.DataFrame) -> pl.DataFrame:
 def gate(scores: pl.DataFrame) -> GateResult:
     """The G4 decision from scored forecasts (HANDOFF section 6, G4; ADR 0028 items 2 and 3)."""
     reasons: list[str] = []
+    provisional = 0
+    if scores.height and "frozen" in scores.columns:  # ADR 0028 item 4: frozen targets only
+        provisional = scores.filter(~pl.col("frozen")).height
+        scores = scores.filter(pl.col("frozen"))
     all_rows = scores
     scores = _county_rows(scores) if scores.height else scores
     origins = scores["origin"].n_unique() if scores.height else 0
@@ -310,7 +350,9 @@ def gate(scores: pl.DataFrame) -> GateResult:
                 f"horizon {h}: model better in {wins} of {len(grp[h])} groups; "
                 f"G4 needs {GATE_GROUP_WINS} of {len(GROUPS)}"
             )
-    return GateResult("fail" if reasons else "pass", origins, cov, w, wp, reasons, cov_all, grp)
+    return GateResult(
+        "fail" if reasons else "pass", origins, cov, w, wp, reasons, cov_all, grp, provisional
+    )
 
 
 def group_uncertainty(
@@ -363,8 +405,15 @@ def write_gate(
             "groups": list(GROUPS),
             "group_wins_needed": GATE_GROUP_WINS,
             "horizons": list(GATE_HORIZONS),
-            "rules": "ADR 0028 items 1 to 3",
+            "rules": "ADR 0028 items 1 to 5",
+            "outcomes_frozen_days": FREEZE_DAYS,
+            "rules_note": (
+                "rules set on 2026-11-19 to 2026-11-25, after one scored week had been seen, "
+                "and applied to every origin from 2026-10-28 with model version 1 unchanged "
+                "(ADR 0028 item 5)"
+            ),
         },
+        "provisional_targets_excluded": result.provisional,
         "origins": result.origins,
         "coverage_80": result.coverage_80,
         "coverage_80_all": result.coverage_80_all,
@@ -384,7 +433,28 @@ def replay(
     forecaster: Forecaster,
     observed: Series,
     cutoff: Callable[[date], datetime],
+    outcomes: Outcomes | None = None,
 ) -> pl.DataFrame:
     """Fit and forecast at each origin with data known at ``cutoff(origin)``, then score."""
     forecasts = {t: forecaster(t, cutoff(t)) for t in origins}
-    return score(origins, forecasts, observed)
+    return score(origins, forecasts, observed, outcomes=outcomes)
+
+
+def frozen_outcomes(
+    series_at: Callable[[datetime], Series], now: datetime | None = None
+) -> Outcomes:
+    """``Outcomes`` from a reader of the published series as known at a time (ADR 0028 item 4):
+    a target day reads the series as known at its freeze time, or now if that is later than
+    now (provisional). Reads are cached, so the not-yet-frozen targets share one read."""
+    now = now or datetime.now(UTC)
+    cache: dict[datetime, Series] = {}
+
+    def run(target: date) -> tuple[Series, bool]:
+        at = freeze_time(target)
+        frozen = at <= now
+        at = at if frozen else now
+        if at not in cache:
+            cache[at] = series_at(at)
+        return cache[at], frozen
+
+    return run

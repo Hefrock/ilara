@@ -2,8 +2,8 @@
 
 Status: item 1 **accepted** and implemented (owner, 2026-11-19: "accept ADR 0028 item 1 and
 implement it"); items 2 and 3 **accepted** and implemented (owner, 2026-11-20: "accept ADR 0028
-items 2 and 3 and implement them"); items 4 and 5 **proposed**, nothing in the code changes for
-them until the owner decides.
+items 2 and 3 and implement them"); items 4 and 5 **accepted** and implemented (owner,
+2026-11-28: "accept items 4 and 5 and implement them").
 
 ## Context
 
@@ -72,9 +72,28 @@ Each item is separate; the owner may accept, change or reject any of them.
 4. **Frozen outcomes.** Each outcome is read as known 14 days after its target day and recorded
    with that date; later revisions do not change a score. Open: the length of the lag.
 
+   **As implemented (2026-11-28).** The lag is 14 days: the outcome of the week ending on day D
+   is read from the published series as known at 23:59:59 ET on D + 14 (`validate.freeze_time`,
+   `FREEZE_DAYS`). Both ends of the week are read from that same series. A target whose freeze
+   time has not passed is still scored, on the data known now, and marked `frozen` False
+   (provisional); the gate counts only frozen targets and records how many it left out. Group
+   outcomes sum the members' frozen totals; membership and the persistence baseline are
+   unchanged. Code: `validate.frozen_outcomes`, `score(..., outcomes=...)`, used by
+   `run_validation`. Consequence: the earliest G4 decision moves from 2026-12-30 to the end of
+   2027-01-13, when the eighth origin's (2026-12-16) two-week target freezes.
+
 5. **Applied to every origin.** The rules apply to all origins from 2026-10-28, with model version
    1 unchanged. They are set after one scored week has been seen (one origin, one horizon); that
    is recorded here so a reader can weigh it ([lesson 12](../lessons.md)).
+
+   **As accepted (2026-11-28).** Items 1 to 3 were already run on every origin from 2026-10-28
+   from the day each was accepted; item 4 applies to every origin the same way. The rules were
+   set between 2026-11-19 and 2026-11-28, after the first scored weeks had been seen. Each fixes
+   a problem that exists whatever a model does (a skipped update, counties with no cases, one
+   large county deciding a pooled mean, revisions moving past scores), none was chosen for its
+   effect on version 1's scores, and version 1 was not changed. On these rules version 1 still
+   loses to persistence in most groups. `data/validation_gate.json` records this caveat
+   (`criteria.rules_note`).
 
 ## Consequences if accepted
 

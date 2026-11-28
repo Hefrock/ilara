@@ -71,7 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         fc = pa.forecaster(
             particles=a.particles, generations=a.generations, seed=a.seed, version=a.model
         )
-    scores = validate.replay(ts, fc, observed, pa.cutoff)
+    outcomes = validate.frozen_outcomes(lambda at: pa.observed_series(now=at))  # ADR 0028 item 4
+    scores = validate.replay(ts, fc, observed, pa.cutoff, outcomes)
     scores = scores.with_columns(pl.lit(a.model).alias("model_version"))  # ADR 0026
     out = a.out if a.model == pa.MODEL_VERSION else a.out.parent / f"validation_{a.model}"
     out.mkdir(parents=True, exist_ok=True)

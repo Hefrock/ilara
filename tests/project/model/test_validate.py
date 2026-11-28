@@ -244,3 +244,47 @@ def test_runs_record_the_model_version() -> None:  # ADR 0026
     assert pa.MODEL_VERSION == "1"
     params = rv.run_params(date(2026, 10, 28), 300, 8)
     assert params["model_version"] == pa.MODEL_VERSION and params["first"] == date(2026, 10, 28)
+
+
+def test_freeze_time_is_the_end_of_the_day_fourteen_days_on() -> None:  # ADR 0028 item 4
+    at = v.freeze_time(date(2026, 11, 4))
+    assert at == datetime(2026, 11, 19, 4, 59, 59, tzinfo=UTC)  # 23:59:59 ET on Nov 18
+    assert v.FREEZE_DAYS == 14
+
+
+def test_a_revision_after_the_freeze_does_not_change_a_score() -> None:  # ADR 0028 item 4
+    t = MON + timedelta(days=28)
+    end = t + timedelta(days=7)
+    revised = {**CUM, end: CUM[end] + 9}  # a later revision of the week-1 total
+    fc = {t: {"state": {1: np.full(50, 12.0)}}}
+    frozen = v.score([t], fc, {"state": revised}, outcomes=lambda d: ({"state": CUM}, True))
+    latest = v.score([t], fc, {"state": revised})
+    assert frozen["observed"].to_list() == [CUM[end] - CUM[t]]
+    assert latest["observed"].to_list() == [CUM[end] - CUM[t] + 9]
+    assert frozen["frozen"].to_list() == [True]
+
+
+def test_frozen_outcomes_read_at_the_freeze_time_or_now() -> None:  # ADR 0028 item 4
+    reads: list[datetime] = []
+
+    def series_at(at: datetime) -> v.Series:
+        reads.append(at)
+        return {"state": {}}
+
+    now = datetime(2026, 11, 28, 12, tzinfo=UTC)
+    out = v.frozen_outcomes(series_at, now)
+    assert out(date(2026, 11, 4))[1] is True and reads[-1] == v.freeze_time(date(2026, 11, 4))
+    assert out(date(2026, 11, 18))[1] is False and reads[-1] == now  # not yet frozen
+    out(date(2026, 11, 25))
+    assert reads.count(now) == 1  # provisional targets share one read
+
+
+def test_gate_counts_only_frozen_targets() -> None:  # ADR 0028 item 4
+    s = _scores(8, 0.8, (True, True)).with_columns(pl.lit(True).alias("frozen"))
+    extra = s.filter(pl.col("origin") == s["origin"].max()).with_columns(
+        (pl.col("origin") + timedelta(days=7)).alias("origin"),
+        pl.lit(False).alias("covered_80"),
+        pl.lit(False).alias("frozen"),
+    )
+    r = v.gate(pl.concat([s, extra]))
+    assert r.status == "pass" and r.origins == 8 and r.provisional == extra.height

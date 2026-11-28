@@ -31,7 +31,8 @@ tested now so that the first origin can be the day G3 passes.
 - **Gate:** pooled over counties and weeks, as G4 states; statewide rows are scored and
   reported but do not decide. *Amended 2026-11-20 by [ADR 0028](0028-scoring-rules-proposed.md)
   items 1 to 3: outcomes by capture day, coverage over targets with a case, and a comparison
-  with persistence in four groups, the state among them.* `write_gate` records `pass` only when every criterion holds
+  with persistence in four groups, the state among them; amended 2026-11-28 by items 4 and 5:
+  outcomes frozen as known 14 days after each week ends, and the rules applied to every origin.* `write_gate` records `pass` only when every criterion holds
   (T6.15), and stores summary metrics and the run reference only, never forecasts (I10).
 - **Leak guard (T6.13):** every read made with a cutoff (`calibrate`, `pa`, `inputs`,
   `estimate`) passes through `project/leak.py:check_known`, which raises `LeakError` if any row
